@@ -3,13 +3,14 @@
 #include <iostream>
 #include <complex>
 #include <armadillo>
+#include <type_traits>
 
 template <template<typename T, typename ...> class Container, bool is_cplx = false>
 class Test
 {
 	public:
 
-		using Ret = std::conditional_t<is_cplx, std::complex<double>, double>;
+		using Ret = typename std::conditional<is_cplx, std::complex<double>, double>::type;
 
 		void print() {
 			std::cout << typeid(Container<Ret>).name() << std::endl;

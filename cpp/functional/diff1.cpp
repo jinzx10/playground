@@ -15,13 +15,8 @@ Func diff1(Func const& f) {
 	};
 }
 
-double diff(double x1, double x2, double h) {
-	return (x1 - x2) / 2.0 / h;
-}
-
 int main() {
 
-	std::cout << diff(para1(0.5 + h), para1(0.5 - h), h) << std::endl;
 	std::cout << diff1(para1)(0.5) << std::endl;
 	std::cout << diff1(para2)(0.5) << std::endl;
 

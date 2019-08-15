@@ -1,0 +1,3 @@
+/data/home/jinzx10/playground/cmake/hw2/build/CMakeFiles/rebuild_cache.dir
+/data/home/jinzx10/playground/cmake/hw2/build/CMakeFiles/edit_cache.dir
+/data/home/jinzx10/playground/cmake/hw2/build/CMakeFiles/hw2.dir

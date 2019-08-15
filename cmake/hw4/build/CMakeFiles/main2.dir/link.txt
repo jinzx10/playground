@@ -1,0 +1,1 @@
+/opt/gcc/7.3/bin/g++    -rdynamic CMakeFiles/main2.dir/src/main.cpp.o CMakeFiles/main2.dir/src/tq.cpp.o  -o bin/main2  -L/data/home/jinzx10/playground/cmake/hw3/lib -Wl,-rpath,/data/home/jinzx10/playground/cmake/hw3/lib:/data/home/jinzx10/playground/cmake/hw3/build/lib: lib/libdfact.a lib/libfact.a lib/libfib.so 

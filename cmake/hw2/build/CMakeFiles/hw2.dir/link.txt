@@ -1,0 +1,1 @@
+/opt/gcc/7.3/bin/g++    -rdynamic CMakeFiles/hw2.dir/src/fact.cpp.o CMakeFiles/hw2.dir/src/main.cpp.o  -o hw2 

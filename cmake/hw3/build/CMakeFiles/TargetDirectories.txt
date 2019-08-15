@@ -1,0 +1,11 @@
+/data/home/jinzx10/playground/cmake/hw3/build/CMakeFiles/install.dir
+/data/home/jinzx10/playground/cmake/hw3/build/CMakeFiles/list_install_components.dir
+/data/home/jinzx10/playground/cmake/hw3/build/CMakeFiles/install/strip.dir
+/data/home/jinzx10/playground/cmake/hw3/build/CMakeFiles/install/local.dir
+/data/home/jinzx10/playground/cmake/hw3/build/CMakeFiles/fib.dir
+/data/home/jinzx10/playground/cmake/hw3/build/CMakeFiles/rebuild_cache.dir
+/data/home/jinzx10/playground/cmake/hw3/build/CMakeFiles/fact.dir
+/data/home/jinzx10/playground/cmake/hw3/build/CMakeFiles/edit_cache.dir
+/data/home/jinzx10/playground/cmake/hw3/build/CMakeFiles/main2.dir
+/data/home/jinzx10/playground/cmake/hw3/build/CMakeFiles/main.dir
+/data/home/jinzx10/playground/cmake/hw3/build/CMakeFiles/dfact.dir

@@ -1,0 +1,1 @@
+/opt/gcc/7.3/bin/g++ -fPIC   -shared -Wl,-soname,libfib.so -o lib/libfib.so CMakeFiles/fib.dir/src/fib.cpp.o  -L/data/home/jinzx10/playground/cmake/hw3/lib 

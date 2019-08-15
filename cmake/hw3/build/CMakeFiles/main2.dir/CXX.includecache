@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/dfact.h
+
+../include/fact.h
+
+../include/fib.h
+
+../include/tq.h
+
+/data/home/jinzx10/playground/cmake/hw3/src/main.cpp
+fib.h
+-
+fact.h
+-
+dfact.h
+-
+tq.h
+-
+iostream
+-
+
+/data/home/jinzx10/playground/cmake/hw3/src/tq.cpp
+tq.h
+-
+

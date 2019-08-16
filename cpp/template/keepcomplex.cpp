@@ -3,10 +3,10 @@
 #include <complex>
 
 template <bool is_cplx = true>
-struct KeepCplx { static std::complex<double> value(std::complex<double> z) {return z;} };
+struct KeepCplx { static std::complex<double> value(std::complex<double> const& z) {return z;} };
 
 template <>
-struct KeepCplx<false> { static double value(std::complex<double> z) {return z.real();} };
+struct KeepCplx<false> { static double value(std::complex<double> const& z) {return z.real();} };
 
 int main() {
 

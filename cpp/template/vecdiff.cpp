@@ -67,6 +67,23 @@ std::enable_if_t<is_good_type<T>::value, std::function<T(T)>> VecDiff(std::funct
 	};
 }
 
+//template <typename T>
+//auto VecDiff(std::function<std::complex<double>(T)> const& f) {
+//	return [f](T const& x) {
+//		T dfx_real = x, dfx_imag = x;
+//		auto df = vecdiff<true>(f);
+//		for (auto& val : dfx_real) {
+//			auto dim = &val - &*std::begin(dfx_real);
+//			val = func_real(df)(x, dim);
+//		}
+//		for (auto& val : dfx_imag) {
+//			auto dim = &val - &*std::begin(dfx_imag);
+//			val = func_imag(df)(x, dim);
+//		}
+//		return dfx_real + I * dfx_imag;
+//	};
+//}
+
 
 int main() {
 

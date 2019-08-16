@@ -15,7 +15,7 @@ template <typename T, typename = void>
 struct is_good_type : std::false_type {};
 
 template <typename T>
-struct is_good_type<T, std::enable_if_t<is_iterable<T>::value && std::is_copy_constructible<T>::value, void>> : std::true_type {};
+struct is_good_type<T, typename std::enable_if<is_iterable<T>::value && std::is_copy_constructible<T>::value, void>::type > : std::true_type {};
 
 
 template <bool is_cplx>
@@ -38,7 +38,7 @@ std::function<double(T)> func_imag(std::function<std::complex<double>(T)> const&
 
 
 template <typename T>
-std::enable_if_t<is_good_type<T>::value, T> pt(T x, size_t const& dim, double const& dx) {
+typename std::enable_if<is_good_type<T>::value, T>::type pt(T x, size_t const& dim, double const& dx) {
 	auto it = std::begin(x);
 	std::advance(it, dim);
 	(*it) += dx;
@@ -47,7 +47,7 @@ std::enable_if_t<is_good_type<T>::value, T> pt(T x, size_t const& dim, double co
 
 
 template <typename T, bool is_cplx = false>
-std::enable_if_t<is_good_type<T>::value, std::function<is_cplx_t<is_cplx>(T, size_t)>> vecdiff(std::function<is_cplx_t<is_cplx>(T)> const& f) {
+typename std::enable_if<is_good_type<T>::value, std::function<is_cplx_t<is_cplx>(T, size_t)>>::type vecdiff(std::function<is_cplx_t<is_cplx>(T)> const& f) {
 	return [f](T const& x, size_t const& dim) -> is_cplx_t<is_cplx> {
 		return ( f(pt(x, dim, dx)) - f(pt(x, dim, -dx)) ) / dx / 2.0;
 	};
@@ -55,7 +55,7 @@ std::enable_if_t<is_good_type<T>::value, std::function<is_cplx_t<is_cplx>(T, siz
 
 
 template <typename T>
-std::enable_if_t<is_good_type<T>::value, std::function<T(T)>> VecDiff(std::function<double(T)> const& f) {
+typename std::enable_if<is_good_type<T>::value, std::function<T(T)>>::type VecDiff(std::function<double(T)> const& f) {
 	return [f](T const& x) {
 		T dfx = x;
 		auto df = vecdiff(f);

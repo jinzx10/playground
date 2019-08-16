@@ -7,8 +7,14 @@
 
 double const dx = 1e-6;
 
+template <typename T, typename = void>
+struct is_good_type : std::false_type {};
+
 template <typename T>
-std::enable_if_t<is_iterable<T>::value, T> pt(T x, size_t const& dim, double const& dx) {
+struct is_good_type<T, std::enable_if_t<is_iterable<T>::value && std::is_copy_constructible<T>::value, void>> : std::true_type {};
+
+template <typename T>
+std::enable_if_t<is_good_type<T>::value, T> pt(T x, size_t const& dim, double const& dx) {
 	auto it = std::begin(x);
 	std::advance(it, dim);
 	(*it) += dx;
@@ -16,16 +22,16 @@ std::enable_if_t<is_iterable<T>::value, T> pt(T x, size_t const& dim, double con
 }
 
 template <typename T>
-std::enable_if_t<is_iterable<T>::value, std::function<double(T, size_t)>> vecdiff(std::function<double(T)> const& f) {
+std::enable_if_t<is_good_type<T>::value, std::function<double(T, size_t)>> vecdiff(std::function<double(T)> const& f) {
 	return [f](T const& x, size_t const& dim) {
 		return ( f(pt(x, dim, dx)) - f(pt(x, dim, -dx)) ) / dx / 2.0;
 	};
 }
 
 template <typename T>
-std::enable_if_t<is_iterable<T>::value, std::function<T(T)>> VecDiff(std::function<double(T)> const& f) {
+std::enable_if_t<is_good_type<T>::value, std::function<T(T)>> VecDiff(std::function<double(T)> const& f) {
 	return [f](T const& x) {
-		T dfx = x; // T needs to be copyable
+		T dfx = x;
 		auto df = vecdiff(f);
 		for (auto& val : dfx) {
 			auto dim = &val - &*std::begin(dfx);

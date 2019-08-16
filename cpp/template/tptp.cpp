@@ -12,22 +12,13 @@ struct Test {
 };
 
 template<typename, typename>
-struct meta {};
+struct replace_base_type {};
 
 template<typename A, template<typename ...> typename C, typename B>
-struct meta<A, C<B>> {
+struct replace_base_type<A, C<B>> {
     using type = C<A>;
 };
 
-//template<typename A, template<typename ...> typename C, typename B, typename N >
-//struct meta<A, C<B,N>> {
-//    using type = C<A, N>;
-//};
-
-//template<typename A, template<typename ...T> typename C, typename B>
-//struct meta<A, C<B>> {
-//    using type = C<A>;
-//};
 
 int main() {
 
@@ -37,8 +28,8 @@ int main() {
 	Test<std::vector, true> vec_vec;
 	vec_vec.print();
 
-	std::cout << typeid(meta<std::complex<double>, arma::vec>::type).name() << std::endl;
-	std::cout << typeid(meta<std::complex<double>, std::vector<double>>::type).name() << std::endl;
+	std::cout << typeid(replace_base_type<std::complex<double>, arma::vec>::type).name() << std::endl;
+	std::cout << typeid(replace_base_type<std::complex<double>, std::vector<double>>::type).name() << std::endl;
 
 	//Test<std::array, true> vec_arr;
 

@@ -54,6 +54,10 @@ int main() {
 	dur = iclock::now() - start;
 	std::cout << std::endl << "move-swap time elapsed = " << dur.count() << std::endl;
 
+	start = iclock::now();
+	std::swap(a,b);
+	dur = iclock::now() - start;
+	std::cout << std::endl << "std::swap time elapsed = " << dur.count() << std::endl;
 
 
 	return 0;

@@ -1,15 +1,21 @@
 #include <armadillo>
+#include <type_traits>
 
-double isum(arma::vec2 const& v) {
-	return v(0)+v(1);
+template <typename T>
+typename std::enable_if<arma::is_arma_type<T>::value, T>::type zero() {
+	return T(arma::fill::zeros);
+}
+
+template <typename T>
+typename std::enable_if<!arma::is_arma_type<T>::value, T>::type zero() {
+	return 0.0;
 }
 
 int main() {
-	arma::vec2 v2 = {1,2};
+	auto cv = zero<arma::cx_vec4>();
+	cv.print();
 
-	arma::vec2 u2 = v2 + 1;
-
-	u2.print();
-
+	auto z = zero<std::complex<double>>();
+	std::cout << z << std::endl;
 	return 0;
 }

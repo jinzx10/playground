@@ -9,11 +9,12 @@ nodes=`cat $PBS_NODEFILE | uniq`
 nodes=`echo $nodes | tr ' ' ','`
 echo $nodes
 
-bpsh $nodes mkdir -p /scratch/zuxin/pi
-bpsh $nodes cp /home/zuxin/playground/cpp/mpi/pi /scratch/zuxin/pi/pi
+bpsh $nodes mkdir -p $WORK/pi
+bpsh $nodes cp /home/zuxin/playground/cpp/mpi/pi.cpp $WORK/pi/pi.cpp
 
-cd /scratch/zuxin/pi
+cd $WORK/pi
+mpicxx pi.cpp -o pi -O2
 mpirun -np 96 ./pi 1000000000 > pi.out
 cp pi.out /home/zuxin/playground/cpp/mpi/pi.out
-bpsh $nodes rm -r /scratch/zuxin/pi
+bpsh $nodes rm -r $WORK/pi
 

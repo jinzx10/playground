@@ -1,6 +1,18 @@
 #include <armadillo>
+#include <type_traits>
 
 using namespace arma;
+
+template <typename T>
+typename std::enable_if<arma::is_arma_type<T>::value, T>::type zero() {
+	return T(arma::fill::zeros);
+}
+
+template <typename T>
+typename std::enable_if<!arma::is_arma_type<T>::value, T>::type zero() {
+	return 0.0;
+}
+
 
 int main() {
 	size_t nx = 10;
@@ -16,5 +28,10 @@ int main() {
 	std::cout << typeid(z).name() << std::endl;
 	std::cout << typeid(dc).name() << std::endl;
 
+	auto cv = zero<arma::cx_vec4>();
+	cv.print();
+
+	auto z = zero<std::complex<double>>();
+	std::cout << z << std::endl;
 	return 0;
 }

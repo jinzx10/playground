@@ -4,9 +4,14 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/data/home/jinzx10/playground/cmake/hw3/src/fib.cpp" "/data/home/jinzx10/playground/cmake/hw3/build/CMakeFiles/fib.dir/src/fib.cpp.o"
+  "/home/zuxin/playground/cmake/hw4/src/fib.cpp" "/home/zuxin/playground/cmake/hw4/build/CMakeFiles/fib.dir/src/fib.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
+
+# Preprocessor definitions for this target.
+set(CMAKE_TARGET_DEFINITIONS_CXX
+  "fib_EXPORTS"
+  )
 
 # The include file search paths:
 set(CMAKE_CXX_TARGET_INCLUDE_PATH

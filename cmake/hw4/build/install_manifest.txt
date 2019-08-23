@@ -1,2 +1,2 @@
-/data/home/jinzx10/playground/cmake/hw3/bin/main
-/data/home/jinzx10/playground/cmake/hw3/bin/main2
+/home/zuxin/playground/cmake/hw4/bin/main
+/home/zuxin/playground/cmake/hw4/bin/main2

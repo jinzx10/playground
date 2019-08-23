@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-set(ROOTDIR ~/playground/cmake/hw3 )
+set(ROOTDIR ~/playground/cmake/hw4 )
 set(SRCDIR ${ROOTDIR}/src)
 set(BUILDDIR ${ROOTDIR}/build)
 

@@ -1,7 +1,8 @@
-set(CMAKE_C_COMPILER "/opt/gcc/7.3/bin/gcc")
+set(CMAKE_C_COMPILER "/opt/gcc/8.3/bin/gcc")
 set(CMAKE_C_COMPILER_ARG1 "")
 set(CMAKE_C_COMPILER_ID "GNU")
-set(CMAKE_C_COMPILER_VERSION "7.3.0")
+set(CMAKE_C_COMPILER_VERSION "8.3.0")
+set(CMAKE_C_COMPILER_VERSION_INTERNAL "")
 set(CMAKE_C_COMPILER_WRAPPER "")
 set(CMAKE_C_STANDARD_COMPUTED_DEFAULT "11")
 set(CMAKE_C_COMPILE_FEATURES "c_std_90;c_function_prototypes;c_std_99;c_restrict;c_variadic_macros;c_std_11;c_static_assert")
@@ -13,9 +14,14 @@ set(CMAKE_C_PLATFORM_ID "Linux")
 set(CMAKE_C_SIMULATE_ID "")
 set(CMAKE_C_SIMULATE_VERSION "")
 
+
+
 set(CMAKE_AR "/usr/bin/ar")
+set(CMAKE_C_COMPILER_AR "/opt/gcc/8.3/bin/gcc-ar")
 set(CMAKE_RANLIB "/usr/bin/ranlib")
+set(CMAKE_C_COMPILER_RANLIB "/opt/gcc/8.3/bin/gcc-ranlib")
 set(CMAKE_LINKER "/usr/bin/ld")
+set(CMAKE_MT "")
 set(CMAKE_COMPILER_IS_GNUCC 1)
 set(CMAKE_C_COMPILER_LOADED 1)
 set(CMAKE_C_COMPILER_WORKS TRUE)
@@ -63,6 +69,7 @@ endif()
 
 
 
-set(CMAKE_C_IMPLICIT_LINK_LIBRARIES "c")
-set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "/opt/gcc/7.3/lib64;/opt/gcc/7.3/lib/gcc/x86_64-pc-linux-gnu/7;/lib64;/usr/lib64;/opt/boost/gnu/1.55.0/lib;/opt/openblas/gnu/0.2.20/lib;/opt/fftw/gnu/3.3.8/lib;/opt/openmpi/gnu/3.1.2/lib;/opt/intel/composer_xe_2013.4.183/mkl/lib/intel64;/opt/curl/7.61/lib;/opt/git/2.11.0/lib;/opt/python/2.7/lib;/opt/python/3.6/lib;/opt/gcc/7.3/lib")
+set(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "/opt/python/3.7/include/python3.7m;/opt/python/3.7/include;/opt/intel/compilers_and_libraries_2019.4.243/linux/mkl/include;/opt/openmpi/gnu/3.1.4/include;/opt/armadillo/gnu/9.500.2/include;/opt/openblas/gnu/0.3.6/include;/opt/gcc/8.3/include/c++/8/x86_64-pc-linux-gnu;/opt/gcc/8.3/include/c++/8;/opt/gcc/8.3/lib/gcc/x86_64-pc-linux-gnu/8/include;/usr/local/include;/opt/gcc/8.3/include;/opt/gcc/8.3/lib/gcc/x86_64-pc-linux-gnu/8/include-fixed;/usr/include")
+set(CMAKE_C_IMPLICIT_LINK_LIBRARIES "gcc;gcc_s;c;gcc;gcc_s")
+set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "/opt/armadillo/gnu/9.500.2/lib64;/opt/openblas/gnu/0.3.6/lib64;/opt/gcc/8.3/lib64;/opt/gcc/8.3/lib/gcc/x86_64-pc-linux-gnu/8;/lib64;/usr/lib64;/opt/python/3.7/lib;/opt/intel/compilers_and_libraries_2019.4.243/linux/compiler/lib/intel64;/opt/intel/compilers_and_libraries_2019.4.243/linux/mkl/lib/intel64;/opt/openmpi/gnu/3.1.4/lib;/opt/scalapack/gnu/2.0.2/lib;/opt/gcc/8.3/libexec;/opt/gcc/8.3/lib")
 set(CMAKE_C_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "")

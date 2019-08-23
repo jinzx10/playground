@@ -14,7 +14,7 @@
 
 ../include/tq.h
 
-/data/home/jinzx10/playground/cmake/hw3/src/main.cpp
+/home/zuxin/playground/cmake/hw4/src/main.cpp
 fib.h
 -
 fact.h
@@ -26,7 +26,7 @@ tq.h
 iostream
 -
 
-/data/home/jinzx10/playground/cmake/hw3/src/tq.cpp
+/home/zuxin/playground/cmake/hw4/src/tq.cpp
 tq.h
 -
 

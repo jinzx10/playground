@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/data/home/jinzx10/playground/cmake/hw3/src/fact.cpp" "/data/home/jinzx10/playground/cmake/hw3/build/CMakeFiles/fact.dir/src/fact.cpp.o"
+  "/home/zuxin/playground/cmake/hw4/src/fact.cpp" "/home/zuxin/playground/cmake/hw4/build/CMakeFiles/fact.dir/src/fact.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

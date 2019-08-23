@@ -1,4 +1,4 @@
-# Install script for directory: /data/home/jinzx10/playground/cmake/hw3
+# Install script for directory: /home/zuxin/playground/cmake/hw4
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -32,58 +32,63 @@ if(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
   set(CMAKE_INSTALL_SO_NO_EXE "0")
 endif()
 
-if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  if(EXISTS "$ENV{DESTDIR}/data/home/jinzx10/playground/cmake/hw3/bin/main" AND
-     NOT IS_SYMLINK "$ENV{DESTDIR}/data/home/jinzx10/playground/cmake/hw3/bin/main")
+# Is this installation the result of a crosscompile?
+if(NOT DEFINED CMAKE_CROSSCOMPILING)
+  set(CMAKE_CROSSCOMPILING "FALSE")
+endif()
+
+if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
+  if(EXISTS "$ENV{DESTDIR}/home/zuxin/playground/cmake/hw4/bin/main" AND
+     NOT IS_SYMLINK "$ENV{DESTDIR}/home/zuxin/playground/cmake/hw4/bin/main")
     file(RPATH_CHECK
-         FILE "$ENV{DESTDIR}/data/home/jinzx10/playground/cmake/hw3/bin/main"
+         FILE "$ENV{DESTDIR}/home/zuxin/playground/cmake/hw4/bin/main"
          RPATH "")
   endif()
   list(APPEND CMAKE_ABSOLUTE_DESTINATION_FILES
-   "/data/home/jinzx10/playground/cmake/hw3/bin/main")
+   "/home/zuxin/playground/cmake/hw4/bin/main")
   if(CMAKE_WARN_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(WARNING "ABSOLUTE path INSTALL DESTINATION : ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-file(INSTALL DESTINATION "/data/home/jinzx10/playground/cmake/hw3/bin" TYPE EXECUTABLE FILES "/data/home/jinzx10/playground/cmake/hw3/build/bin/main")
-  if(EXISTS "$ENV{DESTDIR}/data/home/jinzx10/playground/cmake/hw3/bin/main" AND
-     NOT IS_SYMLINK "$ENV{DESTDIR}/data/home/jinzx10/playground/cmake/hw3/bin/main")
+file(INSTALL DESTINATION "/home/zuxin/playground/cmake/hw4/bin" TYPE EXECUTABLE FILES "/home/zuxin/playground/cmake/hw4/build/bin/main")
+  if(EXISTS "$ENV{DESTDIR}/home/zuxin/playground/cmake/hw4/bin/main" AND
+     NOT IS_SYMLINK "$ENV{DESTDIR}/home/zuxin/playground/cmake/hw4/bin/main")
     file(RPATH_CHANGE
-         FILE "$ENV{DESTDIR}/data/home/jinzx10/playground/cmake/hw3/bin/main"
-         OLD_RPATH "/data/home/jinzx10/playground/cmake/hw3/lib:/data/home/jinzx10/playground/cmake/hw3/build/lib:"
+         FILE "$ENV{DESTDIR}/home/zuxin/playground/cmake/hw4/bin/main"
+         OLD_RPATH "/home/zuxin/playground/cmake/hw4/lib:/home/zuxin/playground/cmake/hw4/build/lib:"
          NEW_RPATH "")
     if(CMAKE_INSTALL_DO_STRIP)
-      execute_process(COMMAND "/usr/bin/strip" "$ENV{DESTDIR}/data/home/jinzx10/playground/cmake/hw3/bin/main")
+      execute_process(COMMAND "/usr/bin/strip" "$ENV{DESTDIR}/home/zuxin/playground/cmake/hw4/bin/main")
     endif()
   endif()
 endif()
 
-if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  if(EXISTS "$ENV{DESTDIR}/data/home/jinzx10/playground/cmake/hw3/bin/main2" AND
-     NOT IS_SYMLINK "$ENV{DESTDIR}/data/home/jinzx10/playground/cmake/hw3/bin/main2")
+if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
+  if(EXISTS "$ENV{DESTDIR}/home/zuxin/playground/cmake/hw4/bin/main2" AND
+     NOT IS_SYMLINK "$ENV{DESTDIR}/home/zuxin/playground/cmake/hw4/bin/main2")
     file(RPATH_CHECK
-         FILE "$ENV{DESTDIR}/data/home/jinzx10/playground/cmake/hw3/bin/main2"
+         FILE "$ENV{DESTDIR}/home/zuxin/playground/cmake/hw4/bin/main2"
          RPATH "")
   endif()
   list(APPEND CMAKE_ABSOLUTE_DESTINATION_FILES
-   "/data/home/jinzx10/playground/cmake/hw3/bin/main2")
+   "/home/zuxin/playground/cmake/hw4/bin/main2")
   if(CMAKE_WARN_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(WARNING "ABSOLUTE path INSTALL DESTINATION : ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-file(INSTALL DESTINATION "/data/home/jinzx10/playground/cmake/hw3/bin" TYPE EXECUTABLE FILES "/data/home/jinzx10/playground/cmake/hw3/build/bin/main2")
-  if(EXISTS "$ENV{DESTDIR}/data/home/jinzx10/playground/cmake/hw3/bin/main2" AND
-     NOT IS_SYMLINK "$ENV{DESTDIR}/data/home/jinzx10/playground/cmake/hw3/bin/main2")
+file(INSTALL DESTINATION "/home/zuxin/playground/cmake/hw4/bin" TYPE EXECUTABLE FILES "/home/zuxin/playground/cmake/hw4/build/bin/main2")
+  if(EXISTS "$ENV{DESTDIR}/home/zuxin/playground/cmake/hw4/bin/main2" AND
+     NOT IS_SYMLINK "$ENV{DESTDIR}/home/zuxin/playground/cmake/hw4/bin/main2")
     file(RPATH_CHANGE
-         FILE "$ENV{DESTDIR}/data/home/jinzx10/playground/cmake/hw3/bin/main2"
-         OLD_RPATH "/data/home/jinzx10/playground/cmake/hw3/lib:/data/home/jinzx10/playground/cmake/hw3/build/lib:"
+         FILE "$ENV{DESTDIR}/home/zuxin/playground/cmake/hw4/bin/main2"
+         OLD_RPATH "/home/zuxin/playground/cmake/hw4/lib:/home/zuxin/playground/cmake/hw4/build/lib:"
          NEW_RPATH "")
     if(CMAKE_INSTALL_DO_STRIP)
-      execute_process(COMMAND "/usr/bin/strip" "$ENV{DESTDIR}/data/home/jinzx10/playground/cmake/hw3/bin/main2")
+      execute_process(COMMAND "/usr/bin/strip" "$ENV{DESTDIR}/home/zuxin/playground/cmake/hw4/bin/main2")
     endif()
   endif()
 endif()
@@ -96,5 +101,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/data/home/jinzx10/playground/cmake/hw3/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/zuxin/playground/cmake/hw4/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

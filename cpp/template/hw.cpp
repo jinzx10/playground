@@ -1,22 +1,27 @@
-#include <type_traits>
-#include <iostream>
-#include <complex>
+#include "aux.h"
+#include <vector>
+#include <array>
 #include <armadillo>
-
-template <bool is_cplx>
-using num_t = typename std::conditional<is_cplx, std::complex<double>, double>::type;
-
-template <bool is_cplx>
-num_t<is_cplx> keep_cplx(std::complex<double>& z) { return z; }
-
-template <>
-num_t<false> keep_cplx<false>(std::complex<double>& z) { return z.real(); }
-
+#include <iostream>
 
 int main() 
 {
-	arma::Col<double>::fixed<0> v0;
-	std::cout << typeid(v0).name() << std::endl;
+	std::array<int,3> ai = {1,2,3};
+	std::vector<int> vi = {0, -1, -3};
+	arma::vec av = {5,6,7};
+	int* pi = &ai[0];
+
+	std::cout << is_iterable<std::vector<int>>::value << std::endl;
+	std::cout << is_iterable<std::array<int,3>>::value << std::endl;
+	std::cout << is_iterable<arma::vec>::value << std::endl;
+	std::cout << is_iterable<double>::value << std::endl;
+
+	std::cout << std::is_lvalue_reference_v< decltype(std::declval<decltype( std::begin( std::declval<arma::vec&>() ) ) >() ) > 
+		<< std::endl;
+	std::cout << std::is_lvalue_reference_v< decltype(std::declval<decltype( std::begin( std::declval<arma::vec&>() ) )&>() ) > 
+		<< std::endl;
+
+
 	return 0;
 }
 	

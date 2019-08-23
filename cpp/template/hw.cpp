@@ -16,9 +16,9 @@ int main()
 	std::cout << is_iterable<arma::vec>::value << std::endl;
 	std::cout << is_iterable<double>::value << std::endl;
 
-	std::cout << std::is_lvalue_reference_v< decltype(std::declval<decltype( std::begin( std::declval<arma::vec&>() ) ) >() ) > 
+	std::cout << std::is_lvalue_reference< decltype(std::declval<decltype( std::begin( std::declval<arma::vec&>() ) ) >() ) >::value 
 		<< std::endl;
-	std::cout << std::is_lvalue_reference_v< decltype(std::declval<decltype( std::begin( std::declval<arma::vec&>() ) )&>() ) > 
+	std::cout << std::is_lvalue_reference< decltype(std::declval<decltype( std::begin( std::declval<arma::vec&>() ) )&>() ) >::value
 		<< std::endl;
 
 

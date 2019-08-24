@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "mpi.h"
+#include <PBblacs.h>
 
 #define AA(i,j) AA[(i)*M+(j)]
 

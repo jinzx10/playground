@@ -4,7 +4,8 @@
 #include <fstream>
 #include <string>
 #include <iomanip>
-#include "scalapack.h"
+#include <mkl_blacs.h>
+#include <mkl_scalapack.h>
 
 void print(double const* A, int sz_row, int sz_col, int width = 4) {
 	for (int r = 0; r < sz_row; ++r) {
@@ -26,8 +27,8 @@ int main(int argc, char** argv)
 	/* get process id and total process number by Cblacs_pinfo */
 	int ctxt, id_blacs, np_blacs;
 	char scope[] = "All";
-	Cblacs_pinfo(&id_blacs, &np_blacs);
-	Cblacs_get(0, 0, &ctxt);
+	blacs_pinfo(&id_blacs, &np_blacs);
+	blacs_get(0, 0, &ctxt);
 	//std::cout << "id = " << id_blacs << "/" << np_blacs << std::endl;
 
 	/* command line input check */
@@ -56,10 +57,10 @@ int main(int argc, char** argv)
 
 	// initialize the process grid
 	char grid_format[] = "Row";
-	Cblacs_gridinit(&ctxt, grid_format, np_row, np_col);
-	Cblacs_gridinfo(ctxt, &np_row, &np_col, &ip_row, &ip_col);
+	blacs_gridinit(&ctxt, grid_format, &np_row, &np_col);
+	blacs_gridinfo(&ctxt, &np_row, &np_col, &ip_row, &ip_col);
 
-	Cblacs_barrier(ctxt, scope);
+	blacs_barrier(&ctxt, scope);
 	//::MPI_Barrier(MPI_COMM_WORLD);
 
 	/* read matrix from file */
@@ -96,14 +97,16 @@ int main(int argc, char** argv)
 	int ZERO = 0; // auxiliary variable
 
 	// ready to communicate
-	Cblacs_barrier(ctxt, scope);
+	blacs_barrier(&ctxt, scope);
 
 	double* B = new double[sz_row*sz_col];
 	for (int i = 0; i < sz_row*sz_col; ++i) B[i] = 0;
 
+	int nrow_comm = 3;
+	int ncol_comm = 2;
 	if (!id_blacs) {
-		Cdgesd2d(ctxt, 3, 2, A_glb + 12, sz_col, 0, 0);
-		Cdgerv2d(ctxt, 2, 3, B+3, sz_col, 0, 0);
+		dgesd2d(&ctxt, &nrow_comm, &ncol_comm, A_glb + 12, &sz_col, &ZERO, &ZERO);
+		dgerv2d(&ctxt, &nrow_comm, &ncol_comm, B+3, &sz_col, &ZERO, &ZERO);
 	}
 
 	/*
@@ -128,17 +131,17 @@ int main(int argc, char** argv)
 	*/
 
 
-	Cblacs_barrier(ctxt, scope);
+	blacs_barrier(&ctxt, scope);
 
 	if (!id_blacs) {
 		std::cout << std::endl;
 		print(B, sz_row, sz_col);
 	}
 
-	Cblacs_barrier(ctxt, scope);
+	blacs_barrier(&ctxt, scope);
 
 
-	Cblacs_gridexit(ctxt);
+	blacs_gridexit(&ctxt);
 	::MPI_Finalize();
 
 	return 0;

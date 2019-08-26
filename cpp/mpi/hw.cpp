@@ -28,7 +28,7 @@ int main(int argc, char** argv)
 	char scope[] = "All";
 	Cblacs_pinfo(&id_blacs, &np_blacs);
 	Cblacs_get(0, 0, &ctxt);
-	//std::cout << "id = " << id_blacs << "/" << np_blacs << std::endl;
+	std::cout << "id = " << id_blacs << "/" << np_blacs << std::endl;
 
 	/* command line input check */
 	if (argc < 6) {
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 
 	if (!id_blacs) {
 		Cdgesd2d(ctxt, 3, 2, A_glb + 12, sz_col, 0, 0);
-		Cdgerv2d(ctxt, 2, 3, B+3, sz_col, 0, 0);
+		Cdgerv2d(ctxt, 3, 2, B+3, sz_col, 0, 0);
 	}
 
 	/*

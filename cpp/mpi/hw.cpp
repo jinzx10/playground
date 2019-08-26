@@ -1,3 +1,9 @@
+/* This test program demonstrates the basic usage of BLACS,
+ * including grid initialization and data communication.
+ * It will read a data file that contains a matrix, 
+ * scatter its data to different processes, multiply by 2,
+ * gather, and print to the stdout. */
+
 #include <iostream>
 #include <mpi.h>
 #include <sstream>
@@ -5,12 +11,6 @@
 #include <string>
 #include <iomanip>
 #include "scalapack.h"
-
-/* This test program demonstrates the basic usage of BLACS,
- * including grid initialization and data communication.
- * It will read a matrix from file, scatter its elements
- * to different processes, multiply by 2, and gather. */
-
 
 int main(int argc, char** argv)
 {
@@ -29,10 +29,10 @@ int main(int argc, char** argv)
 	//std::cout << "id = " << id_blacs << "/" << np_blacs << std::endl;
 
 	/* command line input check */
-	if (argc < 8) {
+	if (argc < 6) {
 		if (!id_blacs) {
-			std::cerr << "Usage: mpirun -np X ./blacs data.txt M N P Q m n" << std::endl
-				<< "will read from data.txt a MxN matrix, use a PxQ process grid, and block size mxn " << std::endl;
+			std::cerr << "Usage: mpirun -np X ./blacs data.txt M N P Q" << std::endl
+				<< "will read from data.txt a MxN matrix and use a PxQ process grid" << std::endl;
 		}
 		::MPI_Barrier(MPI_COMM_WORLD);
 		::MPI_Finalize();
@@ -95,34 +95,22 @@ int main(int argc, char** argv)
 	::MPI_Bcast(&sz_col, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 	/* scatter the global matrix */
-	int sz_blk_row, sz_blk_col; // size of each block
-	if (!id_blacs) {
-		std::stringstream ss;
-		ss << argv[6] << ' ' << argv[7];
-		ss >> sz_blk_row >> sz_blk_col;
-	}
-	::MPI_Bcast(&sz_blk_row, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	::MPI_Bcast(&sz_blk_col, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-	// local matrix
-	double* A_loc;
 
 	// size of the local matrix
 	int ZERO = 0; // auxiliary variable
-	int sz_loc_row = numroc_(&sz_row, &sz_blk_row, &ip_row, &ZERO, &np_row);
-	int sz_loc_col = numroc_(&sz_col, &sz_blk_col, &ip_col, &ZERO, &np_col);
-
-	A_loc = new double[sz_loc_row*sz_loc_col];
-	for (int i = 0; i != sz_loc_row*sz_loc_col; ++i)
-		A_loc[i] = 0;
-
-	std::cout << "id = " << id_blacs << ", ("
-		<< ip_row << "," << ip_col << ")" << ", ("
-		<< sz_loc_row << "x" << sz_loc_col << ")" << std::endl;
 
 	// ready to communicate
 	Cblacs_barrier(ctxt, scope);
 
+	double* B = new double[sz_row*sz_col];
+	for (int i = 0; i < sz_row*sz_col; ++i) B[i] = 0;
+
+	if (!id_blacs) {
+		Cdgesd2d(ctxt, 3, 2, A_glb + 22, sz_col, 0, 0);
+		Cdgerv2d(ctxt, 3, 2, B+3, sz_col, 0, 0);
+	}
+
+	/*
 	int sz_comm_row, sz_comm_col; // size of the communication block
 	int proc_row = 0, proc_col = 0; // index of the process (in the process grid) that is responsible for the communication block
 	int loc_r = 0, loc_c = 0; // local matrix indices
@@ -131,36 +119,34 @@ int main(int argc, char** argv)
 		for (int c = 0; c < sz_col; c += sz_blk_col, proc_col = (proc_col+1) % np_col) {
 			sz_comm_col = (c + sz_blk_col <= sz_col) ? sz_blk_col : sz_col - c;
 			if (!id_blacs) 
-				Cdgesd2d(ctxt, sz_comm_col, sz_comm_row, A_glb+r*sz_col+c, sz_col, proc_row, proc_col);
+				Cdgesd2d(ctxt, sz_comm_row, sz_comm_col, A_glb+r*sz_col+c, sz_row, proc_row, proc_col);
+
 			if (ip_row == proc_row && ip_col == proc_col) {
-				Cdgerv2d(ctxt, sz_comm_col, sz_comm_row, A_loc+loc_r*sz_loc_col+loc_c, sz_loc_col, 0, 0);
+				Cdgerv2d(ctxt, sz_comm_row, sz_comm_col, A_loc+loc_r*sz_loc_col+loc_c, sz_loc_row, 0, 0);
 				loc_c = (loc_c + sz_comm_col) % sz_loc_col;
 			}
 		}
 		if (ip_row == proc_row)
 			loc_r = (loc_r + sz_comm_row) % sz_loc_row;
 	}
+	*/
+
 
 	Cblacs_barrier(ctxt, scope);
 
 	if (!id_blacs) {
 		std::cout << std::endl;
-		for (int i = 0; i != sz_loc_row; ++i) {
-			for (int j = 0; j != sz_loc_col; ++j)
-				std::cout << std::setw(3) << A_loc[i*sz_loc_col+j] << " ";
+
+		for (int i = 0; i != sz_row; ++i) {
+			for (int j = 0; j != sz_col; ++j) {
+				std::cout << std::setw(3) << B[i*sz_col+j] << " ";
+			}
 			std::cout << std::endl;
 		}
 		std::cout << std::endl;
 	}
 
 	Cblacs_barrier(ctxt, scope);
-
-	// multiply each local element by 2
-	for (int i = 0; i != sz_loc_row*sz_loc_col; ++i)
-		A_loc[i] *= 2;
-
-	/* gather local matrices */
-
 
 
 	Cblacs_gridexit(ctxt);

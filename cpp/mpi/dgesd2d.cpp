@@ -1,10 +1,9 @@
 /* This program shows the standard usage of Cdgesd2d and Cdgerv2d.
- * These BLACS routines are probably C-wrappers of fortran programs
- * and naturally work with column-major storage.
- *
  * Specifically, a block of the source matrix in root process will
- * be sent to a specific position in the destination matrix with the 
- * designated process id. */
+ * be sent to a specific process at a specific position in the 
+ * destination matrix.
+ * These BLACS routines are probably C-wrappers of fortran programs
+ * and thus naturally work with column-major storage. */
 
 #include <iostream>
 #include <mpi.h>
@@ -49,16 +48,14 @@ int main(int argc, char** argv)
 	if (!id) {
 		A = new double[sz_row_src*sz_col_src];
 		for (int i = 0; i < sz_row_src*sz_col_src; ++i) A[i] = i;
-	}
 
-	Cblacs_barrier(ctxt, scope);
-
-	if (!id) {
 		std::cout << std::endl;
 		std::cout << "source matrix" << std::endl;
 		print(A, sz_row_src, sz_col_src);
 		std::cout << std::endl;
 	}
+
+	Cblacs_barrier(ctxt, scope);
 
 	/* command line input check */
 	if (argc < 8) {
@@ -71,42 +68,44 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	int R = 0, C = 0, M = 0, N = 0, p = 0, r = 0, c = 0;
+	int params[7];
 	if (!id) {
 		std::stringstream ss;
 		ss << argv[1] << ' ' << argv[2] << ' ' << argv[3] << ' '<< argv[4] << ' '
 			<< argv[5] << ' ' << argv[6] << ' ' << argv[7];
-		ss >> M >> N >> R >> C >> p >> r >> c;
+		ss >> params[0] >> params[1] >> params[2] >> params[3] >> params[4] >> params[5] >> params[6]; 
 	}
+	::MPI_Bcast(params, 7, MPI_INT, 0, MPI_COMM_WORLD);
+	int M = params[0], N = params[1], R = params[2], C = params[3], p = params[4], r = params[5], c = params[6];
 
 	// overflow check
 	if (R+M > sz_row_src || C+N > sz_col_src) {
-		std::cerr << "source overflow" << std::endl;
+		if (!id)
+			std::cerr << "source overflow" << std::endl;
 		::MPI_Barrier(MPI_COMM_WORLD);
 		::MPI_Finalize();
 		return -1;
 	}
-	if (r+M > sz_row_dst || c+N > sz_col_dst) {
-		std::cerr << "destination overflow" << std::endl;
-		::MPI_Barrier(MPI_COMM_WORLD);
-		::MPI_Finalize();
-		return -1;
-	}
-	if (p >= nprocs) {
-		std::cerr << "process id overflow" << std::endl;
-		::MPI_Barrier(MPI_COMM_WORLD);
-		::MPI_Finalize();
-		return -1;
-	}
-	std::cout << M << "x" << N << ", " << "(" << R << "," << C << ") " << "-->" << " (" << r << "," << c << ")" <<  std::endl;
 
-	// broadcast the destination process id, block size and position in destination matrix
-	::MPI_Bcast(&p, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	::MPI_Bcast(&M, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	::MPI_Bcast(&N, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	::MPI_Bcast(&r, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	::MPI_Bcast(&c, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	if (r+M > sz_row_dst || c+N > sz_col_dst) {
+		if (!id)
+			std::cerr << "destination overflow" << std::endl;
+		::MPI_Barrier(MPI_COMM_WORLD);
+		::MPI_Finalize();
+		return -1;
+	}
+
+	if (p >= nprocs) {
+		if (!id)
+			std::cerr << "process id overflow" << std::endl;
+		::MPI_Barrier(MPI_COMM_WORLD);
+		::MPI_Finalize();
+		return -1;
+	}
 	
+	if (!id)
+		std::cout << M << "x" << N << ", " << "(" << R << "," << C << ") " << "-->" << " (" << r << "," << c << ")" <<  std::endl;
+
 	Cblacs_barrier(ctxt, scope);
 
 	double* B = nullptr; // destination matrix

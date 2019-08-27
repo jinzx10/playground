@@ -6,12 +6,10 @@
 #include <iomanip>
 #include "scalapack.h"
 
-/* 
- * This test program demonstrates the basic usage of BLACS,
+/* This test program demonstrates the basic usage of BLACS,
  * including grid initialization and data communication.
  * It will read a matrix from file, scatter its elements
- * to local processes, multiply by 2, and gather.
- */ 
+ * to local processes, multiply by 2, and gather. */ 
 
 void print(double const* A, int sz_row, int sz_col, int width = 4) {
 	for (int r = 0; r < sz_row; ++r) {

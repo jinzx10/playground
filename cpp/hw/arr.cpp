@@ -19,5 +19,8 @@ int main() {
 		std::cout << std::endl;
 	}
 
+	int* B = new int;
+	*B = 3;
+	delete[] B;
 	return 0;
 }

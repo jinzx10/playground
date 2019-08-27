@@ -1,7 +1,9 @@
 /* This test program does the same thing as does blacs.cpp
  * with all mkl subroutines. 
  * link line and compiler options:
+ *
  * -Wl,--no-as-needed -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl -m64
+ *
  */
 
 #include <iostream>
@@ -12,7 +14,7 @@
 #include <iomanip>
 #include <mkl_blacs.h>
 #include <mkl_scalapack.h>
-#include "mpiaux.h"
+#include "../fstream/matio.h"
 
 int main(int argc, char** argv)
 {
@@ -25,10 +27,10 @@ int main(int argc, char** argv)
 	blacs_get(&ZERO, &ZERO, &ctxt);
 
 	/* command line input option check */
-	if (argc < 8) {
+	if (argc < 6) {
 		if (!id_blacs) {
-			std::cout << "Usage: mpirun -np X ./blacs data.txt M N P Q m n" << std::endl
-				<< "The program will read from data.txt a MxN matrix, use a PxQ process grid, and block size mxn " << std::endl;
+			std::cout << "Usage: mpirun -np X ./blacs mat.txt P Q m n" << std::endl
+				<< "The program will read a matrix from mat.txt, use a PxQ process grid, and block size mxn " << std::endl;
 		}
 		::MPI_Barrier(MPI_COMM_WORLD);
 		::MPI_Finalize();
@@ -41,7 +43,7 @@ int main(int argc, char** argv)
 	if (!id_blacs) {
 		// read the grid size from the command line
 		std::stringstream ss;
-		ss << argv[4] << ' ' << argv[5];
+		ss << argv[2] << ' ' << argv[3];
 		ss >> np_row >> np_col;
 	}
 	// broadcast grid size
@@ -61,20 +63,9 @@ int main(int argc, char** argv)
 	double* A_glb = nullptr;
 
 	if (!id_blacs) {
-		std::stringstream ss;
-		ss << argv[2] << ' ' << argv[3];
-		ss >> sz_row >> sz_col;
-
-		A_glb = new double[sz_row*sz_col];
-		
 		// read from file
 		std::string filename = argv[1];
-		std::ifstream file(filename.c_str());
-		for (int irow = 0; irow != sz_row; ++irow) {
-			for (int icol = 0; icol != sz_col; ++icol) {
-				file >> A_glb[irow + icol*sz_row];
-			}
-		}
+		read_mat(filename, A_glb, sz_row, sz_col);
 
 		// print
 		std::cout << std::endl;
@@ -91,7 +82,7 @@ int main(int argc, char** argv)
 	int sz_blk_row, sz_blk_col; // size of each block
 	if (!id_blacs) {
 		std::stringstream ss;
-		ss << argv[6] << ' ' << argv[7];
+		ss << argv[4] << ' ' << argv[5];
 		ss >> sz_blk_row >> sz_blk_col;
 	}
 	::MPI_Bcast(&sz_blk_row, 1, MPI_INT, 0, MPI_COMM_WORLD);

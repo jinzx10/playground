@@ -1,8 +1,8 @@
 /* This program does the same thing as does dgesd2d.cpp
  * with all mkl subroutines.
- * Compile with:
+ * link line and compiler options:
  *
- * mpicxx mkl_dgesd2d.cpp -o mkl_dgesd2d -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl
+ * -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl
  *
  * See intel link line advisor for help. */
 
@@ -10,17 +10,9 @@
 #include <mpi.h>
 #include <sstream>
 #include <iomanip>
+#include "../fstream/matio.h"
 #include <mkl_blacs.h>
 #include <mkl_scalapack.h>
-
-void print(double const* A, int sz_row, int sz_col, int width = 4) {
-	for (int r = 0; r < sz_row; ++r) {
-		for (int c = 0; c < sz_col; ++c) {
-			std::cout << std::setw(width) << A[r+c*sz_row] << " ";
-		}
-		std::cout << std::endl;
-	}
-}
 
 int main(int argc, char** argv)
 {
@@ -53,7 +45,7 @@ int main(int argc, char** argv)
 
 		std::cout << std::endl;
 		std::cout << "source matrix" << std::endl;
-		print(A, sz_row_src, sz_col_src);
+		print_mat(A, sz_row_src, sz_col_src);
 		std::cout << std::endl;
 	}
 
@@ -131,7 +123,7 @@ int main(int argc, char** argv)
 	if (id == p) {
 		std::cout << std::endl;
 		std::cout << "destination matrix (id = " << id << ")" << std::endl;
-		print(B, sz_row_dst, sz_col_dst);
+		print_mat(B, sz_row_dst, sz_col_dst);
 		std::cout << std::endl;
 	}
 

@@ -2,13 +2,17 @@
 #include <mpi.h>
 #include <armadillo>
 #include "mpiaux.h"
+#include "../fstream/matio.h"
 
 int main() {
 
 	int id = 0, nprocs = 0;
 
-	mpi_start(&id, &nprocs);
-	print_id(&id, &nprocs);
+	::MPI_Init(nullptr, nullptr);
+	::MPI_Comm_rank(MPI_COMM_WORLD, &id);
+	::MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+
+	std::cout << "id = " << id << "/" << nprocs << std::endl;
 
 	int sz = 3;
 
@@ -42,7 +46,14 @@ int main() {
 		u.print();
 	}
 
-	mpi_end();
+	if (!id) {
+		double* B = nullptr;
+		int szr, szc;
+		read_mat<double>("testdata/blacs.txt", B, szr, szc);
+		print_mat<double>(B, szr, szc);
+	}
+
+	::MPI_Finalize();
 
 	return 0;
 }

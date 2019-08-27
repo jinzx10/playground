@@ -10,16 +10,7 @@
 #include <sstream>
 #include <iomanip>
 #include "scalapack.h"
-
-void print(double const* A, int sz_row, int sz_col, int width = 4) {
-	for (int r = 0; r < sz_row; ++r) {
-		for (int c = 0; c < sz_col; ++c) {
-			// interpret 1d-array as column-major matrix
-			std::cout << std::setw(width) << A[r+c*sz_row] << " ";
-		}
-		std::cout << std::endl;
-	}
-}
+#include "../fstream/matio.h"
 
 int main(int argc, char** argv)
 {
@@ -51,7 +42,7 @@ int main(int argc, char** argv)
 
 		std::cout << std::endl;
 		std::cout << "source matrix" << std::endl;
-		print(A, sz_row_src, sz_col_src);
+		print_mat(A, sz_row_src, sz_col_src);
 		std::cout << std::endl;
 	}
 
@@ -129,7 +120,7 @@ int main(int argc, char** argv)
 	if (id == p) {
 		std::cout << std::endl;
 		std::cout << "destination matrix (id = " << id << ")" << std::endl;
-		print(B, sz_row_dst, sz_col_dst);
+		print_mat(B, sz_row_dst, sz_col_dst);
 		std::cout << std::endl;
 	}
 

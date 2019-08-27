@@ -133,6 +133,12 @@ int main(int argc, char** argv)
 		std::cout << std::endl;
 	}
 
+	if (!id)
+		delete [] A;
+
+	if (id == p)
+		delete [] B;
+
 	Cblacs_gridexit(ctxt);
 	::MPI_Finalize();
 

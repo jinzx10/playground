@@ -1,3 +1,8 @@
+/* This test program demonstrates the basic usage of BLACS,
+ * including grid initialization and data communication.
+ * It will read a matrix from file, scatter its elements
+ * to local processes, multiply by 2, and gather. */ 
+
 #include <iostream>
 #include <mpi.h>
 #include <sstream>
@@ -5,34 +10,16 @@
 #include <string>
 #include <iomanip>
 #include "scalapack.h"
-
-/* This test program demonstrates the basic usage of BLACS,
- * including grid initialization and data communication.
- * It will read a matrix from file, scatter its elements
- * to local processes, multiply by 2, and gather. */ 
-
-void print(double const* A, int sz_row, int sz_col, int width = 4) {
-	for (int r = 0; r < sz_row; ++r) {
-		for (int c = 0; c < sz_col; ++c) {
-			std::cout << std::setw(width) << A[r*sz_col+c] << " ";
-		}
-		std::cout << std::endl;
-	}
-}
+#include "mpiaux.h"
 
 int main(int argc, char** argv)
 {
 	::MPI_Init(nullptr, nullptr);
 
-	//int mpi_id, mpi_nprocs;
-	//::MPI_Comm_rank(MPI_COMM_WORLD, &mpi_id);
-	//::MPI_Comm_size(MPI_COMM_WORLD, &mpi_nprocs);
-
 	/* get process id and total process number */
 	int ctxt, id_blacs, np_blacs;
 	Cblacs_pinfo(&id_blacs, &np_blacs);
 	Cblacs_get(0, 0, &ctxt);
-	//std::cout << "id = " << id_blacs << "/" << np_blacs << std::endl;
 
 	/* command line input option check */
 	if (argc < 8) {
@@ -65,7 +52,6 @@ int main(int argc, char** argv)
 
 	char scope[] = "All";
 	Cblacs_barrier(ctxt, scope);
-	//::MPI_Barrier(MPI_COMM_WORLD);
 
 	/* read matrix from file */
 	int sz_row, sz_col;
@@ -83,14 +69,13 @@ int main(int argc, char** argv)
 		std::ifstream file(filename.c_str());
 		for (int irow = 0; irow != sz_row; ++irow) {
 			for (int icol = 0; icol != sz_col; ++icol) {
-				file >> A_glb[irow*sz_col + icol];
+				file >> A_glb[irow + icol*sz_row];
 			}
 		}
 
-		// print
 		std::cout << std::endl;
 		std::cout << "raw matrix: " << std::endl;
-		print(A_glb, sz_row, sz_col);
+		print_mat(A_glb, sz_row, sz_col);
 		std::cout << std::endl;
 	}
 
@@ -120,7 +105,7 @@ int main(int argc, char** argv)
 	for (int i = 0; i != sz_loc_row*sz_loc_col; ++i)
 		A_loc[i] = 0;
 
-	std::cout << "id = " << id_blacs << ", ("
+	std::cout << "id = " << id_blacs << "/" << np_blacs << ", ("
 		<< ip_row << "," << ip_col << ")" << ", ("
 		<< sz_loc_row << "x" << sz_loc_col << ")" << std::endl;
 
@@ -136,9 +121,9 @@ int main(int argc, char** argv)
 		for (int c = 0; c < sz_col; c += sz_blk_col, proc_col = (proc_col+1) % np_col) {
 			sz_comm_col = (c + sz_blk_col <= sz_col) ? sz_blk_col : sz_col - c;
 			if (!id_blacs) 
-				Cdgesd2d(ctxt, sz_comm_col, sz_comm_row, A_glb+r*sz_col+c, sz_col, proc_row, proc_col);
+				Cdgesd2d(ctxt, sz_comm_row, sz_comm_col, A_glb+r+c*sz_row, sz_row, proc_row, proc_col);
 			if (ip_row == proc_row && ip_col == proc_col) {
-				Cdgerv2d(ctxt, sz_comm_col, sz_comm_row, A_loc+loc_r*sz_loc_col+loc_c, sz_loc_col, 0, 0);
+				Cdgerv2d(ctxt, sz_comm_row, sz_comm_col, A_loc+loc_r+loc_c*sz_loc_row, sz_loc_row, 0, 0);
 				loc_c = (loc_c + sz_comm_col) % sz_loc_col;
 			}
 		}
@@ -154,7 +139,7 @@ int main(int argc, char** argv)
 		if (id_blacs == ip) {
 			std::cout << std::endl;
 			std::cout << "local matrix at id = " << id_blacs << ": " << std::endl;
-			print(A_loc, sz_loc_row, sz_loc_col);
+			print_mat(A_loc, sz_loc_row, sz_loc_col);
 		}
 		Cblacs_barrier(ctxt, scope);
 	}
@@ -184,11 +169,11 @@ int main(int argc, char** argv)
 		for (int c = 0; c < sz_col; c += sz_blk_col, proc_col = (proc_col+1) % np_col) {
 			sz_comm_col = (c + sz_blk_col <= sz_col) ? sz_blk_col : sz_col - c;
 			if (ip_row == proc_row && ip_col == proc_col) {
-				Cdgesd2d(ctxt, sz_comm_col, sz_comm_row, A_loc+loc_r*sz_loc_col+loc_c, sz_loc_col, 0, 0);
+				Cdgesd2d(ctxt, sz_comm_row, sz_comm_col, A_loc+loc_r+loc_c*sz_loc_row, sz_loc_row, 0, 0);
 				loc_c = (loc_c + sz_comm_col) % sz_loc_col;
 			}
 			if (!id_blacs) 
-				Cdgerv2d(ctxt, sz_comm_col, sz_comm_row, B_glb+r*sz_col+c, sz_col, proc_row, proc_col);
+				Cdgerv2d(ctxt, sz_comm_row, sz_comm_col, B_glb+r+c*sz_row, sz_row, proc_row, proc_col);
 		}
 		if (ip_row == proc_row)
 			loc_r = (loc_r + sz_comm_row) % sz_loc_row;
@@ -199,7 +184,7 @@ int main(int argc, char** argv)
 	if (!id_blacs) {
 		std::cout << std::endl;
 		std::cout << "matrix multiplied by 2: " << std::endl;
-		print(B_glb, sz_row, sz_col);
+		print_mat(B_glb, sz_row, sz_col);
 	}
 
 	Cblacs_barrier(ctxt, scope);

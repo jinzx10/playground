@@ -1,9 +1,7 @@
 /* This test program does the same thing as does blacs.cpp
  * with all mkl subroutines. 
- * Compile with:
- *
- * mpicxx mkl_blacs.cpp -o mkl_blacs -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lmkl_scalapack_lp64 \
- * -lpthread -lm -ldl
+ * link line and compiler options:
+ * -Wl,--no-as-needed -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl -m64
  */
 
 #include <iostream>
@@ -22,8 +20,9 @@ int main(int argc, char** argv)
 
 	/* get process id and total process number */
 	int ctxt, id_blacs, np_blacs;
+	int ZERO = 0; // auxiliary variable
 	blacs_pinfo(&id_blacs, &np_blacs);
-	blacs_get(0, 0, &ctxt);
+	blacs_get(&ZERO, &ZERO, &ctxt);
 
 	/* command line input option check */
 	if (argc < 8) {
@@ -102,7 +101,6 @@ int main(int argc, char** argv)
 	double* A_loc = nullptr;
 
 	// size of the local matrix
-	int ZERO = 0; // auxiliary variable
 	int sz_loc_row = numroc(&sz_row, &sz_blk_row, &ip_row, &ZERO, &np_row);
 	int sz_loc_col = numroc(&sz_col, &sz_blk_col, &ip_col, &ZERO, &np_col);
 

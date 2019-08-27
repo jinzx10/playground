@@ -17,18 +17,19 @@ int main(int, char** argv) {
 	iclock::time_point start;
 	std::chrono::duration<double> dur;
 
-	std::stringstream ss;
-	ss << argv[1];
-	ull sz;
-	ss >> sz;
 
 	::MPI_Init(nullptr, nullptr);
 	::MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 	::MPI_Comm_rank(MPI_COMM_WORLD, &id);
 
+	ull sz = 0;
 	if (id == 0) {
 		start = iclock::now();
+		std::stringstream ss;
+		ss << argv[1];
+		ss >> sz;
 	}
+	::MPI_Bcast(&sz, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
 
 	std::srand(id+std::time(nullptr));
 
@@ -55,9 +56,6 @@ int main(int, char** argv) {
 		std::cout << "num procs = " << num_procs << std::endl;
 	}
 
-	//::MPI_Barrier(MPI_COMM_WORLD);
-	//system("hostname");
-	
 	::MPI_Finalize();
 
 	return 0;

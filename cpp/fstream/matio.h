@@ -44,10 +44,9 @@ void read_mat(std::string const& filename, T*& A, int& sz_row, int& sz_col, bool
 		ss.clear();
 	}
 
-	if (A) {
-		delete[] A;
-		A = nullptr;
-	}
+	delete[] A;
+	A = nullptr;
+
 	A = new T[sz_row*sz_col];
 	for (int i = 0; i != sz_row*sz_col; ++i) A[i] = 0;
 

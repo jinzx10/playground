@@ -15,23 +15,23 @@ typename std::enable_if<!arma::is_arma_type<T>::value, T>::type zero() {
 
 
 int main() {
-	size_t nx = 10;
-	vec x = linspace<vec>(0, 1, nx);
-	cx_vec z = linspace<cx_vec>(0, 1, nx);
+	int sz = 10;
+	int num = 100;
+	
+	mat a = zeros(sz,sz);
+	mat eigvec;
+	vec eigval;
+	int count = 0;
+	for (int i = 0; i != num; ++i) {
+		a = randu(sz,sz);
+		a = a + a.t();
+		eig_sym(eigval, eigvec, a);
+		a = a + (eigval(1)-eigval(0)+1) * (eigvec.col(0) * eigvec.col(0).t());
+		eig_sym(eigval, eigvec, a);
+		count += eigval.is_sorted();
+	}
 
-	cx_mat dc = zeros<cx_mat>(nx, 2);
-	dc.col(0) = arma::conv_to<cx_vec>::from(x);
+	std::cout << count << std::endl;
 
-	dc.print();
-
-	std::cout << typeid(x).name() << std::endl;
-	std::cout << typeid(z).name() << std::endl;
-	std::cout << typeid(dc).name() << std::endl;
-
-	auto cv = zero<arma::cx_vec4>();
-	cv.print();
-
-	auto z = zero<std::complex<double>>();
-	std::cout << z << std::endl;
 	return 0;
 }

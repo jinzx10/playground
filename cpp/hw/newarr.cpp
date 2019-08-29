@@ -50,5 +50,12 @@ int main() {
 	cout << "current values of old pointer: ";
 	print(ptri, sz);
 
+	int* tq = new int;
+	*tq = 1;
+
+	delete[] tq;
+	tq = nullptr;
+	tq = new int[3];
+
 	return 0;
 }

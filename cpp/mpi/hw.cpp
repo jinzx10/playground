@@ -1,7 +1,6 @@
 #include <iostream>
 #include <mpi.h>
 #include <armadillo>
-#include "mpiaux.h"
 #include "../fstream/matio.h"
 
 int main() {

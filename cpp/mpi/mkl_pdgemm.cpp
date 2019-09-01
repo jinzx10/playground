@@ -13,6 +13,7 @@ int main(int argc, char** argv) {
 	::MPI_Init(nullptr, nullptr);
 
 	int ZERO = 0, ONE = 1;
+	double dZERO = 0.0, dONE = 1.0;
 	int ctxt = 0;
 	int id = 0, nprocs = 0;
 
@@ -94,15 +95,31 @@ int main(int argc, char** argv) {
 	double* B_loc = nullptr;
 	double* C_loc = nullptr;
 
-	scatter(ctxt, A, A_loc, MA, NA, mb, mb, ip_row, ip_col, np_row, np_col);
+	scatter(ctxt, A, A_loc, MA, NA, mb, nb, ip_row, ip_col, np_row, np_col);
+	scatter(ctxt, B, B_loc, MB, NB, mb, nb, ip_row, ip_col, np_row, np_col); 
+
+	char trans = 'N';
+	int ia = ip_row*mb;
+	int ja = ip_col*nb;
+	int ib = ip_row*mb;
+	int jb = ip_col*nb;
+	int ic = ip_row*mb;
+	int jc = ip_col*nb;
+
+	::pdgemm(&trans, &trans, &MA, &NB, &NA, &dONE, A_loc, &ia, &ja, descA, B_loc, &ib, &jb, descB, &dZERO, C_loc, &ic, &jc, descC);
+
+	gather();
 
 	if (!id) {
-		print_mat(A, MA, NA);
-		print_mat(A_loc, RA, CA);
+		print_mat(C, MA, NB);
 	}
 
 	delete[] A;
 	delete[] A_loc;
+	delete[] B;
+	delete[] B_loc;
+	delete[] C;
+	delete[] C_loc;
 
 	::blacs_gridexit(&ctxt);
 	::MPI_Finalize();

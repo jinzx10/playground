@@ -9,7 +9,7 @@
 #include "../fstream/matio.h"
 #include "scalapack.h"
 #include "aux.h"
-//#include <armadillo>
+#include <armadillo>
 
 int main(int argc, char** argv) {
 
@@ -113,11 +113,11 @@ int main(int argc, char** argv) {
 
 	if (!id) {
 		print_mat(C, MA, NB);
-		//arma::mat a, b, c;
-		//a.load(file1);
-		//b.load(file2);
-		//c = a*b;
-		//c.print();
+		arma::mat a, b, c;
+		a.load(file1);
+		b.load(file2);
+		c = a*b;
+		c.print();
 	}
 
 	delete[] A;

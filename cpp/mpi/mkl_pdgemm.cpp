@@ -1,3 +1,9 @@
+/* This test program reads two matrices from file, scatters it to different processes,
+ * calls pdgemm to perform a parallel matrix multiplication, and gathers the result.
+ * link line and compiler options: 
+ * -Wl,--no-as-needed -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl -m64
+ */
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -7,6 +13,7 @@
 #include <mpi.h>
 #include "../fstream/matio.h"
 #include "mkl_aux.h"
+#include <armadillo>
 
 int main(int argc, char** argv) {
 
@@ -98,20 +105,23 @@ int main(int argc, char** argv) {
 	scatter(ctxt, A, A_loc, MA, NA, mb, nb, ip_row, ip_col, np_row, np_col);
 	scatter(ctxt, B, B_loc, MB, NB, mb, nb, ip_row, ip_col, np_row, np_col); 
 
+	C_loc = new double[RC*CC];
+	for (int i = 0; i != RC*CC; ++i) C_loc[i] = 0.0;
+
 	char trans = 'N';
-	int ia = ip_row*mb;
-	int ja = ip_col*nb;
-	int ib = ip_row*mb;
-	int jb = ip_col*nb;
-	int ic = ip_row*mb;
-	int jc = ip_col*nb;
 
-	::pdgemm(&trans, &trans, &MA, &NB, &NA, &dONE, A_loc, &ia, &ja, descA, B_loc, &ib, &jb, descB, &dZERO, C_loc, &ic, &jc, descC);
+	// ia, ja, ... start from one instead of zero! (fortran convention)
+	::pdgemm(&trans, &trans, &MA, &NB, &NA, &dONE, A_loc, &ONE, &ONE, descA, B_loc, &ONE, &ONE, descB, &dZERO, C_loc, &ONE, &ONE, descC);
 
-	gather();
+	gather(ctxt, C, C_loc, MA, NB, mb, nb, ip_row, ip_col, np_row, np_col);
 
 	if (!id) {
 		print_mat(C, MA, NB);
+		arma::mat a, b, c;
+		a.load(file1);
+		b.load(file2);
+		c = a*b;
+		c.print();
 	}
 
 	delete[] A;

@@ -10,8 +10,11 @@ extern "C"
 	void Cblacs_gridinit(int* , char*, int, int);
 	void Cblacs_gridinfo(int, int*, int*, int*, int*);
 	void Cblacs_gridexit(int);
-	void Cdgesd2d(int context, int num_col, int num_row, double* A, int sz_col, int dest_row, int dest_col);
+	void Cdgesd2d(int, int, int, double*, int, int, int);
 	void Cdgerv2d(int, int, int, double*, int, int, int);
+
+	// PBLAS
+	void pdgemm_(char*, char*, int*, int*, int*, double*, double*, int*, int*, int*, double*, int*, int*, int*, double*, double*, int*, int*, int*);
 
 	// ScaLAPACK utilities
 	int numroc_(int const*, int const*, int const*, int const*, int const*);

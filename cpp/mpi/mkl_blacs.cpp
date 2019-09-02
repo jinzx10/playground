@@ -1,9 +1,7 @@
 /* This test program does the same thing as does blacs.cpp
  * with all mkl subroutines. 
  * link line and compiler options:
- *
  * -Wl,--no-as-needed -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl -m64
- *
  */
 
 #include <iostream>

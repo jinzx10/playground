@@ -3,7 +3,7 @@
  *
  * On some machines, if scalapack is compiled with user-specified blas and lapack libs
  * (like mkl or openblas), the link line should include those libs (like -lopenblas or
- * -lmkl_core -lmkl_...) as well as fortran libs (-lgfortran or -lifcore) if blas and
+ * -lmkl_core -lmkl_...) as well as fortran libs (-lgfortran or -lifcore), if blas and
  * lapack routines (like pdgemm) are called.
  */
 

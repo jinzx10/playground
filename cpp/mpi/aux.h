@@ -42,10 +42,7 @@ inline void gather(
 );
 
 inline void scatter(int const& ctxt, double*& A, double*& A_loc, int const& sz_row, int const& sz_col, int const& sz_blk_row, int const& sz_blk_col, int const& ip_row, int const& ip_col, int const& np_row, int const& np_col, int const& src_row, int const& src_col, int const& ip_row_start, int const& ip_col_start) {
-	if (A_loc) {
-		delete[] A_loc;
-		A_loc = nullptr;
-	}
+	delete[] A_loc;
 
 	int sz_loc_row = numroc_(&sz_row, &sz_blk_row, &ip_row, &ip_row_start, &np_row);
 	int sz_loc_col = numroc_(&sz_col, &sz_blk_col, &ip_col, &ip_col_start, &np_col);
@@ -74,10 +71,7 @@ inline void scatter(int const& ctxt, double*& A, double*& A_loc, int const& sz_r
 
 
 inline void gather(int const& ctxt, double*& A, double*& A_loc, int const& sz_row, int const& sz_col, int const& sz_blk_row, int const& sz_blk_col, int const& ip_row, int const& ip_col, int const& np_row, int const& np_col, int const& src_row, int const& src_col, int const& ip_row_start, int const& ip_col_start) {
-	if (A) {
-		delete[] A;
-		A = nullptr;
-	}
+	delete[] A;
 	A = new double[sz_row*sz_col];
 	for (int i = 0; i != sz_row*sz_col; ++i) A[i] = 0.0;
 

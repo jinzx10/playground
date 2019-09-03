@@ -14,7 +14,7 @@
 
 int main(int argc, char** argv)
 {
-	::MPI_Init(nullptr, nullptr);
+	MPI_Init(nullptr, nullptr);
 
 	/* get process id and total process number */
 	int ctxt, id, nprocs;
@@ -54,8 +54,8 @@ int main(int argc, char** argv)
 			std::cerr << "Usage: mpirun -np X ./Cdgesd2d M N R C p r c" << std::endl
 				<< "will send a MxN block of source matrix at (R,C) to (r,c) of the destination matrix at process p" << std::endl;
 		}
-		::MPI_Barrier(MPI_COMM_WORLD);
-		::MPI_Finalize();
+		MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Finalize();
 		return -1;
 	}
 
@@ -66,31 +66,31 @@ int main(int argc, char** argv)
 			<< argv[5] << ' ' << argv[6] << ' ' << argv[7];
 		ss >> params[0] >> params[1] >> params[2] >> params[3] >> params[4] >> params[5] >> params[6]; 
 	}
-	::MPI_Bcast(params, 7, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(params, 7, MPI_INT, 0, MPI_COMM_WORLD);
 	int M = params[0], N = params[1], R = params[2], C = params[3], p = params[4], r = params[5], c = params[6];
 
 	// overflow check
 	if (R+M > sz_row_src || C+N > sz_col_src) {
 		if (!id)
 			std::cerr << "source overflow" << std::endl;
-		::MPI_Barrier(MPI_COMM_WORLD);
-		::MPI_Finalize();
+		MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Finalize();
 		return -1;
 	}
 
 	if (r+M > sz_row_dst || c+N > sz_col_dst) {
 		if (!id)
 			std::cerr << "destination overflow" << std::endl;
-		::MPI_Barrier(MPI_COMM_WORLD);
-		::MPI_Finalize();
+		MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Finalize();
 		return -1;
 	}
 
 	if (p >= nprocs) {
 		if (!id)
 			std::cerr << "process id overflow" << std::endl;
-		::MPI_Barrier(MPI_COMM_WORLD);
-		::MPI_Finalize();
+		MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Finalize();
 		return -1;
 	}
 	
@@ -131,7 +131,7 @@ int main(int argc, char** argv)
 		delete [] B;
 
 	Cblacs_gridexit(ctxt);
-	::MPI_Finalize();
+	MPI_Finalize();
 
 	return 0;
 }

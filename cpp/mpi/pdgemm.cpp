@@ -18,7 +18,7 @@
 
 int main(int argc, char** argv) {
 
-	::MPI_Init(nullptr, nullptr);
+	MPI_Init(nullptr, nullptr);
 
 	int ZERO = 0, ONE = 1;
 	double dZERO = 0.0, dONE = 1.0;
@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
 	if (argc < 7) {
 		if (!id)
 			std::cerr << "Usage: mpirun -np X ./mkl_pdgemm data1.txt data2.txt P Q mb nb" << std::endl;
-		::MPI_Finalize();
+		MPI_Finalize();
 		return -1;
 	}
 
@@ -45,8 +45,8 @@ int main(int argc, char** argv) {
 		ss << argv[3] << ' ' << argv[4];
 		ss >> np_row >> np_col;
 	}
-	::MPI_Bcast(&np_row, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	::MPI_Bcast(&np_col, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&np_row, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&np_col, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 	Cblacs_gridinit(&ctxt, layout, np_row, np_col);
 	Cblacs_gridinfo(ctxt, &np_row, &np_col, &ip_row, &ip_col);
@@ -63,15 +63,15 @@ int main(int argc, char** argv) {
 		read_mat(file1, A, MA, NA);
 		read_mat(file2, B, MB, NB);
 	}
-	::MPI_Bcast(&MA, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	::MPI_Bcast(&NA, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	::MPI_Bcast(&MB, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	::MPI_Bcast(&NB, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&MA, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&NA, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&MB, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&NB, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	
 	if (NA != MB) {
 		if (!id)
 			std::cerr << "invalid size for matrix multiplication." << std::endl;
-		::MPI_Finalize();
+		MPI_Finalize();
 		return -1;
 	}
 
@@ -81,8 +81,8 @@ int main(int argc, char** argv) {
 		ss << argv[5] << ' ' << argv[6];
 		ss >> mb >> nb;
 	}
-	::MPI_Bcast(&mb, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	::MPI_Bcast(&nb, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&mb, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&nb, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 	int RA = numroc_(&MA, &mb, &ip_row, &ZERO, &np_row);
 	int CA = numroc_(&NA, &nb, &ip_col, &ZERO, &np_col);
@@ -133,7 +133,7 @@ int main(int argc, char** argv) {
 	delete[] C_loc;
 
 	Cblacs_gridexit(ctxt);
-	::MPI_Finalize();
+	MPI_Finalize();
 
 	return 0;
 }

@@ -14,7 +14,7 @@
 
 int main(int argc, char** argv)
 {
-	::MPI_Init(nullptr, nullptr);
+	MPI_Init(nullptr, nullptr);
 
 	/* get process id and total process number */
 	int ctxt, id_blacs, np_blacs;
@@ -27,8 +27,8 @@ int main(int argc, char** argv)
 			std::cout << "Usage: mpirun -np X ./blacs mat.txt P Q m n" << std::endl
 				<< "The program will read a matrix from mat.txt, use a PxQ process grid, and block size mxn " << std::endl;
 		}
-		::MPI_Barrier(MPI_COMM_WORLD);
-		::MPI_Finalize();
+		MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Finalize();
 		return 0;
 	}
 
@@ -42,8 +42,8 @@ int main(int argc, char** argv)
 		ss >> np_row >> np_col;
 	}
 	// broadcast grid size
-	::MPI_Bcast(&np_row, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	::MPI_Bcast(&np_col, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&np_row, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&np_col, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 	// initialize the process grid
 	char grid_format[] = "Row";
@@ -67,8 +67,8 @@ int main(int argc, char** argv)
 	}
 
 	// broadcast the size of the global matrix
-	::MPI_Bcast(&sz_row, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	::MPI_Bcast(&sz_col, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&sz_row, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&sz_col, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 	/* scatter the global matrix */
 	int sz_blk_row, sz_blk_col; // size of each block
@@ -77,8 +77,8 @@ int main(int argc, char** argv)
 		ss << argv[4] << ' ' << argv[5];
 		ss >> sz_blk_row >> sz_blk_col;
 	}
-	::MPI_Bcast(&sz_blk_row, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	::MPI_Bcast(&sz_blk_col, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&sz_blk_row, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&sz_blk_col, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 	// local matrix
 	double* A_loc = nullptr;
@@ -178,7 +178,7 @@ int main(int argc, char** argv)
 
 
 	Cblacs_gridexit(ctxt);
-	::MPI_Finalize();
+	MPI_Finalize();
 
 	return 0;
 }

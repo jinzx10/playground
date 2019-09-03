@@ -16,7 +16,7 @@
 
 int main(int argc, char** argv)
 {
-	::MPI_Init(nullptr, nullptr);
+	MPI_Init(nullptr, nullptr);
 
 	char scope[] = "All";
 	char grid_format[] = "Row";
@@ -24,16 +24,16 @@ int main(int argc, char** argv)
 
 	/* get process id and total process number */
 	int ctxt, id, nprocs;
-	::blacs_pinfo(&id, &nprocs);
-	::blacs_get(0, &ZERO, &ctxt);
+	blacs_pinfo(&id, &nprocs);
+	blacs_get(0, &ZERO, &ctxt);
 
 	/* initialize BLACS process grid (necessary for dgesd2d) */
 	int ip_row, ip_col;
-	::blacs_gridinit(&ctxt, grid_format, &ONE, &nprocs);
-	::blacs_gridinfo(&ctxt, &ONE, &nprocs, &ip_row, &ip_col);
+	blacs_gridinit(&ctxt, grid_format, &ONE, &nprocs);
+	blacs_gridinfo(&ctxt, &ONE, &nprocs, &ip_row, &ip_col);
 	std::cout << "id = " << id << "/" << nprocs << ", (" << ip_row << "," << ip_col << ")" << std::endl;
 
-	::blacs_barrier(&ctxt, scope);
+	blacs_barrier(&ctxt, scope);
 
 	/* source matrix */
 	int sz_row_src = 11, sz_col_src = 9; // size of the source matrix
@@ -49,7 +49,7 @@ int main(int argc, char** argv)
 		std::cout << std::endl;
 	}
 
-	::blacs_barrier(&ctxt, scope);
+	blacs_barrier(&ctxt, scope);
 
 	/* command line input check */
 	if (argc < 8) {
@@ -57,8 +57,8 @@ int main(int argc, char** argv)
 			std::cerr << "Usage: mpirun -np X ./Cdgesd2d M N R C p r c" << std::endl
 				<< "will send a MxN block of source matrix at (R,C) to (r,c) of the destination matrix at process p" << std::endl;
 		}
-		::MPI_Barrier(MPI_COMM_WORLD);
-		::MPI_Finalize();
+		MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Finalize();
 		return -1;
 	}
 
@@ -69,38 +69,38 @@ int main(int argc, char** argv)
 			<< argv[5] << ' ' << argv[6] << ' ' << argv[7];
 		ss >> params[0] >> params[1] >> params[2] >> params[3] >> params[4] >> params[5] >> params[6]; 
 	}
-	::MPI_Bcast(params, 7, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(params, 7, MPI_INT, 0, MPI_COMM_WORLD);
 	int M = params[0], N = params[1], R = params[2], C = params[3], p = params[4], r = params[5], c = params[6];
 
 	// overflow check
 	if (R+M > sz_row_src || C+N > sz_col_src) {
 		if (!id)
 			std::cerr << "source overflow" << std::endl;
-		::MPI_Barrier(MPI_COMM_WORLD);
-		::MPI_Finalize();
+		MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Finalize();
 		return -1;
 	}
 
 	if (r+M > sz_row_dst || c+N > sz_col_dst) {
 		if (!id)
 			std::cerr << "destination overflow" << std::endl;
-		::MPI_Barrier(MPI_COMM_WORLD);
-		::MPI_Finalize();
+		MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Finalize();
 		return -1;
 	}
 
 	if (p >= nprocs) {
 		if (!id)
 			std::cerr << "process id overflow" << std::endl;
-		::MPI_Barrier(MPI_COMM_WORLD);
-		::MPI_Finalize();
+		MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Finalize();
 		return -1;
 	}
 	
 	if (!id)
 		std::cout << M << "x" << N << ", " << "(" << R << "," << C << ") " << "-->" << " (" << r << "," << c << ")" <<  std::endl;
 
-	::blacs_barrier(&ctxt, scope);
+	blacs_barrier(&ctxt, scope);
 
 	double* B = nullptr; // destination matrix
 	if (id == p) {
@@ -108,16 +108,16 @@ int main(int argc, char** argv)
 		for (int i = 0; i != sz_row_dst*sz_col_dst; ++i) B[i] = 0;
 	}
 
-	::blacs_barrier(&ctxt, scope);
+	blacs_barrier(&ctxt, scope);
 
 	// send
 	if (!id) {
-		::dgesd2d(&ctxt, &M, &N, A+R+C*sz_row_src, &sz_row_src, &ZERO, &p);
+		dgesd2d(&ctxt, &M, &N, A+R+C*sz_row_src, &sz_row_src, &ZERO, &p);
 	}
 
 	// receive
 	if (id == p) {
-		::dgerv2d(&ctxt, &M, &N, B+r+c*sz_row_dst, &sz_row_dst, &ZERO, &ZERO);
+		dgerv2d(&ctxt, &M, &N, B+r+c*sz_row_dst, &sz_row_dst, &ZERO, &ZERO);
 	}
 
 	if (id == p) {
@@ -127,8 +127,8 @@ int main(int argc, char** argv)
 		std::cout << std::endl;
 	}
 
-	::blacs_gridexit(&ctxt);
-	::MPI_Finalize();
+	blacs_gridexit(&ctxt);
+	MPI_Finalize();
 
 	return 0;
 }

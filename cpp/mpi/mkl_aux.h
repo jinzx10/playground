@@ -58,9 +58,9 @@ inline void scatter(int const& ctxt, double*& A, double*& A_loc, int const& sz_r
 		for (int c = 0; c < sz_col; c += sz_blk_col, pid_col = (pid_col+1)%np_col) {
 			sz_comm_col = (c + sz_blk_col > sz_col) ? sz_col - c : sz_blk_col;
 			if (ip_row == src_row && ip_col == src_col) 
-				::dgesd2d(&ctxt, &sz_comm_row, &sz_comm_col, A+r+c*sz_row, &sz_row, &pid_row, &pid_col);
+				dgesd2d(&ctxt, &sz_comm_row, &sz_comm_col, A+r+c*sz_row, &sz_row, &pid_row, &pid_col);
 			if (ip_row == pid_row && ip_col == pid_col) {
-				::dgerv2d(&ctxt, &sz_comm_row, &sz_comm_col, A_loc+r_loc+c_loc*sz_loc_row, &sz_loc_row, &src_row, &src_col);
+				dgerv2d(&ctxt, &sz_comm_row, &sz_comm_col, A_loc+r_loc+c_loc*sz_loc_row, &sz_loc_row, &src_row, &src_col);
 				c_loc = (c_loc + sz_comm_col) % sz_loc_col;
 			}
 		}
@@ -86,11 +86,11 @@ inline void gather(int const& ctxt, double*& A, double*& A_loc, int const& sz_ro
 		for (int c = 0; c < sz_col; c += sz_blk_col, pid_col = (pid_col+1)%np_col) {
 			sz_comm_col = (c + sz_blk_col > sz_col) ? sz_col - c : sz_blk_col;
 			if (ip_row == pid_row && ip_col == pid_col) {
-				::dgesd2d(&ctxt, &sz_comm_row, &sz_comm_col, A_loc+r_loc+c_loc*sz_loc_row, &sz_loc_row, &src_row, &src_col);
+				dgesd2d(&ctxt, &sz_comm_row, &sz_comm_col, A_loc+r_loc+c_loc*sz_loc_row, &sz_loc_row, &src_row, &src_col);
 				c_loc = (c_loc + sz_comm_col) % sz_loc_col;
 			}
 			if (ip_row == src_row && ip_col == src_col)
-				::dgerv2d(&ctxt, &sz_comm_row, &sz_comm_col, A+r+c*sz_row, &sz_row, &pid_row, &pid_col);
+				dgerv2d(&ctxt, &sz_comm_row, &sz_comm_col, A+r+c*sz_row, &sz_row, &pid_row, &pid_col);
 		}
 		if (ip_row == pid_row)
 			r_loc += sz_comm_row;

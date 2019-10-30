@@ -1,8 +1,14 @@
 #include <iostream>
 #include <armadillo>
 #include "grad.h"
+#include <functional>
 
 using namespace arma;
+using namespace std::placeholders;
+
+int sum(int x, int y, int z) {
+	return x+10*y+100*z;
+}
 
 int main() {
 	arma::vec v = {1.5, 3.7};
@@ -18,6 +24,11 @@ int main() {
 
 	for (auto& e : val)
 		std::cout << e << std::endl;
+
+	
+	auto s2 = std::bind(::sum, _2, 7, _1);
+
+	std::cout << s2(1,5) << std::endl;
 
 	return 0;
 }

@@ -1,3 +1,4 @@
+#include <iostream>
 #include <armadillo>
 #include <type_traits>
 
@@ -20,7 +21,6 @@ int main() {
 	std::cout << 1.0 / (std::exp(1 / 1e-18) + 1.0) << std::endl;
 	std::cout << arma::datum::eps << std::endl;
 	
-
 
 	return 0;
 }

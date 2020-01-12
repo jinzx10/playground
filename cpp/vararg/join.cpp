@@ -5,7 +5,25 @@ using namespace arma;
 
 mat joinr2(std::initializer_list<mat> T);
 
+template <typename eT>
+arma::Mat<eT> joinr( std::initializer_list<arma::Mat<eT> > m) {
+	arma::Mat<eT> z;
+	for (auto it = m.begin(); it != m.end(); ++it) {
+		z.insert_cols(z.n_cols, *it);
+	}
+	return z;
+}
 
+template <typename eT>
+arma::Mat<eT> join(std::initializer_list< std::initializer_list<arma::Mat<eT> > > m) {
+	arma::Mat<eT>z;
+	for (auto it = m.begin(); it != m.end(); ++it) {
+		z.insert_rows(z.n_rows, joinr(*it));
+	}
+	return z;
+}
+
+/*
 mat joinr(mat const& m1, mat const& m2) {
 	return join_rows(m1, m2);
 }
@@ -39,6 +57,7 @@ mat join2(std::initializer_list< std::initializer_list<mat> > T) {
 	}
 	return z;
 }
+*/
 
 int main() {
 	uword sz = 3;
@@ -47,6 +66,7 @@ int main() {
 	mat m3 = randu(sz, 3);
 	vec v1 = ones(sz);
 
+	/*
 	mat M = joinr(m1, m2, m3);
 	M.print();
 
@@ -64,7 +84,12 @@ int main() {
 
 	mat L = join( {m1,m2,m3}, {m3,m2,m1} );
 	L.print();
+	*/
 
+	mat K = join( { {v1, m2, m3}, {m3, m2, m1} } );
+	K.print();
+
+	std::cout << std::endl;
 
 	return 0;
 }

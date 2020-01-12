@@ -27,13 +27,12 @@ double dsum(int n_args, ...) {
 	return result;
 }
 
-template <typename T, typename ...Ts>
-double sum(T const& var, Ts const& ...vars) {
+template <typename ...Ts>
+double sum(double const& var, Ts const& ...vars) {
 	return var + sum(vars...);
 }
 
-template <typename T>
-double sum(T const& x) {
+double sum(double const& x) {
 	return x;
 }
 
@@ -47,7 +46,7 @@ int main() {
 	std::cout << dsum(4,1.,2.,3.,4.) << std::endl;
 	*/
 	std::cout << dsum(2,1,2.) << std::endl;
-	std::cout << sum(1.1, 2.2, 3.3, 4) << std::endl;
+	std::cout << sum(1, 2.2, 3.3, 4) << std::endl;
 
 	return 0;
 }

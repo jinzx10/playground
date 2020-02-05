@@ -21,64 +21,25 @@ T join(std::initializer_list< std::initializer_list<T> > m) {
 	return z;
 }
 
-/*
-mat joinr2(std::initializer_list<mat> T);
-
-template <typename eT>
-arma::Mat<eT> joinr( std::initializer_list<arma::Mat<eT> > m) {
-	arma::Mat<eT> z;
-	for (auto it = m.begin(); it != m.end(); ++it) {
-		//z.insert_cols(z.n_cols, *it);
-		z = join_rows(z, *it);
-	}
-	return z;
-}
-
-template <typename eT>
-arma::Mat<eT> join(std::initializer_list< std::initializer_list<arma::Mat<eT> > > m) {
-	arma::Mat<eT>z;
-	for (auto it = m.begin(); it != m.end(); ++it) {
-		//z.insert_rows(z.n_rows, joinr(*it));
-		z = join_cols(z, joinr(*it));
-	}
-	return z;
-}
-*/
-/*
-mat joinr(mat const& m1, mat const& m2) {
+template <typename T>
+T joinr(T const& m1, T const& m2) {
 	return join_rows(m1, m2);
 }
 
-template <typename ...Ts>
-mat joinr(mat const& m, Ts const& ...ms) {
+template <typename T, typename ...Ts>
+T joinr(T const& m, Ts const& ...ms) {
 	return join_rows( m, joinr(ms...) );
 }
 
-template <typename ...Ts>
-mat join(std::initializer_list<mat> m, Ts ...ms) {
-	return join_cols( joinr2(m), join(ms...) );
+template <int N>
+int factorial() {
+	return N*factorial<N-1>();
 }
 
-mat join(std::initializer_list<mat> m1, std::initializer_list<mat> m2) {
-	return join_cols( joinr2(m1), joinr2(m2) );
-}
-
-mat joinr2(std::initializer_list<mat> T) {
-	mat z;
-	for (auto it = T.begin(); it != T.end(); ++it) {
-		z.insert_cols(z.n_cols, *it);
-	}
-	return z;
-}
-
-mat join2(std::initializer_list< std::initializer_list<mat> > T) {
-	mat z;
-	for (auto it = T.begin(); it != T.end(); ++it) {
-		z.insert_rows(z.n_rows, joinr2(*it));
-	}
-	return z;
-}
-*/
+//template <>
+//unsigned int factorial<1>() {
+//	return 1;
+//}
 
 int main() {
 	uword sz = 3;
@@ -100,25 +61,20 @@ int main() {
 	std::cout << std::endl;
 
 
-	/*
-	mat M = joinr(m1, m2, m3);
+	mat M = joinr<mat>(m1, m2, m3);
 	M.print();
 
 	std::cout << std::endl;
 
-	mat N = joinr2({m1, m2, m3});
-	N.print();
+	sp_mat sM = joinr<sp_mat>(sm1, sm2, sm3);
+	sM.print();
 
 	std::cout << std::endl;
 
-	mat K = join2( { {v1, m2, m3}, {m3, m2, m1} } );
-	K.print();
+	mat mM = joinr<mat>(v1, m2, m3);
+	mM.print();
 
 	std::cout << std::endl;
-
-	mat L = join( {m1,m2,m3}, {m3,m2,m1} );
-	L.print();
-	*/
 
 	return 0;
 }

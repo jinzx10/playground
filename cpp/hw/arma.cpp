@@ -2,34 +2,47 @@
 #include <armadillo>
 #include <chrono>
 
+using namespace arma;
 using iclock = std::chrono::high_resolution_clock;
 
-double min(double const& i) {
-	return i;
+template <uword N, typename eT>
+void mass_zeros(arma::Mat<eT>& m) {
+	m.zeros(N);
 }
 
-template <typename ...Ts>
-double min(double const& i, Ts const& ...args) {
-	double tmp = min(args...);
-	return ( i < tmp ) ? i : tmp;
+template <uword N, typename eT, typename ...Ts>
+void mass_zeros(arma::Mat<eT>& m, Ts& ...args) {
+	m.zeros(N);
+	mass_zeros<N>(args...);
 }
+
+template <uword M, uword N, typename eT>
+void mass_zeros(arma::Mat<eT>& m) {
+	m.zeros(M, N);
+}
+
+template <uword M, uword N, typename eT, typename ...Ts>
+void mass_zeros(arma::Mat<eT>& m, Ts& ...args) {
+	m.zeros(M,N);
+	mass_zeros<M,N>(args...);
+}
+
+
 
 int main() {
-	double a = 3.0;
-	int n_times = 1000000;
-	iclock::time_point start = iclock::now();
-	for (int i = 0; i != n_times; ++i) {
-		double b = arma::min(arma::vec{1,2,-a/2,-1});
-	}
-	std::chrono::duration<double> dur = iclock::now() - start;
-	std::cout << "arma min time elapsed = " << dur.count() << std::endl;
+	mat a,b,c;
+	vec d;
+	mass_zeros<5>(a,d);
+	mass_zeros<3,4>(b,c);
 
-	start = iclock::now();
-	for (int i = 0; i != n_times; ++i) {
-		double c = min(1,3,-a/2,-1);
-	}
-	dur = iclock::now() - start;
-	std::cout << "min time elapsed = " << dur.count() << std::endl;
+	a.print();
+	std::cout << std::endl;
+	b.print();
+	std::cout << std::endl;
+	c.print();
+	std::cout << std::endl;
+	d.print();
+	std::cout << std::endl;
 
 	return 0;
 }

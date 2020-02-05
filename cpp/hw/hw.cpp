@@ -1,16 +1,18 @@
 #include <iostream>
 #include <armadillo>
 
-size_t numel(double const& ) {return 1;}
+using namespace arma;
+
+template <typename eT>
+eT getfirst(Mat<eT>& m) {
+	return m(0);
+}
 
 int main() {
-	arma::mat a = arma::randu(3,3);
-	double b = 1;
-
-	std::cout << numel(a) << std::endl
-		<< numel(b) << std::endl;
-
-	a(arma::span(0,1),0).print();
+	vec a = randu(3);
+	a.print();
+	std::cout << getfirst(a) << std::endl;
+	std::cout << typeid(a).name() << std::endl;
 
 	return 0;
 }

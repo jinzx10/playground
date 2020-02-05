@@ -1,7 +1,6 @@
 #include <mpi.h>
 #include <armadillo>
 #include <sstream>
-#include <type_traits>
 
 using namespace arma;
 
@@ -28,20 +27,14 @@ MPI_Datatype get_type<unsigned long long>() {
 void gather() {
 }
 
-void gather(vec const& local, mat& global) {
-	::MPI_Gather(local.memptr(), local.n_elem, MPI_DOUBLE, global.memptr(), local.n_elem, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+template <typename eT>
+void gather(arma::Col<eT> const& local, arma::Mat<eT>& global) {
+	::MPI_Gather(local.memptr(), local.n_elem, get_type<eT>(), global.memptr(), local.n_elem, get_type<eT>, 0, MPI_COMM_WORLD);
 }
 
-void gather(uvec const& local, umat& global) {
-	::MPI_Gather(local.memptr(), local.n_elem, MPI_UNSIGNED_LONG_LONG, global.memptr(), local.n_elem, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
-}
-
-void gather(vec const& local, vec& global) {
-	::MPI_Gather(local.memptr(), local.n_elem, MPI_DOUBLE, global.memptr(), local.n_elem, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-}
-
-void gather(uvec const& local, uvec& global) {
-	::MPI_Gather(local.memptr(), local.n_elem, MPI_UNSIGNED_LONG_LONG, global.memptr(), local.n_elem, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
+template <typename eT>
+void gather(arma::Col<eT> const& local, arma::Col<eT>& global) {
+	::MPI_Gather(local.memptr(), local.n_elem, get_type<eT>(), global.memptr(), local.n_elem, get_type<eT>, 0, MPI_COMM_WORLD);
 }
 
 template <typename eT, typename ...Ts>
@@ -55,7 +48,6 @@ void gather(arma::Col<eT> const& local, arma::Col<eT>& global, Ts& ...args) {
 	gather(local, global);
 	gather(args...);
 }
-
 
 int main(int, char**argv) {
 	int num_procs;
@@ -93,28 +85,26 @@ int main(int, char**argv) {
 		v3.zeros(sz*num_procs);
 	}
 
-	//::MPI_Gather(v_local.memptr(), sz, MPI_DOUBLE, m.memptr(), sz, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-	gather(v_local1, m1, v_local2, m2, v_local3, m3);
-	gather(v_local1, v1, v_local2, v2, v_local3, v3);
+	//::MPI_Gather(v_local1.memptr(), sz, MPI_DOUBLE, m1.memptr(), sz, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	//gather(v_local1, m1, v_local2, m2, v_local3, m3);
+	//gather(v_local1, v1, v_local2, v2, v_local3, v3);
 
 	if (id == 0) {
 		m1.print();
 		std::cout << std::endl;
-		m2.print();
-		std::cout << std::endl;
-		m3.print();
-		std::cout << std::endl;
-		std::cout << std::endl;
-		v1.print();
-		std::cout << std::endl;
-		v2.print();
-		std::cout << std::endl;
-		v3.print();
-		std::cout << typeid(MPI_DOUBLE).name() << std::endl;
-		std::cout << typeid(MPI_INT).name() << std::endl;
-		std::cout << typeid(MPI_Datatype).name() << std::endl;
+		//m2.print();
+		//std::cout << std::endl;
+		//m3.print();
+		//std::cout << std::endl;
+		//std::cout << std::endl;
+		//v1.print();
+		//std::cout << std::endl;
+		//v2.print();
+		//std::cout << std::endl;
+		//v3.print();
 	}
 
 	::MPI_Finalize();
 	return 0;
 }
+

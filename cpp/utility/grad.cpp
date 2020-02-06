@@ -23,12 +23,12 @@ int main() {
 		<< dtq(0) << std::endl;
 
 	std::function<double(arma::vec)> f = [] (arma::vec const& v) {
-		return v(0)*v(0)+v(1)*v(1)*2 + v(0)*v(1);
+		return v(0)*v(0)+v(1)*v(1)*2 + v(0)*v(1) + exp(v(0));
 	};
 
 	std::function<double(std::vector<double>)> g = [] (std::vector<double> const& v) {return v[0]*v[0]*0.5+v[1]*v[1]*4.0; };
 
-	auto grad_f = grad(f);
+	auto grad_f = grad(f,1);
 	grad_f(v).print();
 
 	auto grad_g = grad(g);

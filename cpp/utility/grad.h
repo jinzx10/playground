@@ -6,8 +6,7 @@
 
 #include <functional>
 
-inline std::function<double(double)> grad(std::function<double(double)> const& f) {
-	double delta = 0.001;
+inline std::function<double(double)> grad(std::function<double(double)> const& f, double const& delta = 0.001) {
 	return [=] (double x) -> double {
 		return ( -f(x-3.0*delta)/60.0 + 3.0*f(x-2.0*delta)/20.0 - 3.0*f(x-delta)/4.0 +
 				f(x+3.0*delta)/60.0 - 3.0*f(x+2.0*delta)/20.0 + 3.0*f(x+delta)/4.0 ) 
@@ -16,22 +15,22 @@ inline std::function<double(double)> grad(std::function<double(double)> const& f
 }
 
 template <typename Vector>
-std::function<double(Vector)> gradi(std::function<double(Vector)> const& f, size_t const& i) {
+std::function<double(Vector)> gradi(std::function<double(Vector)> const& f, size_t const& i, double const& delta = 0.001) {
 	return [=] (Vector const& v) -> double {
 		std::function<double(double)> g = [=, v=v] (double const& x) mutable {
 			v[i] = x;
 			return f(v);
 		};
-		return grad(g)(v[i]); 
+		return grad(g, delta)(v[i]); 
 	};
 }
 
 template <typename Vector>
-std::function<Vector(Vector)> grad(std::function<double(Vector)> const& f) {
+std::function<Vector(Vector)> grad(std::function<double(Vector)> const& f, double const& delta = 0.001) {
 	return [=] (Vector const& x) -> Vector {
 		Vector df = x;
 		for (size_t i = 0; i != x.size(); ++i) {
-			df[i] = gradi(f,i)(x);
+			df[i] = gradi(f, i, delta)(x);
 		}
 		return df;
 	};

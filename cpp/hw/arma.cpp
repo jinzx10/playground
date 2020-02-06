@@ -17,6 +17,14 @@ int main() {
 	v.back() = 6.28;
 	v.print();
 
+	std::cout << GET_VARIABLE_NAME(v) << std::endl;
+
+	
+	v.save("v.dat", arma::raw_binary);
+
+	vec u;
+	u.load("v.dat");
+	u.print();
 	
 
 

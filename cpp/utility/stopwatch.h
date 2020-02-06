@@ -14,10 +14,19 @@ class Stopwatch
 
 		void run() {
 			if (is_running) {
-				std::cout << "The stopwatch is already running. Nothing done." << std::endl;
+				std::cout << "The stopwatch is already running. Nothing to do." << std::endl;
 			} else {
 				t_start = iclock::now();
 				is_running = true;
+			}
+		}
+
+		void pause() { 
+			if (is_running) {
+				dur_store += iclock::now() - t_start;
+				is_running = false;
+			} else {
+				std::cout << "The stopwatch is not running. Nothing to do." << std::endl;
 			}
 		}
 
@@ -29,15 +38,6 @@ class Stopwatch
 		void reset() { 
 			dur_store = dur_store.zero();
 			is_running = false;
-		}
-
-		void pause() { 
-			if (is_running) {
-				dur_store += iclock::now() - t_start;
-				is_running = false;
-			} else {
-				std::cout << "The stopwatch is not running. Nothing done." << std::endl;
-			}
 		}
 
 	private:

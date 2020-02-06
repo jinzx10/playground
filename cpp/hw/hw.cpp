@@ -1,18 +1,28 @@
 #include <iostream>
-#include <armadillo>
 
-using namespace arma;
+struct tq
+{
+	tq(): i(0) {}
+	tq(int j): i(j) {}
 
-template <typename eT>
-eT getfirst(Mat<eT>& m) {
-	return m(0);
+	int i;
+	tq operator-(int j) {
+		return tq(i-j);
+	}
+};
+
+template <int N>
+int factorial() {
+    return N*factorial<N-1>();
 }
 
-int main() {
-	vec a = randu(3);
-	a.print();
-	std::cout << getfirst(a) << std::endl;
-	std::cout << typeid(a).name() << std::endl;
+template <>
+int factorial<1>() {
+  return 1;
+}
 
+
+int main() {
+	std::cout << factorial<1>() << std::endl;
 	return 0;
 }

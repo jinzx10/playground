@@ -63,7 +63,6 @@ struct tee
 	int operator()(float, double){return 0;}
 };
 
-// don't work with functions!
 double sum(double x, double y) {
 	return x + y;
 }
@@ -91,6 +90,7 @@ int main() {
 	std::cout << has_signature<bar, int, int>::value << std::endl;
 	std::cout << has_signature<tee, float>::value << std::endl;
 	std::cout << has_signature<tee, int, double,int>::value << std::endl;
+	std::cout << has_signature<decltype(sum), double, double,int>::value << std::endl;
 
 	return 0;
 }

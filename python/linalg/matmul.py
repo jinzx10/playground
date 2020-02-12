@@ -1,7 +1,7 @@
 import timeit
 from numpy import random
 
-n = 1000
+n = 4000
 a = random.rand(n,n)
 b = random.rand(n,n)
 

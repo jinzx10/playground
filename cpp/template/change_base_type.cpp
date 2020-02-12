@@ -14,12 +14,6 @@ struct Test {
 template <typename ...>
 using void_t = void;
 
-template <typename T1, typename T2 = void>
-struct Tq : std::false_type {};
-
-template <typename T1>
-struct Tq<T1, void_t<>> : std::true_type {};
-
 template<typename, typename>
 struct replace_base_type {};
 

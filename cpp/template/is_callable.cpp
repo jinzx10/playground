@@ -2,17 +2,20 @@
 #include <iostream>
 #include <cmath>
 
+template <typename ...>
+using void_t = void;
+
 template <typename F, typename T1, typename T2, typename = void>
 struct is_callable : std::false_type {};
 
 template <typename F, typename T1, typename T2>
-struct is_callable<F, T1, T2, std::void_t<decltype( std::declval<F>()(std::declval<T1>(), std::declval<T2>()))>> : std::true_type {};
+struct is_callable<F, T1, T2, void_t<decltype( std::declval<F>()(std::declval<T1>(), std::declval<T2>()))>> : std::true_type {};
 
 template <typename F, typename T, typename R, typename =void>
 struct has_specific_signature : std::false_type {};
 
 template <typename F, typename T, typename R>
-struct has_specific_signature<F, T, R, std::void_t< std::is_same<R, decltype( std::declval<F>()(std::declval<T>()))> > > : std::true_type {};
+struct has_specific_signature<F, T, R, void_t< std::is_same<R, decltype( std::declval<F>()(std::declval<T>()))> > > : std::true_type {};
 
 template <typename F, typename ...Args>
 using return_t = decltype( std::declval<F>()( std::declval<Args>()... ) );

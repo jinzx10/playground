@@ -14,9 +14,9 @@ inline std::function<double(double)> grad(std::function<double(double)> const& f
 	};
 }
 
-template <typename Vector>
-std::function<double(Vector)> gradi(std::function<double(Vector)> const& f, size_t const& i, double const& delta = 0.001) {
-	return [=] (Vector const& v) -> double {
+template <typename V>
+std::function<double(V)> gradi(std::function<double(V)> const& f, size_t const& i, double const& delta = 0.001) {
+	return [=] (V const& v) -> double {
 		std::function<double(double)> g = [=, v=v] (double const& x) mutable {
 			v[i] = x;
 			return f(v);
@@ -25,10 +25,10 @@ std::function<double(Vector)> gradi(std::function<double(Vector)> const& f, size
 	};
 }
 
-template <typename Vector>
-std::function<Vector(Vector)> grad(std::function<double(Vector)> const& f, double const& delta = 0.001) {
-	return [=] (Vector const& x) -> Vector {
-		Vector df = x;
+template <typename V>
+std::function<V(V)> grad(std::function<double(V)> const& f, double const& delta = 0.001) {
+	return [=] (V const& x) -> V {
+		V df = x;
 		for (size_t i = 0; i != x.size(); ++i) {
 			df[i] = gradi(f, i, delta)(x);
 		}

@@ -30,8 +30,9 @@ struct tee
 	int operator()(float, double){return 0;}
 };
 
+// don't work with functions!
 double sum(double x, double y) {
-	return x+ y;
+	return x + y;
 }
 
 int multiply(int x, int y)
@@ -43,7 +44,7 @@ int main() {
 
 	std::cout << is_callable<foo, float, double>::value << std::endl;
 	std::cout << is_callable<bar, float, double>::value << std::endl;
-	std::cout << is_callable<tee, double , float>::value << std::endl;
+	std::cout << is_callable<tee, double, float>::value << std::endl;
 	//std::cout << is_callable<multiply, float, double>::value << std::endl;
 	std::cout << has_specific_signature<foo, double, int>::value << std::endl;
 	std::cout << has_specific_signature<bar, double, int>::value << std::endl;

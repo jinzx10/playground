@@ -11,6 +11,15 @@ struct Test {
 	void print() { std::cout << typeid(Container<Ret>).name() << std::endl; }
 };
 
+template <typename ...>
+using void_t = void;
+
+template <typename T1, typename T2 = void>
+struct Tq : std::false_type {};
+
+template <typename T1>
+struct Tq<T1, void_t<>> : std::true_type {};
+
 template<typename, typename>
 struct replace_base_type {};
 
@@ -18,7 +27,6 @@ template<typename A, template<typename ...> typename C, typename B>
 struct replace_base_type<A, C<B>> {
     using type = C<A>;
 };
-
 
 int main() {
 
@@ -30,6 +38,7 @@ int main() {
 
 	std::cout << typeid(replace_base_type<std::complex<double>, arma::vec>::type).name() << std::endl;
 	std::cout << typeid(replace_base_type<std::complex<double>, std::vector<double>>::type).name() << std::endl;
+
 
 	//Test<std::array, true> vec_arr;
 

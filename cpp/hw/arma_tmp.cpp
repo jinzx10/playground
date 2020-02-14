@@ -84,7 +84,7 @@ int main() {
 	rowvec xr = x.t();
 	rowvec yr = y.t();
 
-	std::cout << op_is_defined<decltype(x), typename decltype(y)::elem_type, std::plus<>()>::value << std::endl;
+	std::cout << op_is_defined<decltype(x), typename decltype(y)::elem_type, std::plus<>>::value << std::endl;
 
 
 	

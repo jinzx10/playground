@@ -19,6 +19,15 @@ struct get_return
 
 };
 
+template<int, typename ...>
+void test(...) {}
+
+template <int N = 5, typename F>
+typename std::enable_if< N >= 0, void>::type test(F f) {
+	std::cout << N << std::endl;
+	test<N-1,F>(f);
+}
+
 
 
 int sum(int x, int y) {
@@ -31,8 +40,8 @@ double sum(double x, double y) {
 
 int main() {
 
-	std::cout << typeid( get_return<double,double>::get_type(std::pow) ).name() << std::endl;
-	
+	//std::cout << typeid( get_return<double,double>::get_type(std::pow) ).name() << std::endl;
+	test(1.0);
 
 	return 0;
 }

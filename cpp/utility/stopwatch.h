@@ -38,7 +38,7 @@ struct Stopwatch
 		if (!info.empty())
 			std::cout << info << ": "; 
 		dur_t dur = is_running ? dur_store + static_cast<dur_t>(iclock::now() - t_start) : dur_store;
-		std::cout << "time elapsed = " << dur.count() << " seconds" << std::endl; 
+		std::cout << "elapsed time = " << dur.count() << " seconds" << std::endl; 
 	}
 
 	void reset(std::string const& info = "") { 
@@ -54,7 +54,7 @@ struct Stopwatch
 		iclock::time_point start = iclock::now();
 		try_it<N, F, Args...>(f, args...);
 		dur = iclock::now() - start;
-		std::cout << "average time for " << N << " runs = " << dur.count() << " seconds" << std::endl;
+		std::cout << "average elapsed time for " << N << " trials = " << dur.count() / ( N ? N : 1 ) << " seconds" << std::endl;
 	}
 
 	iclock::time_point t_start;	
@@ -64,7 +64,7 @@ struct Stopwatch
 
 	private:
 	template <int, typename ...Args>
-	void try_it(Args const& ...) {} // fallback
+	void try_it(Args const& ...) {}
 
 	template <int N, typename F, typename ...Args>
 	typename std::enable_if<(N>0), void>::type try_it(F f, Args const& ...args) {

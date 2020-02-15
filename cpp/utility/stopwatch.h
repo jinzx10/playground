@@ -48,9 +48,33 @@ struct Stopwatch
 		is_running = false;
 	}
 
+	/*
+	template <typename F, typename...Args>
+	void timeit(F f, Args& ...args) {
+		iclock::time_point start = iclock::now();
+		dur_t dur;
+		auto result = f(args...);
+		dur = iclock::now() - start;
+		std::cout << "time elapsed = " << dur.count() << std::endl;
+	}
+	*/
+	template <int N = 10, typename F, typename...Args>
+	typename std::enable_if<N!=0, void>::type timeit(F f, Args& ...args) {
+		iclock::time_point start = iclock::now();
+		dur_t dur;
+		auto result = f(args...);
+		timeit<N-1, F, Args...>(f, args...);
+		dur = iclock::now() - start;
+		std::cout << "time elapsed = " << dur.count() << std::endl;
+	}
+
+	template <typename ...Ts>
+	void timeit(...) {}
+
 	iclock::time_point t_start;	
 	dur_t dur_store;
 	bool is_running;
 };
+
 
 #endif

@@ -2,22 +2,23 @@
 #include <complex>
 #include <armadillo>
 #include <string>
+#include "../utility/stopwatch.h"
 
 
 int main() {
 
-	std::string str = "";
-	if ( str.length() )
-		std::cout << "length true" << std::endl;
-	std::cout << str.length() << std::endl;;
+	Stopwatch sw;
 
-	if ( str.size() )
-		std::cout << "size true" << std::endl;
-	std::cout << str.size() << std::endl;;
+	int sz = 1000;
+	arma::mat a = arma::ones(sz,sz);
+	sw.run();
 
-	if ( str.empty())
-		std::cout << "empty true" << std::endl;
-	std::cout << str.empty() << std::endl;;
+	auto b = exp(a);
+	sw.report();
+
+	arma::mat c = b;
+	sw.report();
+
 
 	return 0;
 }

@@ -110,6 +110,9 @@ int main(int, char**argv) {
 		uv.print();
 	}
 
+	std::cout << MPI_COMM_WORLD << std::endl;
+	std::cout << typeid(MPI_COMM_WORLD).name() << std::endl;
+
 	::MPI_Finalize();
 	return 0;
 }

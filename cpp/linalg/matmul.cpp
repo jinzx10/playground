@@ -13,11 +13,11 @@ int main(int, char** argv) {
 	auto f = [] (mat const& a, mat const& b) -> mat {return a*b;};
 
 	mat a = randn(sz, sz);
-	a += a.t();
+	mat b = randn(sz, sz);
 
 	Stopwatch sw;
 
-	sw.timeit("arma matrix multiplication", nt, f, a, a);
+	sw.timeit("arma matrix multiplication", nt, f, a, b);
 
 	return 0;
 

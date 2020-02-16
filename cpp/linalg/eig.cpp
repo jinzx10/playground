@@ -1,28 +1,24 @@
 #include <armadillo>
-#include <chrono>
-#include <sstream>
 #include "../utility/stopwatch.h"
 #include "../utility/readargs.h"
 
 using namespace arma;
 using iclock = std::chrono::high_resolution_clock;
 
-int main(int argc, char** argv) {
+int main(int, char** argv) {
 
 	uword sz = 0;
+	uword nt = 0;
+	Stopwatch sw;
 
-	readargs(argv, sz);
+	readargs(argv, sz, nt);
 
 	auto f = [](const mat& a) -> arma::vec { return arma::eig_sym(a); };
-	//auto g = [](const mat& a) { return arma::eig_sym(a); };
-
-	Stopwatch sw;
 
 	mat a = randn(sz,sz);
 	a += a.t();
 
-	sw.timeit("eigval", f, a);
-	//sw.timeit(g, a);
+	sw.timeit("arma::eig_sym", nt, f, a);
 
 	return 0;
 

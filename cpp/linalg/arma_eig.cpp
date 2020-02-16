@@ -14,48 +14,15 @@ int main(int argc, char** argv) {
 	readargs(argv, sz);
 
 	auto f = [](const mat& a) -> arma::vec { return arma::eig_sym(a); };
-	auto g = [](const mat& a) { return arma::eig_sym(a); };
+	//auto g = [](const mat& a) { return arma::eig_sym(a); };
 
 	Stopwatch sw;
 
 	mat a = randn(sz,sz);
 	a += a.t();
 
-	sw.timeit(f, a);
-	sw.timeit(g, a);
-
-	/*
-	if (argc < 3) {
-		std::cerr << "please provide two arguments: size and number of trials." << std::endl;
-		return -1;
-	}
-
-	std::stringstream ss;
-	ss << argv[1] << ' ' << argv[2];
-	ss >> sz >> nt;
-	
-	mat a = randn(sz, sz);
-	a += a.t();
-
-	vec val(sz);
-	mat vec(sz, sz);
-
-	std::cout << "sz = " << sz << std::endl;
-	std::cout << "nt = " << nt << std::endl;
-
-	iclock::time_point start = iclock::now();
-	std::chrono::duration<double> dur;
-
-	for (uword i = 0; i != nt; ++i) {
-		eig_sym(val, vec, a);
-	}
-
-	dur = iclock::now() - start;
-
-	std::cout << "matrix size = " << sz 
-		<< "      average time elapsed = " << dur.count() / nt 
-		<< " seconds for " << nt << " trials." << std::endl;
-	*/
+	sw.timeit("eigval", f, a);
+	//sw.timeit(g, a);
 
 	return 0;
 

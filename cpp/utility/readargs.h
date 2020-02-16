@@ -3,7 +3,7 @@
 
 #include <sstream>
 
-template <int N, typename T>
+template <int N = 1, typename T>
 void readargs(char** args, T& var) {
 	std::stringstream ss;
 	ss << args[N];

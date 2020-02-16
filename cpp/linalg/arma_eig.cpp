@@ -1,6 +1,8 @@
 #include <armadillo>
 #include <chrono>
 #include <sstream>
+#include "../utility/stopwatch.h"
+#include "../utility/readargs.h"
 
 using namespace arma;
 using iclock = std::chrono::high_resolution_clock;
@@ -8,8 +10,21 @@ using iclock = std::chrono::high_resolution_clock;
 int main(int argc, char** argv) {
 
 	uword sz = 0;
-	uword nt = 0;
 
+	readargs(argv, sz);
+
+	auto f = [](const mat& a) -> arma::vec { return arma::eig_sym(a); };
+	auto g = [](const mat& a) { return arma::eig_sym(a); };
+
+	Stopwatch sw;
+
+	mat a = randn(sz,sz);
+	a += a.t();
+
+	sw.timeit(f, a);
+	sw.timeit(g, a);
+
+	/*
 	if (argc < 3) {
 		std::cerr << "please provide two arguments: size and number of trials." << std::endl;
 		return -1;
@@ -40,6 +55,7 @@ int main(int argc, char** argv) {
 	std::cout << "matrix size = " << sz 
 		<< "      average time elapsed = " << dur.count() / nt 
 		<< " seconds for " << nt << " trials." << std::endl;
+	*/
 
 	return 0;
 

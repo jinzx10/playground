@@ -1,14 +1,26 @@
 import numpy as np
 import timeit
+import scipy.linalg as sl
 
-sz = 4000
-
-start = timeit.default_timer()
+sz = 2000
 
 a = np.random.rand(sz,sz)
 a = a + a.transpose()
-[val,vec] = np.linalg.eig(a)
+
+start = timeit.default_timer()
+
+[val,vec] = np.linalg.eigh(a)
 
 elapsed = timeit.default_timer() - start
 
-print("elapsed time = ", elapsed)
+print("numpy.linalg.eigh elapsed time = ", elapsed)
+
+
+
+start = timeit.default_timer()
+
+[val,vec] = sl.eigh(a)
+
+elapsed = timeit.default_timer() - start
+
+print("scipy.linalg.eigh elapsed time = ", elapsed)

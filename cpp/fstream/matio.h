@@ -8,12 +8,9 @@
 #include <string>
 #include <iomanip>
 
-template <typename T> void read_mat(std::string const& filename, T*& A, int& sz_row, int& sz_col, bool column_major = true);
-template <typename T> void print_mat(T* const& A, int const& sz_row, int const& sz_col, bool column_major = true, int const& width = 4);
-
 
 template <typename T>
-void read_mat(std::string const& filename, T*& A, int& sz_row, int& sz_col, bool column_major) {
+void read_mat(std::string const& filename, T*& A, int& sz_row, int& sz_col, bool column_major = true) {
 	std::fstream file(filename);
 	std::vector<T> mat, row;
 	std::string str;
@@ -62,7 +59,7 @@ void read_mat(std::string const& filename, T*& A, int& sz_row, int& sz_col, bool
 }
 
 template <typename T>
-void print_mat(T* const& A, int const& sz_row, int const& sz_col, bool column_major, int const& width) {
+void print_mat(T* const& A, int const& sz_row, int const& sz_col, bool column_major = true, int const& width = 4) {
 	for (int r = 0; r != sz_row; ++r) {
 		for (int c = 0; c != sz_col; ++c) {
 			std::cout << std::setw(width) << (column_major ? A[r+c*sz_row] : A[r*sz_col+c] ) << " ";

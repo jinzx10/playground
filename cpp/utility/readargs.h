@@ -15,7 +15,7 @@ void readargs(char** args, T& var, Ts& ...vars) {
 	std::stringstream ss;
 	ss << args[N];
 	ss >> var;
-	readargs<N+1, Ts...>(args, vars...);
+	readargs<N+1>(args, vars...);
 }
 
 #endif

@@ -5,7 +5,7 @@
 #include <chrono>
 #include <string>
 
-struct Stopwatch
+class Stopwatch
 {
 	using iclock	= std::chrono::high_resolution_clock;
 	using dur_t		= std::chrono::duration<double>;
@@ -15,6 +15,17 @@ struct Stopwatch
 
 	template <typename F, typename ...Args>
 	using return_t	= decltype( std::declval<F>()(std::declval<Args>()...) );
+
+	template <typename F, typename ...Args>
+	void try_it(unsigned int const& N, F f, Args const& ...args) {
+		if (N != 0) {
+			f(args...);
+			try_it(N-1, f, args...);
+		}
+	}
+
+
+	public:
 
 	Stopwatch(): t_start(), dur_store(dur_t::zero()), is_running(false) {}
 
@@ -82,17 +93,6 @@ struct Stopwatch
 	template <typename F, typename ...Args>
 	void_t< return_t<F,Args...> > timeit(F f, Args const& ...args) {
 		timeit(std::string(""), 10u, f, args...);
-	}
-
-
-	private:
-
-	template <typename F, typename ...Args>
-	void try_it(unsigned int const& N, F f, Args const& ...args) {
-		if (N != 0) {
-			f(args...);
-			try_it(N-1, f, args...);
-		}
 	}
 };
 

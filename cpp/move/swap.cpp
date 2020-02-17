@@ -1,8 +1,8 @@
 #include <iostream>
 #include <armadillo>
 #include <chrono>
-
-using iclock = std::chrono::high_resolution_clock;
+#include "../utility/readargs.h"
+#include "../utility/stopwatch.h"
 
 void copy_swap(arma::mat& a, arma::mat& b) {
 	arma::mat tmp(a);
@@ -10,54 +10,63 @@ void copy_swap(arma::mat& a, arma::mat& b) {
 	b = tmp;
 }
 
-void move_swap(arma::mat& a, arma::mat& b) {
-	std::cout << "a memptr before move: " << a.memptr() << std::endl;
-	std::cout << "b memptr before move: " << b.memptr() << std::endl;
+void move_swap(arma::mat& a, arma::mat& b, bool info = false) {
+	if (info) {
+		std::cout << "a memptr before move: " << a.memptr() << std::endl;
+		std::cout << "b memptr before move: " << b.memptr() << std::endl;
+		std::cout << "move a to tmp" << std::endl;
+	}
 	arma::mat tmp = std::move(a);
-	std::cout << "a memptr after move: " << a.memptr() << std::endl;
-	std::cout << "tmp memptr: " << tmp.memptr() << std::endl;
+
+	if (info) {
+		std::cout << "a memptr after move: " << a.memptr() << std::endl;
+		std::cout << "tmp memptr: " << tmp.memptr() << std::endl;
+		std::cout << "move b to a" << std::endl;
+	}
 	a = std::move(b);
-	std::cout << "b memptr after move: " << b.memptr() << std::endl;
-	std::cout << "a memptr after assign: " << a.memptr() << std::endl;
+
+	if (info) {
+		std::cout << "b memptr after move: " << b.memptr() << std::endl;
+		std::cout << "a memptr after assign: " << a.memptr() << std::endl;
+		std::cout << "move tmp to b" << std::endl;
+	}
 	b = std::move(tmp);
-	std::cout << "tmp memptr after move: " << tmp.memptr() << std::endl;
-	std::cout << "b memptr after assign: " << b.memptr() << std::endl;
+
+	if (info) {
+		std::cout << "tmp memptr after move: " << tmp.memptr() << std::endl;
+		std::cout << "b memptr after assign: " << b.memptr() << std::endl;
+	}
 }
 
-int main() {
+int main(int, char**argv) {
 
-	size_t sz = 4000;
+	arma::uword sz = 0;
+	readargs(argv, sz);
 
-	arma::mat a = arma::randu(sz,sz);
-	arma::mat b = arma::randu(sz,sz);
+	Stopwatch sw;
 
-	iclock::time_point start;
-	std::chrono::duration<double> dur;
+	arma::mat a = arma::zeros(sz,sz);
+	arma::mat b = arma::ones(sz,sz);
 
-	start = iclock::now();
+
+	sw.run();
 	move_swap(a,b);
-	dur = iclock::now() - start;
-	std::cout << std::endl << "move-swap time elapsed = " << dur.count() << std::endl;
+	sw.report("move swap");
 
-	start = iclock::now();
+	sw.reset();
+	sw.run();
 	copy_swap(a,b);
-	dur = iclock::now() - start;
-	std::cout << "copy-swap time elapsed = " << dur.count() << std::endl << std::endl;
+	sw.report("copy swap");
 
-	start = iclock::now();
-	copy_swap(a,b);
-	dur = iclock::now() - start;
-	std::cout << "copy-swap time elapsed = " << dur.count() << std::endl << std::endl;
-
-	start = iclock::now();
-	move_swap(a,b);
-	dur = iclock::now() - start;
-	std::cout << std::endl << "move-swap time elapsed = " << dur.count() << std::endl;
-
-	start = iclock::now();
+	sw.reset();
+	sw.run();
 	std::swap(a,b);
-	dur = iclock::now() - start;
-	std::cout << std::endl << "std::swap time elapsed = " << dur.count() << std::endl;
+	sw.report("std::swap");
+
+	sw.reset();
+	sw.run();
+	move_swap(a,b,true);
+	sw.report("move swap (with info)");
 
 
 	return 0;

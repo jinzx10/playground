@@ -7,10 +7,11 @@
 #include <sstream>
 #include <string>
 #include <iomanip>
+#include <cassert>
 
 
 template <typename T>
-void read_mat(std::string const& filename, T*& A, int& sz_row, int& sz_col, bool column_major = true) {
+void read_mat(std::string const& filename, T*& A, int& sz_row, int& sz_col, bool column_major = false) {
 	std::fstream file(filename);
 	std::vector<T> mat, row;
 	std::string str;
@@ -23,17 +24,15 @@ void read_mat(std::string const& filename, T*& A, int& sz_row, int& sz_col, bool
 
 	while (std::getline(file, str)) {
 		ss << str;
-		while (ss >> elem) {
+		while (ss >> elem)
 			row.push_back(elem);
-		}
+
 		sz_col_now = row.size();
 		sz_row += 1;
-		if (sz_row == 1) sz_col = sz_col_now;
+		if (sz_row == 1)
+			sz_col = sz_col_now;
 
-		if (sz_col_now != sz_col) {
-			std::cerr << "error: inconsistent row length" << std::endl;
-			return;
-		}
+		assert(("row length must be consistent", sz_col_now == sz_col));
 
 		mat.insert(mat.end(), row.begin(), row.end());
 		row.clear();
@@ -43,9 +42,7 @@ void read_mat(std::string const& filename, T*& A, int& sz_row, int& sz_col, bool
 
 	delete[] A;
 	A = nullptr;
-
 	A = new T[sz_row*sz_col];
-	for (int i = 0; i != sz_row*sz_col; ++i) A[i] = 0;
 
 	if (column_major) {
 		for (int r = 0; r != sz_row; ++r) {
@@ -59,7 +56,7 @@ void read_mat(std::string const& filename, T*& A, int& sz_row, int& sz_col, bool
 }
 
 template <typename T>
-void print_mat(T* const& A, int const& sz_row, int const& sz_col, bool column_major = true, int const& width = 4) {
+void print_mat(T* const& A, int const& sz_row, int const& sz_col, bool column_major = false, int const& width = 4) {
 	for (int r = 0; r != sz_row; ++r) {
 		for (int c = 0; c != sz_col; ++c) {
 			std::cout << std::setw(width) << (column_major ? A[r+c*sz_row] : A[r*sz_col+c] ) << " ";

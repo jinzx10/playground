@@ -48,8 +48,8 @@ int main() {
 	if (!id) {
 		double* B = nullptr;
 		int szr, szc;
-		read_mat<double>("testdata/blacs.txt", B, szr, szc);
-		print_mat<double>(B, szr, szc);
+		read_mat("testdata/blacs.txt", B, szr, szc);
+		print_mat(B, szr, szc);
 	}
 
 	::MPI_Finalize();

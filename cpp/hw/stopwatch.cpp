@@ -1,8 +1,8 @@
 #include <cstdlib>
 #include <string>
 #include <armadillo>
-#include "stopwatch.h"
-#include "readargs.h"
+#include "../utility/stopwatch.h"
+#include "../utility/readargs.h"
 
 int main(int, char**argv) {
 

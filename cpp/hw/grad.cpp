@@ -1,6 +1,6 @@
 #include <iostream>
 #include <armadillo>
-#include "grad.h"
+#include "../utility/grad.h"
 #include <functional>
 
 using namespace arma;

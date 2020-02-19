@@ -1,9 +1,34 @@
-#ifndef __STOPWATCH_H__
-#define __STOPWATCH_H__
+#ifndef __WIDGETS_H__
+#define __WIDGETS_H__
 
+#include <string>
+#include <cstdlib>
+#include <sstream>
 #include <iostream>
 #include <chrono>
-#include <string>
+
+
+template <int N = 1, typename T>
+void readargs(char** args, T& var) {
+	std::stringstream ss;
+	ss << args[N];
+	ss >> var;
+}
+
+template <int N = 1, typename T, typename ...Ts>
+void readargs(char** args, T& var, Ts& ...vars) {
+	std::stringstream ss;
+	ss << args[N];
+	ss >> var;
+	readargs<N+1>(args, vars...);
+}
+
+
+inline int mkdir(std::string const& dir) {
+	std::string command = "mkdir -p " + dir;
+	return std::system(command.c_str());
+}
+
 
 class Stopwatch
 {

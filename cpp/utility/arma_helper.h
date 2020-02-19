@@ -25,7 +25,7 @@ typename std::enable_if< R::is_row && C::is_col && is_valid_call<Op, typename R:
 }
 
 template <typename R, typename C, typename Op>
-typename std::enable_if< R::is_row && C::is_col && !is_valid_call<Op, typename R::elem, C, Op>::value && is_valid_call<Op, R, typename C::elem_type>::value, arma::Mat< typename is_valid_call<Op, R, typename C::elem_type>::return_type::elem_type > >::type bcast_op(R const& row, C const& col, Op op) {
+typename std::enable_if< R::is_row && C::is_col && !is_valid_call<Op, typename R::elem_type, C, Op>::value && is_valid_call<Op, R, typename C::elem_type>::value, arma::Mat< typename is_valid_call<Op, R, typename C::elem_type>::return_type::elem_type > >::type bcast_op(R const& row, C const& col, Op op) {
 	arma::Mat< typename is_valid_call<Op, R, typename C::elem_type>::return_type::elem_type > result(arma::size(col).n_rows, arma::size(row).n_cols);
 	for (arma::uword i = 0; i != arma::size(col).n_rows; ++i) {
 		result.row(i) = op(row, arma::conv_to<arma::Col<typename C::elem_type>>::from(col)(i));

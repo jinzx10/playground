@@ -7,7 +7,6 @@
 #include <iostream>
 #include <chrono>
 
-
 template <int N = 1, typename T>
 void readargs(char** args, T& var) {
 	std::stringstream ss;

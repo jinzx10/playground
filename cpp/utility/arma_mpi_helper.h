@@ -3,6 +3,7 @@
 
 #include <armadillo>
 #include <mpi.h>
+#include <type_traits>
 
 template <typename eT>
 MPI_Datatype mpi_type_helper() {
@@ -122,6 +123,25 @@ void gatherv(arma::Mat<eT> const& local, arma::Mat<eT>& global, Ts& ...args) {
 }
 
 
+template <typename T>
+typename std::enable_if<!arma::is_arma_type<T>::value, int>::type bcast(T& data, int root = 0) {
+	return MPI_Bcast(&data, 1, mpi_type_helper<T>(), root, MPI_COMM_WORLD);
+}
+
+template <typename T>
+typename std::enable_if<arma::is_arma_type<T>::value, int>::type bcast(T& data, int root = 0) {
+	return MPI_Bcast(data.memptr(), data.n_elem, mpi_type_helper<typename T::elem_type>(), root, MPI_COMM_WORLD);
+}
+
+template <typename T, typename ...Ts>
+int bcast(T& data, Ts& ...args) {
+	int status = bcast(data);
+	if (status)
+		return status;
+	return bcast(args...);
+}
+
+/*
 template <typename eT>
 void bcast(eT* ptr, int root = 0) {
 	MPI_Bcast(ptr, 1, mpi_type_helper<eT>(), root, MPI_COMM_WORLD);
@@ -143,7 +163,7 @@ void bcast(arma::Mat<eT>& data, Ts& ...args) {
 	bcast(data);
 	bcast(args...);
 }
-
+*/
 
 
 #endif

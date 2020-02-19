@@ -19,6 +19,12 @@ int main(int, char** argv) {
 
 	int sz_col1_local = sz_col1_global / nprocs;
 	int sz_col2_local = sz_col2_global / nprocs;
+	int rem1 = sz_col1_global % nprocs;
+	int rem2 = sz_col2_global % nprocs;
+	if (id < rem1)
+		sz_col1_local += 1;
+	if (id < rem2)
+		sz_col2_local += 1;
 
 	arma::mat global1, global2;
 	arma::mat local1 = arma::ones(sz_row, sz_col1_local) * id;
@@ -29,7 +35,8 @@ int main(int, char** argv) {
 		global2.set_size(sz_row, sz_col2_global);
 	}
 
-	int status = gather(local1, global1, local2, global2);
+	int status = gatherv(local1, global1, local2, global2);
+	//int status = gatherv(local1, global1);
 
 	if (id == 0) {
 		global1.print();

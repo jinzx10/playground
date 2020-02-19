@@ -1,6 +1,6 @@
 #include <mpi.h>
 #include <iostream>
-#include "../utility/arma_mpi_helper.h"
+#include "../utility/mpi_helper.h"
 #include "../utility/widgets.h"
 
 int main(int, char** argv) {
@@ -10,36 +10,34 @@ int main(int, char** argv) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &id);
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-	int x, y, z, w;
-	arma::vec vx, vy, vz, vw;
+	int x, y;
+	arma::vec vx, vy;
 	if (id == 0) {
-		readargs(argv, x, y, z, w);
+		readargs(argv, x, y);
 	}
 
-	bcast(x, y, z, w);
+	int status = bcast(x, y);
+	if (id == 0) {
+		std::cout << "bcast(x,y) return value = " << status << std::endl;
+	}
+
 	vx.set_size(x);
 	vy.set_size(y);
-	vz.set_size(z);
-	vw.set_size(w);
 
 	if (id == 0) {
 		vx.zeros();
 		vy.ones();
-		vz.fill(2.0);
-		vw.fill(3.0);
+		x = 321;
+		y = 123;
 	}
 
-	//bcast(vx, vy, vz, vw);
+	bcast(vx, x, y, vy);
 
-	if (id == 1) {
+	if (id == nprocs-1) {
 		std::cout << x << std::endl;
 		std::cout << y << std::endl;
-		std::cout << z << std::endl;
-		std::cout << w << std::endl;
 		vx.print();
 		vy.print();
-		vz.print();
-		vw.print();
 	}
 
 	MPI_Finalize();

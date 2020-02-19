@@ -98,6 +98,28 @@ void gather(arma::Mat<eT> const& local, arma::Mat<eT>& global, Ts& ...args) {
 	gather(args...);
 }
 
+template <typename eT>
+void gatherv(arma::Mat<eT> const& local, arma::Mat<eT>& global, int root = 0) {
+	int id, nprocs;
+	::MPI_Comm_rank(MPI_COMM_WORLD, &id);
+	::MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+	int n_local = local.n_elem;
+	arma::Col<int> local_counts, disp;
+   	if (id == root) 
+		local_counts = arma::zeros<arma::Col<int>>(nprocs);
+	gather(&n_local, local_counts);
+	if (id == root) {
+		disp = arma::cumsum(local_counts);
+		disp.insert_rows(0,1,true);
+	}
+	MPI_Gatherv(local.memptr(), local.n_elem, mpi_type_helper<eT>(), global.memptr(), local_counts.memptr(), disp.memptr(), mpi_type_helper<eT>(), root, MPI_COMM_WORLD);
+}
+
+template <typename eT, typename ...Ts>
+void gatherv(arma::Mat<eT> const& local, arma::Mat<eT>& global, Ts& ...args) {
+	gatherv(local, global);
+	gatherv(args...);
+}
 
 
 template <typename eT>

@@ -8,7 +8,7 @@
 // broadcasted operations between column and row vectors
 template <typename C, typename R, typename Op>
 typename std::enable_if< C::is_col && R::is_row && is_valid_call<Op, C, typename R::elem_type>::value, arma::Mat< typename is_valid_call<Op, C, typename R::elem_type>::return_type::elem_type > >::type bcast_op(C const& col, R const& row, Op op) {
-	arma::Mat< typename is_valid_call<Op, C, typename R::elem_type>::return_type::elem_type > result( arma::size(col).n_rows, arma::size(row).n_cols);
+	arma::Mat< typename is_valid_call<Op, C, typename R::elem_type>::return_type::elem_type > result(arma::size(col).n_rows, arma::size(row).n_cols);
 	for (arma::uword j = 0; j != arma::size(row).n_cols; ++j) {
 		result.col(j) = op(col, arma::conv_to<arma::Row<typename R::elem_type>>::from(row)(j));
 	}

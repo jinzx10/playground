@@ -7,7 +7,7 @@ template <typename ...>
 using void_t = void;
 
 template <typename F, typename ...Args>
-struct is_valid_call
+class is_valid_call
 {
     typedef char yes;
     typedef char no[2];
@@ -21,14 +21,16 @@ struct is_valid_call
     template <typename F1, typename ...Args1>
     static no& test(...);
 
-    static const bool value = sizeof(test<F, Args...>(nullptr)) == sizeof(yes);
-
 	template <bool, typename, typename ...>
 	struct try_return { using type = void; };
 	
 	template <typename F1, typename ...Args1>
 	struct try_return<true, F1, Args1...> { using type = return_t<F1, Args...>; };
 
+
+	public:
+
+    static const bool value = sizeof(test<F, Args...>(nullptr)) == sizeof(yes);
 	using return_type = typename try_return<value, F, Args...>::type;
 
 };

@@ -8,22 +8,7 @@ using namespace arma;
 
 int main(int, char** argv) {
 
-	vec a = ones(10);
-	int i,j;
-
-	readargs(argv, i, j);
-
-	a.print();
-	std::cout << std::endl;
-
-	a.insert_rows(i,1);
-	a.print();
-	std::cout << std::endl;
-	
-	a.insert_rows(j,1);
-	a.print();
-	std::cout << std::endl;
-	
+	std::cout << std::endl << std::endl << std::endl << "1" << std::endl;	
 
 
 	return 0;

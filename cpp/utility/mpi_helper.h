@@ -111,8 +111,16 @@ int gather(arma::Mat<eT> const& local, arma::Mat<eT>& global) {
 	return MPI_Gather(local.memptr(), local.n_elem, mpi_type_helper<eT>(), global.memptr(), local.n_elem, mpi_type_helper<eT>(), 0, MPI_COMM_WORLD);
 }
 
-template <typename T, typename eT, typename ...Ts>
-int gather(T const& local, arma::Mat<eT>& global, Ts& ...args) {
+template <typename eT, typename ...Ts>
+int gather(eT const& local, arma::Mat<eT>& global, Ts& ...args) {
+	int status = gather(local, global);
+	if (status)
+		return status;
+	return gather(args...);
+}
+
+template <typename eT, typename ...Ts>
+int gather(arma::Mat<eT> const& local, arma::Mat<eT>& global, Ts& ...args) {
 	int status = gather(local, global);
 	if (status)
 		return status;

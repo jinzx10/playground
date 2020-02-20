@@ -1,0 +1,3 @@
+dir /home/zuxin/tmp/
+value 0.05
+size 3

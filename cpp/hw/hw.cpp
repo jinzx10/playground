@@ -1,34 +1,30 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <armadillo>
+#include "../utility/widgets.h"
 
-
-template <int N, typename T>
-void readargs(char** args, T& var) {
-	std::stringstream ss;
-	ss << args[N];
-	ss >> var;
-}
-
-
-template <int N = 1, typename T, typename ...Ts>
-void readargs(char** args, T& var, Ts& ...vars) {
-	std::stringstream ss;
-	ss << args[N];
-	ss >> var;
-	readargs<N+1, Ts...>(args, vars...);
-}
+using namespace arma;
 
 int main(int, char** argv) {
 
-	int u;
-	char v;
-	double w;
-	readargs(argv, u, v, w);
+	vec a = ones(10);
+	int i,j;
 
-	std::cout << "u = " << u << std::endl;
-	std::cout << "v = " << v << std::endl;
-	std::cout << "w = " << w << std::endl;
+	readargs(argv, i, j);
+
+	a.print();
+	std::cout << std::endl;
+
+	a.insert_rows(i,1);
+	a.print();
+	std::cout << std::endl;
+	
+	a.insert_rows(j,1);
+	a.print();
+	std::cout << std::endl;
+	
+
 
 	return 0;
 }

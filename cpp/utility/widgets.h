@@ -4,8 +4,10 @@
 #include <string>
 #include <cstdlib>
 #include <sstream>
+#include <fstream>
 #include <iostream>
 #include <chrono>
+#include <vector>
 
 template <int N = 1, typename T>
 void readargs(char** args, T& var) {
@@ -119,5 +121,54 @@ class Stopwatch
 		timeit(std::string(""), 10u, f, args...);
 	}
 };
+
+
+struct Parser
+{
+	Parser(std::vector<std::string> const& keys_) : keys(keys_), vals(keys.size()) {}
+
+	std::vector<std::string> keys;
+	std::vector<std::string> vals;
+
+	void parse(std::string const& file) {
+		std::fstream fs(file);
+		std::string str;
+		while (std::getline(fs, str)) {
+			for (size_t i = 0; i != keys.size(); ++i) {
+				auto pos = str.find(keys[i]);
+				if (pos != std::string::npos) {
+					str.erase(pos, keys[i].length());
+					vals[i] = str;
+					break;
+				}
+			}
+		}
+	}
+
+	template <int N = 0, typename T>
+	void pour(T& val) {
+		if (N >= keys.size()) {
+			std::cerr << "Too many variables." << std::endl;
+			return;
+		}
+		std::stringstream ss;
+		ss << vals[N];
+		ss >> val;
+	}
+
+	template <int N = 0, typename T, typename ...Ts>
+	void pour(T& val, Ts& ...args) {
+		if (N >= keys.size()) {
+			std::cerr << "Too many variables." << std::endl;
+			return;
+		}
+		std::stringstream ss;
+		ss << vals[N];
+		ss >> val;
+		pour<N+1, Ts...>(args...);
+	}
+};
+
+
 
 #endif

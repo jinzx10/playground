@@ -1,13 +1,21 @@
 #include <iostream>
 #include <tuple>
+#include <typeinfo>
+
+template <typename ...Ts>
+struct T
+{
+	std::tuple<Ts...> types;
+
+};
 
 int main() {
 	
-	double a = 3, b = 4;
-	double c = 1, d = 2;
-	std::tie(a,b) = std::make_tuple(c,d);
+	T<int,double,char> t;
 
-	std::cout << a << b << std::endl;
+	std::cout << typeid( decltype(std::get<0>(t.types)) ).name() << std::endl;
+	std::cout << typeid( decltype(std::get<2>(t.types)) ).name() << std::endl;
+
 
 
 	return 0;

@@ -1,13 +1,22 @@
 #ifndef __WIDGETS_H__
 #define __WIDGETS_H__
 
-#include <string>
 #include <cstdlib>
 #include <sstream>
 #include <fstream>
 #include <iostream>
 #include <chrono>
 #include <vector>
+#include <string>
+#include <type_traits>
+
+// read arguments from the command line
+template <int N = 1>
+void readargs(char** args, std::string& var) {
+	std::stringstream ss;
+	ss << args[N];
+	std::getline(ss, var);
+}
 
 template <int N = 1, typename T>
 void readargs(char** args, T& var) {
@@ -17,20 +26,18 @@ void readargs(char** args, T& var) {
 }
 
 template <int N = 1, typename T, typename ...Ts>
-void readargs(char** args, T& var, Ts& ...vars) {
-	std::stringstream ss;
-	ss << args[N];
-	ss >> var;
-	readargs<N+1>(args, vars...);
+void readargs(char** args, T& var, Ts& ...rest) {
+	readargs<N>(args, var);
+	readargs<N+1>(args, rest...);
 }
 
-
+// mkdir
 inline int mkdir(std::string const& dir) {
 	std::string command = "mkdir -p " + dir;
 	return std::system(command.c_str());
 }
 
-
+// a stopwatch class
 class Stopwatch
 {
 	using iclock	= std::chrono::high_resolution_clock;

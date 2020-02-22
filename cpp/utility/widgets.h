@@ -9,6 +9,8 @@
 #include <vector>
 #include <string>
 #include <type_traits>
+#include <typeinfo>
+#include <tuple>
 
 // read arguments from the command line
 template <int N = 1>
@@ -130,50 +132,105 @@ class Stopwatch
 };
 
 
+// keyword parser
+template <typename ...Ts>
 struct Parser
 {
-	Parser(std::vector<std::string> const& keys_) : keys(keys_), vals(keys.size()) {}
+	Parser(std::vector<std::string> const& keys_) : keys(keys_), vals(keys.size()) {
+		if ( sizeof...(Ts) > keys.size() ) {
+			std::cerr << "Parser error: too many types specified." << std::endl;
+			exit(EXIT_FAILURE);
+		}
+	}
 
 	std::vector<std::string> keys;
 	std::vector<std::string> vals;
 
 	void parse(std::string const& file) {
 		std::fstream fs(file);
+		std::string line;
 		std::string str;
-		while (std::getline(fs, str)) {
-			for (size_t i = 0; i != keys.size(); ++i) {
-				auto pos = str.find(keys[i]);
-				if (pos != std::string::npos) {
-					str.erase(pos, keys[i].length());
-					vals[i] = str;
-					break;
+		std::stringstream ss;
+		while (std::getline(fs, line)) {
+			ss << line;
+			while (std::getline(ss, str, ',')) {
+				for (size_t i = 0; i != keys.size(); ++i) {
+					auto pos = str.find(keys[i]);
+					if (pos != std::string::npos) {
+						str.erase(pos, keys[i].length());
+						vals[i] = trim(str);
+						break;
+					}
 				}
 			}
+			ss.str("");
+			ss.clear();
 		}
+	}
+
+	template <int N = 0>
+	void pour(std::string& val) {
+		check<N, std::string>();
+		std::stringstream ss;
+		ss << vals[N];
+		std::getline(ss, val);
 	}
 
 	template <int N = 0, typename T>
 	void pour(T& val) {
-		if (N >= keys.size()) {
-			std::cerr << "Too many variables." << std::endl;
-			return;
-		}
+		check<N, T>();
 		std::stringstream ss;
 		ss << vals[N];
 		ss >> val;
 	}
 
-	template <int N = 0, typename T, typename ...Ts>
-	void pour(T& val, Ts& ...args) {
-		if (N >= keys.size()) {
-			std::cerr << "Too many variables." << std::endl;
-			return;
-		}
-		std::stringstream ss;
-		ss << vals[N];
-		ss >> val;
-		pour<N+1, Ts...>(args...);
+	template <int N = 0, typename T, typename ...Rs>
+	void pour(T& val, Rs& ...args) {
+		pour<N>(val);
+		pour<N+1, Rs...>(args...);
 	}
+
+
+	private:
+
+	std::string trim(std::string const& str, std::string whitespace =" \t") {
+		std::string out = str;
+		auto start = str.find_first_not_of(whitespace);
+		if (start == std::string::npos)
+			return "";
+		auto end = str.find_last_not_of(whitespace);
+		auto range = end - start + 1;
+		return str.substr(start, range);
+	}
+
+	template <int N, typename T>
+	typename std::enable_if< ( N >= sizeof...(Ts) ), void>::type type_check() {}
+
+	template <int N, typename T>
+	typename std::enable_if< ( N < sizeof...(Ts) ), void>::type type_check() {
+		using C = typename std::tuple_element<N, std::tuple<Ts...>>::type;
+		if ( !std::is_same<void, C>::value && !std::is_same<T, C>::value ) {
+			std::cerr << "Parser error: type mismatch: argument " << N << std::endl
+				<< "expected type: " << typeid(C).name() << std::endl
+				<< "detected type: " << typeid(T).name() << std::endl;
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	template <int N>
+	void size_check() {
+		if ( N >= keys.size() ) {
+			std::cerr << "Parser error: too many variables." << std::endl;
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	template <int N, typename T>
+	void check() {
+		size_check<N>();
+		type_check<N,T>();
+	}
+
 };
 
 

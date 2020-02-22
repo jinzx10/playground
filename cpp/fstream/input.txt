@@ -1,4 +1,5 @@
 dir /home/zuxin/tmp/
 value 0.05
 size 3
-age -1, name tq, job .5
+
+age -1, name tq, job 1

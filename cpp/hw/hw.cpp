@@ -2,63 +2,36 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <string>
 
-template <typename T>
-void tq(T& val) {
-	std::cout << "tq" << std::endl;
-}
+using namespace std;
 
-template <typename T, typename ...Ts, typename R>
-void tq(T&, Ts&...args, R& r) {
-	std::cout << "tq" << std::endl;
-	tq(args..., r);
-}
+struct P
+{
+	template<typename T>
+	void add(std::string const& key) {
+		keys.push_back(key);
+		vals.push_back(new T);
+	}
 
-/*
-template <typename T, int N = 0>
-void pour2(T& val) {
-	std::cout << N << std::endl;
-}
-
-template <typename T, typename ...Ts, int N = 0>
-void pour2(T& val, Ts& ...args) {
-	std::cout << N << std::endl;
-    pour2<Ts...>(args...);
-}
-*/
-
+	vector<std::string> keys;
+	vector<void*> vals;
+	
+};
 
 int main() {
 
-	int i,j,k,l;
-	tq(i,j,k,l);
+	vector<void*> vv;
+	vv.push_back(new int);
+	vv.push_back(new double);
 
+	*static_cast<int*>(vv[0]) = 34;
+	*static_cast<double*>(vv[1]) = 3.14;
+
+	std::cout << *static_cast<int*>(vv[0]) << std::endl;
+	std::cout << *static_cast<double*>(vv[1]) << std::endl;
+
+	
 
     return 0;
 }
-/*
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <armadillo>
-#include "../utility/widgets.h"
-
-using namespace arma;
-
-int main(int, char** argv) {
-
-	std::string a;
-	int b;
-
-	readargs(argv, a, b);
-
-	std::cout << a << std::endl;
-	std::cout << b << std::endl;
-
-
-
-
-	return 0;
-}
-
-*/

@@ -15,6 +15,11 @@
 #include "mkl_aux.h"
 #include <armadillo>
 
+void sleep() {
+	std::string cmd = "sleep 0.5";
+	std::system(cmd.c_str());
+}
+
 int main(int argc, char** argv) {
 
 	MPI_Init(nullptr, nullptr);
@@ -26,6 +31,8 @@ int main(int argc, char** argv) {
 
 	blacs_pinfo(&id, &nprocs);
 	blacs_get(&ZERO, &ZERO, &ctxt);
+
+	std::string cmd = "sleep 0.5";
 
 	// command line input check
 	if (argc < 7) {
@@ -50,6 +57,15 @@ int main(int argc, char** argv) {
 	blacs_gridinit(&ctxt, layout, &np_row, &np_col);
 	blacs_gridinfo(&ctxt, &np_row, &np_col, &ip_row, &ip_col);
 
+	for (int i = 0; i != nprocs; ++i) {
+		if (id == i) {
+			std::cout << "id = " << id 
+				<< "   grid id = (" << ip_row << "," << ip_col << ")"
+				<< std::endl;
+		}
+		sleep();
+	}
+
 	double* A = nullptr;
 	double* B = nullptr;
 	double* C = nullptr;
@@ -59,8 +75,8 @@ int main(int argc, char** argv) {
 		std::stringstream ss;
 		ss << argv[1] << ' ' << argv[2];
 		ss >> file1 >> file2;
-		read_mat(file1, A, MA, NA);
-		read_mat(file2, B, MB, NB);
+		read_mat(file1, A, MA, NA, true);
+		read_mat(file2, B, MB, NB, true);
 	}
 	MPI_Bcast(&MA, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	MPI_Bcast(&NA, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -109,6 +125,40 @@ int main(int argc, char** argv) {
 	for (int i = 0; i != RC*CC; ++i) C_loc[i] = 0.0;
 
 	char trans = 'N';
+
+	if (id == 0) {
+		print_mat(A, MA, NA, true);
+		std::cout << std::endl;
+		print_mat(B, MB, NB, true);
+		std::cout << std::endl;
+	}
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	std::system(cmd.c_str());
+
+	for (int i = 0; i != nprocs; ++i) {
+		if (id == i) {
+			print_mat(A_loc, RA, CA);
+			std::cout << std::endl;
+		}
+		sleep();
+	}
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	std::system(cmd.c_str());
+
+	for (int i = 0; i != nprocs; ++i) {
+		if (id == i) {
+			print_mat(B_loc, RB, CB);
+			std::cout << std::endl;
+		}
+		sleep();
+	}
+
+	std::cout << "get ready" << std::endl;
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	std::system(cmd.c_str());
 
 	// ia, ja, ... start from one instead of zero! (fortran convention)
 	pdgemm(&trans, &trans, &MA, &NB, &NA, &dONE, A_loc, &ONE, &ONE, descA, B_loc, &ONE, &ONE, descB, &dZERO, C_loc, &ONE, &ONE, descC);

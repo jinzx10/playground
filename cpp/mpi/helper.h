@@ -143,6 +143,7 @@ void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 		szB_row_loc = numroc(&szB_row, &szB_row_blk, &ip_row, &iZERO, &np_row);
 		szB_col_loc = numroc(&szB_col, &szB_col_blk, &ip_col, &iZERO, &np_col);
 
+		C.set_size(A.n_rows, B.n_cols);
 		szC_row = C.n_rows;
 		szC_col = C.n_cols;
 		szC_row_blk = szC_row / np_row;
@@ -161,20 +162,47 @@ void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 	descinit(descB, &szB_row, &szB_col, &szB_row_blk, &szB_col_blk, &iZERO, &iZERO, &ctxt, &szB_row_loc, &info);
 	descinit(descC, &szC_row, &szC_col, &szC_row_blk, &szC_col_blk, &iZERO, &iZERO, &ctxt, &szC_row_loc, &info);
 
-	arma::mat A_loc = arma::zeros(szA_row_loc, szA_col_loc);
-	arma::mat B_loc = arma::zeros(szB_row_loc, szB_col_loc);
-	arma::mat C_loc = arma::zeros(szC_row_loc, szC_col_loc);
+	arma::mat A_loc(szA_row_loc, szA_col_loc);
+	arma::mat B_loc(szB_row_loc, szB_col_loc);
+	arma::mat C_loc(szC_row_loc, szC_col_loc);
 
 	scatter(ctxt, A.memptr(), A_loc.memptr(), szA_row, szA_col, szA_row_blk, szA_col_blk, ip_row, ip_col, np_row, np_col);
 	scatter(ctxt, B.memptr(), B_loc.memptr(), szB_row, szB_col, szB_row_blk, szB_col_blk, ip_row, ip_col, np_row, np_col);
 
-	if (id == 0) {
-		std::cout << "pdgemm ready" << std::endl;
+	/*
+	for(int i = 0; i != np_blacs; ++i) {
+		if (id == i) {
+			A_loc.print();
+			std::cout << std::endl;
+		}
+		std::system("sleep 0.3");
 	}
 
+	if (id == 0) {
+		A.print();
+		std::cout << std::endl;
+	}
+
+	std::system("sleep 0.5");
+
+	for(int i = 0; i != np_blacs; ++i) {
+		if (id == i) {
+			B_loc.print();
+			std::cout << std::endl;
+		}
+		std::system("sleep 0.3");
+	}
+
+	if (id == 0) {
+		B.print();
+		std::cout << std::endl;
+		std::cout << "pdgemm ready" << std::endl;
+	}
+	std::system("sleep 0.5");
+	*/
+
 	char trans = 'N';
-	//pdgemm(&trans, &trans, &szA_row, &szB_col, &szA_col, &dONE, A_loc.memptr(), &iONE, &iONE, descA, B_loc.memptr(), &iONE, &iONE, descB, &dZERO, C_loc.memptr(), &iONE, &iONE, descC);
-	pdgemm(&trans, &trans, &szA_row, &szB_col, &szA_col, &dONE, A_loc.memptr(), &iZERO, &iZERO, descA, B_loc.memptr(), &iZERO, &iZERO, descB, &dZERO, C_loc.memptr(), &iZERO, &iZERO, descC);
+	pdgemm(&trans, &trans, &szA_row, &szB_col, &szA_col, &dONE, A_loc.memptr(), &iONE, &iONE, descA, B_loc.memptr(), &iONE, &iONE, descB, &dZERO, C_loc.memptr(), &iONE, &iONE, descC);
 
 	if (id == 0) {
 		std::cout << "pdgemm done" << std::endl;

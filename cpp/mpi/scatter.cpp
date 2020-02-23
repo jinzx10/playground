@@ -31,13 +31,27 @@ int main(int, char** argv) {
 
 	for (int i = 0; i != nprocs; ++i) {
 		if (id == i) {
-			std::cout << id << " " << id_blacs << std::endl;
+			std::cout << "mpi id = " << id << ", " 
+				<< "blacs id = " << id_blacs << std::endl;
 		}
 		sleep(0.2);
 	}
 
 	if (id == 0) {
-		readargs(argv, np_row, np_col, szA_row, szA_col, szA_row_blk, szA_col_blk);
+		std::cout << "np_row:" << std::endl;
+		std::cin >> np_row;
+		std::cout << "np_col:" << std::endl;
+		std::cin >> np_col;
+		std::cout << "szA_row:" << std::endl;
+		std::cin >> szA_row;
+		std::cout << "szA_col:" << std::endl;
+		std::cin >> szA_col;
+		std::cout << "szA_row_blk:" << std::endl;
+		std::cin >> szA_row_blk;
+		std::cout << "szA_col_blk:" << std::endl;
+		std::cin >> szA_col_blk;
+		std::cout << std::endl;
+		//readargs(argv, np_row, np_col, szA_row, szA_col, szA_row_blk, szA_col_blk);
 	}
 	bcast(np_row, np_col, szA_row, szA_col, szA_row_blk, szA_col_blk);
 
@@ -53,6 +67,7 @@ int main(int, char** argv) {
 	if (id == 0) {
 		A.set_size(szA_row, szA_col);
 		A = 0.01 * ones(szA_row) * regspace<rowvec>(0, 1, szA_col-1) + regspace(0, 1, szA_row-1) * ones<rowvec>(szA_col);
+		std::cout << "A" << std::endl;
 		A.print();
 		std::cout << std::endl;
 	}
@@ -69,11 +84,16 @@ int main(int, char** argv) {
 
 	for (int i = 0; i != nprocs; ++i) {
 		if (id == i) {
+			std::cout << "mpi id = " << id << ", grid id = ("
+				<< ip_row << "," << ip_col << ")" << std::endl
+				<< "A_loc = " << std::endl;
 			A_loc.print();
 			std::cout << std::endl;
 		}
 		sleep(0.2);
 	}
+
+	A_loc *= 0.1;
 
 	mat B;
 	if (id == 0) {
@@ -83,6 +103,7 @@ int main(int, char** argv) {
 	gather(ctxt, B.memptr(), A_loc.memptr(), szA_row, szA_col, szA_row_blk, szA_col_blk, ip_row, ip_col, np_row, np_col);
 
 	if (id == 0) {
+		std::cout << "B = " << std::endl;
 		B.print();
 	}
 

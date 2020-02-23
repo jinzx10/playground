@@ -122,8 +122,9 @@ void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 	blacs_gridinit(&ctxt, &layout, &np_row, &np_col);
 	blacs_gridinfo(&ctxt, &np_row, &np_col, &ip_row, &ip_col);
 
-	int id;
+	int id, nprocs;
 	MPI_Comm_rank(MPI_COMM_WORLD, &id);
+	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
 	int szA_row, szA_col, szA_row_blk, szA_col_blk, szA_row_loc, szA_col_loc;
 	int szB_row, szB_col, szB_row_blk, szB_col_blk, szB_row_loc, szB_col_loc;
@@ -152,15 +153,21 @@ void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 		szC_col_loc = numroc(&szC_col, &szC_col_blk, &ip_col, &iZERO, &np_col);
 	}
 
-	bcast(szA_row, szA_col, szA_row_blk, szA_col_blk, szA_row_loc, szA_col_loc,
+	bcast(  szA_row, szA_col, szA_row_blk, szA_col_blk, szA_row_loc, szA_col_loc,
 			szB_row, szB_col, szB_row_blk, szB_col_blk, szB_row_loc, szB_col_loc,
-			szC_row, szC_col, szC_row_blk, szC_col_blk, szC_row_loc, szC_col_loc);
+			szC_row, szC_col, szC_row_blk, szC_col_blk, szC_row_loc, szC_col_loc  );
 
 	int descA[9], descB[9], descC[9];
 	int info;
 	descinit(descA, &szA_row, &szA_col, &szA_row_blk, &szA_col_blk, &iZERO, &iZERO, &ctxt, &szA_row_loc, &info);
+	if (info)
+		std::cout << "descinit info = " << info << std::endl;
 	descinit(descB, &szB_row, &szB_col, &szB_row_blk, &szB_col_blk, &iZERO, &iZERO, &ctxt, &szB_row_loc, &info);
+	if (info)
+		std::cout << "descinit info = " << info << std::endl;
 	descinit(descC, &szC_row, &szC_col, &szC_row_blk, &szC_col_blk, &iZERO, &iZERO, &ctxt, &szC_row_loc, &info);
+	if (info)
+		std::cout << "descinit info = " << info << std::endl;
 
 	arma::mat A_loc(szA_row_loc, szA_col_loc);
 	arma::mat B_loc(szB_row_loc, szB_col_loc);
@@ -168,6 +175,43 @@ void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 
 	scatter(ctxt, A.memptr(), A_loc.memptr(), szA_row, szA_col, szA_row_blk, szA_col_blk, ip_row, ip_col, np_row, np_col);
 	scatter(ctxt, B.memptr(), B_loc.memptr(), szB_row, szB_col, szB_row_blk, szB_col_blk, ip_row, ip_col, np_row, np_col);
+
+#ifdef PRINT
+	if (id == 0) {
+		std::cout << "A = " << std::endl;
+		A.print();
+		std::cout << std::endl;
+	}
+	std::system("sleep 0.2");
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	for (int i = 0; i != nprocs; ++i) {
+		if (id == i) {
+			std::cout << "id = " << id << "   A_loc = " << std::endl;
+			A_loc.print();
+			std::cout << std::endl;
+		}
+		std::system("sleep 0.2");
+	}
+	std::system("sleep 0.2");
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	if (id == 0) {
+		std::cout << "B = " << std::endl;
+		B.print();
+		std::cout << std::endl;
+	}
+	std::system("sleep 0.2");
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	for (int i = 0; i != nprocs; ++i) {
+		if (id == i) {
+			std::cout << "id = " << id << "   B_loc = " << std::endl;
+			B_loc.print();
+		}
+		std::system("sleep 0.2");
+	}
+#endif
 
 	char trans = 'N';
 	pdgemm(&trans, &trans, &szA_row, &szB_col, &szA_col, &dONE, A_loc.memptr(), &iONE, &iONE, descA, B_loc.memptr(), &iONE, &iONE, descB, &dZERO, C_loc.memptr(), &iONE, &iONE, descC);

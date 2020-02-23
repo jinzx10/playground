@@ -12,6 +12,7 @@
 int main(int, char** argv) {
 
 	int id, nprocs;
+	Stopwatch sw;
 
 	MPI_Init(nullptr, nullptr);
 	MPI_Comm_rank(MPI_COMM_WORLD, &id);
@@ -30,14 +31,29 @@ int main(int, char** argv) {
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (id == 0) {
 		std::cout << "ready" << std::endl;
+		sw.run();
 	}
 	
 	pmatmul(A, B, C);
 	
 	if (id == 0) {
+		sw.report("pdgemm");
+		sw.reset();
+		sw.run();
+		arma::mat D = A*B;
+		sw.report("single-core");
+		arma::mat err = D - C;
+		std::cout << "error = " << arma::accu(err % err) << std::endl;
+#ifdef PRINT
+		A.print();
+		std::cout << std::endl;
+		B.print();
+		std::cout << std::endl;
 		C.print();
 		std::cout << std::endl;
-		(A*B).print();
+		D.print();
+		std::cout << std::endl;
+#endif
 	}
 
 	MPI_Finalize();

@@ -116,7 +116,7 @@ void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 	blacs_pinfo(&id_blacs, &np_blacs);
 	blacs_get(&iZERO, &iZERO, &ctxt);
 
-	int np_row = 2, np_col = 2;
+	int np_row = sqrt(np_blacs), np_col = sqrt(np_blacs);
 	int ip_row, ip_col;
 	char layout = 'C';
 	blacs_gridinit(&ctxt, &layout, &np_row, &np_col);
@@ -168,38 +168,6 @@ void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 
 	scatter(ctxt, A.memptr(), A_loc.memptr(), szA_row, szA_col, szA_row_blk, szA_col_blk, ip_row, ip_col, np_row, np_col);
 	scatter(ctxt, B.memptr(), B_loc.memptr(), szB_row, szB_col, szB_row_blk, szB_col_blk, ip_row, ip_col, np_row, np_col);
-
-	/*
-	for(int i = 0; i != np_blacs; ++i) {
-		if (id == i) {
-			A_loc.print();
-			std::cout << std::endl;
-		}
-		std::system("sleep 0.3");
-	}
-
-	if (id == 0) {
-		A.print();
-		std::cout << std::endl;
-	}
-
-	std::system("sleep 0.5");
-
-	for(int i = 0; i != np_blacs; ++i) {
-		if (id == i) {
-			B_loc.print();
-			std::cout << std::endl;
-		}
-		std::system("sleep 0.3");
-	}
-
-	if (id == 0) {
-		B.print();
-		std::cout << std::endl;
-		std::cout << "pdgemm ready" << std::endl;
-	}
-	std::system("sleep 0.5");
-	*/
 
 	char trans = 'N';
 	pdgemm(&trans, &trans, &szA_row, &szB_col, &szA_col, &dONE, A_loc.memptr(), &iONE, &iONE, descA, B_loc.memptr(), &iONE, &iONE, descB, &dZERO, C_loc.memptr(), &iONE, &iONE, descC);

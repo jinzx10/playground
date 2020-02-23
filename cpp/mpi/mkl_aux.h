@@ -54,7 +54,7 @@ inline void scatter(int const& ctxt, double*& A, double*& A_loc, int const& sz_r
 	int r_loc = 0, c_loc = 0;
 	for (int r = 0; r < sz_row; r += sz_blk_row, pid_row = (pid_row+1)%np_row) {
 		sz_comm_row = (r + sz_blk_row > sz_row) ? sz_row - r : sz_blk_row;
-		pid_col = 0;
+		pid_col = ip_col_start;
 		for (int c = 0; c < sz_col; c += sz_blk_col, pid_col = (pid_col+1)%np_col) {
 			sz_comm_col = (c + sz_blk_col > sz_col) ? sz_col - c : sz_blk_col;
 			if (ip_row == src_row && ip_col == src_col) 

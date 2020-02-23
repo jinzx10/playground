@@ -129,6 +129,11 @@ class Stopwatch
 	void_t< return_t<F,Args...> > timeit(F f, Args const& ...args) {
 		timeit(std::string(""), 10u, f, args...);
 	}
+
+	template <typename F, typename ...Args>
+	void timeit(...) {
+		std::cerr << "Stopwatch error: timeit: invalid call" << std::endl;
+	}
 };
 
 

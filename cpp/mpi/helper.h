@@ -134,28 +134,29 @@ void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 		szA_col = A.n_cols;
 		szA_row_blk = szA_row / np_row;
 		szA_col_blk = szA_col / np_col;
-		szA_row_loc = numroc(&szA_row, &szA_row_blk, &ip_row, &iZERO, &np_row);
-		szA_col_loc = numroc(&szA_col, &szA_col_blk, &ip_col, &iZERO, &np_col);
 
 		szB_row = B.n_rows;
 		szB_col = B.n_cols;
 		szB_row_blk = szB_row / np_row;
 		szB_col_blk = szB_col / np_col;
-		szB_row_loc = numroc(&szB_row, &szB_row_blk, &ip_row, &iZERO, &np_row);
-		szB_col_loc = numroc(&szB_col, &szB_col_blk, &ip_col, &iZERO, &np_col);
 
 		C.set_size(A.n_rows, B.n_cols);
 		szC_row = C.n_rows;
 		szC_col = C.n_cols;
 		szC_row_blk = szC_row / np_row;
 		szC_col_blk = szC_col / np_col;
-		szC_row_loc = numroc(&szC_row, &szC_row_blk, &ip_row, &iZERO, &np_row);
-		szC_col_loc = numroc(&szC_col, &szC_col_blk, &ip_col, &iZERO, &np_col);
 	}
 
-	bcast(  szA_row, szA_col, szA_row_blk, szA_col_blk, szA_row_loc, szA_col_loc,
-			szB_row, szB_col, szB_row_blk, szB_col_blk, szB_row_loc, szB_col_loc,
-			szC_row, szC_col, szC_row_blk, szC_col_blk, szC_row_loc, szC_col_loc  );
+	bcast(  szA_row, szA_col, szA_row_blk, szA_col_blk,
+			szB_row, szB_col, szB_row_blk, szB_col_blk,
+			szC_row, szC_col, szC_row_blk, szC_col_blk  );
+
+	szA_row_loc = numroc(&szA_row, &szA_row_blk, &ip_row, &iZERO, &np_row);
+	szA_col_loc = numroc(&szA_col, &szA_col_blk, &ip_col, &iZERO, &np_col);
+	szB_row_loc = numroc(&szB_row, &szB_row_blk, &ip_row, &iZERO, &np_row);
+	szB_col_loc = numroc(&szB_col, &szB_col_blk, &ip_col, &iZERO, &np_col);
+	szC_row_loc = numroc(&szC_row, &szC_row_blk, &ip_row, &iZERO, &np_row);
+	szC_col_loc = numroc(&szC_col, &szC_col_blk, &ip_col, &iZERO, &np_col);
 
 	int descA[9], descB[9], descC[9];
 	int info;
@@ -211,6 +212,32 @@ void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 		}
 		std::system("sleep 0.2");
 	}
+	std::system("sleep 0.2");
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	for (int i = 0; i != nprocs; ++i) {
+		if (id == i) {
+			std::cout << "id = " << id << "   C_loc = " << std::endl;
+			C_loc.print();
+		}
+		std::system("sleep 0.2");
+	}
+	std::cout << std::endl;
+
+	for (auto e : descA)
+		std::cout << e << ' ';
+	std::cout << std::endl;
+		
+	for (auto e : descB)
+		std::cout << e << ' ';
+	std::cout << std::endl;
+
+	for (auto e : descC)
+		std::cout << e << ' ';
+	std::cout << std::endl;
+
+	std::system("sleep 0.2");
+	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
 	char trans = 'N';

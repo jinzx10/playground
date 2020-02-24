@@ -112,30 +112,29 @@ void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 	int iZERO = 0, iONE = 1;
 	double dZERO = 0.0, dONE = 1.0;
 
+	int id;
+	MPI_Comm_rank(MPI_COMM_WORLD, &id);
+
 	int ctxt, id_blacs, np_blacs;
 	blacs_pinfo(&id_blacs, &np_blacs);
 	blacs_get(&iZERO, &iZERO, &ctxt);
 
-	//int np_row = sqrt(np_blacs), np_col = sqrt(np_blacs);
-	int np_row, np_col;
+	int np_row;
 	for (np_row = sqrt(np_blacs); np_row != 1; --np_row) {
 		if (np_blacs % np_row == 0)
 			break;
 	}
-	np_col = np_blacs / np_row;
+	int np_col = np_blacs / np_row;
 
 	int ip_row, ip_col;
 	char layout = 'C';
 	blacs_gridinit(&ctxt, &layout, &np_row, &np_col);
 	blacs_gridinfo(&ctxt, &np_row, &np_col, &ip_row, &ip_col);
 
-	int id, nprocs;
-	MPI_Comm_rank(MPI_COMM_WORLD, &id);
-	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-
 	int szA_row, szA_col, szA_row_blk, szA_col_blk, szA_row_loc, szA_col_loc;
 	int szB_row, szB_col, szB_row_blk, szB_col_blk, szB_row_loc, szB_col_loc;
 	int szC_row, szC_col, szC_row_blk, szC_col_blk, szC_row_loc, szC_col_loc;
+
 	if (id == 0) {
 		szA_row = A.n_rows;
 		szA_col = A.n_cols;
@@ -177,57 +176,6 @@ void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 
 	scatter(ctxt, A.memptr(), A_loc.memptr(), szA_row, szA_col, szA_row_blk, szA_col_blk, ip_row, ip_col, np_row, np_col);
 	scatter(ctxt, B.memptr(), B_loc.memptr(), szB_row, szB_col, szB_row_blk, szB_col_blk, ip_row, ip_col, np_row, np_col);
-
-#ifdef PRINT
-	if (id == 0) {
-		std::cout << "A = " << std::endl;
-		A.print();
-		std::cout << std::endl;
-	}
-	std::system("sleep 0.2");
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	for (int i = 0; i != nprocs; ++i) {
-		if (id == i) {
-			std::cout << "id = " << id << "   A_loc = " << std::endl;
-			A_loc.print();
-			std::cout << std::endl;
-		}
-		std::system("sleep 0.2");
-	}
-	std::system("sleep 0.2");
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	if (id == 0) {
-		std::cout << "B = " << std::endl;
-		B.print();
-		std::cout << std::endl;
-	}
-	std::system("sleep 0.2");
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	for (int i = 0; i != nprocs; ++i) {
-		if (id == i) {
-			std::cout << "id = " << id << "   B_loc = " << std::endl;
-			B_loc.print();
-		}
-		std::system("sleep 0.2");
-	}
-	std::system("sleep 0.2");
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	for (int i = 0; i != nprocs; ++i) {
-		if (id == i) {
-			std::cout << "id = " << id << "   C_loc = " << std::endl;
-			C_loc.print();
-		}
-		std::system("sleep 0.2");
-	}
-	std::cout << std::endl;
-
-	std::system("sleep 0.2");
-	MPI_Barrier(MPI_COMM_WORLD);
-#endif
 
 	char trans = 'N';
 	pdgemm(&trans, &trans, &szA_row, &szB_col, &szA_col, &dONE, A_loc.memptr(), &iONE, &iONE, descA, B_loc.memptr(), &iONE, &iONE, descB, &dZERO, C_loc.memptr(), &iONE, &iONE, descC);

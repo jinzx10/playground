@@ -4,20 +4,25 @@
 #include <vector>
 #include <string>
 #include <armadillo>
+#include <type_traits>
 
 using namespace std;
 
-void help(char info[]) {
-	std::cout << info << std::endl;
-}
-
 int main() {
 
-	arma::mat a = arma::ones(5,30);
+	std::cout << std::is_trivial<std::string>::value << std::endl;
 
-	double* ptr = a.memptr();
+	std::string a = "good";
+	std::cout << a.size() << std::endl;
+	std::cout << a.data() << std::endl;
 
-	std::cout << ptr[10] << std::endl;
+	arma::mat b = arma::ones(3,5);
+
+	auto sz = arma::size(b);
+	arma::cube v = arma::ones(4,5,6);
+	auto sz2 = arma::size(v);
+
+	
 
     return 0;
 }

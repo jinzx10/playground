@@ -5,6 +5,7 @@
 #include <iostream>
 #include <type_traits>
 #include <armadillo>
+#include <string>
 
 template <typename eT>
 MPI_Datatype mpi_type_helper() {
@@ -86,7 +87,30 @@ typename std::enable_if<std::is_trivial<T>::value, int>::type bcast(T& data) {
 
 template <typename T>
 typename std::enable_if<arma::is_arma_type<T>::value, int>::type bcast(T& data) {
+	int id;
+	MPI_Comm_rank(MPI_COMM_WORLD, &id);
+	// how to broadcast size?
 	return MPI_Bcast(data.memptr(), data.n_elem, mpi_type_helper<typename T::elem_type>(), 0, MPI_COMM_WORLD);
+}
+
+int bcast(std::string& data) {
+	int id, sz;
+	MPI_Comm_rank(MPI_COMM_WORLD, &id);
+	if (id == 0) {
+		sz = data.size();
+	}
+	bcast(sz);
+	char* content = new char[sz+1];
+	if (id == 0) {
+		std::copy(data.begin(), data.end(), content);
+		content[sz] = '\0';
+	}
+	int status = MPI_Bcast(content, sz+1, MPI_CHAR, 0, MPI_COMM_WORLD);
+	if (id != 0) {
+		data = content;
+	}
+	delete[] content;
+	return status;
 }
 
 template <typename T, typename ...Ts>

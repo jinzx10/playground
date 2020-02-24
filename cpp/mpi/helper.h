@@ -116,7 +116,14 @@ void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 	blacs_pinfo(&id_blacs, &np_blacs);
 	blacs_get(&iZERO, &iZERO, &ctxt);
 
-	int np_row = sqrt(np_blacs), np_col = sqrt(np_blacs);
+	//int np_row = sqrt(np_blacs), np_col = sqrt(np_blacs);
+	int np_row, np_col;
+	for (np_row = sqrt(np_blacs); np_row != 1; --np_row) {
+		if (np_blacs % np_row == 0)
+			break;
+	}
+	np_col = np_blacs / np_row;
+
 	int ip_row, ip_col;
 	char layout = 'C';
 	blacs_gridinit(&ctxt, &layout, &np_row, &np_col);
@@ -132,19 +139,19 @@ void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 	if (id == 0) {
 		szA_row = A.n_rows;
 		szA_col = A.n_cols;
-		szA_row_blk = szA_row / np_row;
-		szA_col_blk = szA_col / np_col;
+		szA_row_blk = szA_row / np_row + (szA_row % np_row != 0);
+		szA_col_blk = szA_col / np_col + (szA_col % np_col != 0);
 
 		szB_row = B.n_rows;
 		szB_col = B.n_cols;
-		szB_row_blk = szB_row / np_row;
-		szB_col_blk = szB_col / np_col;
+		szB_row_blk = szB_row / np_row + (szB_row % np_row != 0);
+		szB_col_blk = szB_col / np_col + (szB_col % np_col != 0);
 
 		C.set_size(A.n_rows, B.n_cols);
 		szC_row = C.n_rows;
 		szC_col = C.n_cols;
-		szC_row_blk = szC_row / np_row;
-		szC_col_blk = szC_col / np_col;
+		szC_row_blk = szC_row / np_row + (szC_row % np_row != 0);
+		szC_col_blk = szC_col / np_col + (szC_col % np_col != 0);
 	}
 
 	bcast(  szA_row, szA_col, szA_row_blk, szA_col_blk,
@@ -161,14 +168,8 @@ void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 	int descA[9], descB[9], descC[9];
 	int info;
 	descinit(descA, &szA_row, &szA_col, &szA_row_blk, &szA_col_blk, &iZERO, &iZERO, &ctxt, &szA_row_loc, &info);
-	if (info)
-		std::cout << "descinit info = " << info << std::endl;
 	descinit(descB, &szB_row, &szB_col, &szB_row_blk, &szB_col_blk, &iZERO, &iZERO, &ctxt, &szB_row_loc, &info);
-	if (info)
-		std::cout << "descinit info = " << info << std::endl;
 	descinit(descC, &szC_row, &szC_col, &szC_row_blk, &szC_col_blk, &iZERO, &iZERO, &ctxt, &szC_row_loc, &info);
-	if (info)
-		std::cout << "descinit info = " << info << std::endl;
 
 	arma::mat A_loc(szA_row_loc, szA_col_loc);
 	arma::mat B_loc(szB_row_loc, szB_col_loc);
@@ -224,18 +225,6 @@ void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 	}
 	std::cout << std::endl;
 
-	for (auto e : descA)
-		std::cout << e << ' ';
-	std::cout << std::endl;
-		
-	for (auto e : descB)
-		std::cout << e << ' ';
-	std::cout << std::endl;
-
-	for (auto e : descC)
-		std::cout << e << ' ';
-	std::cout << std::endl;
-
 	std::system("sleep 0.2");
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -243,9 +232,6 @@ void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 	char trans = 'N';
 	pdgemm(&trans, &trans, &szA_row, &szB_col, &szA_col, &dONE, A_loc.memptr(), &iONE, &iONE, descA, B_loc.memptr(), &iONE, &iONE, descB, &dZERO, C_loc.memptr(), &iONE, &iONE, descC);
 
-	if (id == 0) {
-		std::cout << "pdgemm done" << std::endl;
-	}
 	gather(ctxt, C.memptr(), C_loc.memptr(), szC_row, szC_col, szC_row_blk, szC_col_blk, ip_row, ip_col, np_row, np_col);
 
 	blacs_gridexit(&ctxt);

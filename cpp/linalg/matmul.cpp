@@ -1,6 +1,5 @@
 #include <armadillo>
-#include "../utility/readargs.h"
-#include "../utility/stopwatch.h"
+#include "../utility/widgets.h"
 
 using namespace arma;
 

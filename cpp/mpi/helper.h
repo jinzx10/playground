@@ -137,6 +137,7 @@ struct Blacs
 };
 
 
+// matrix descriptor
 struct MatDesc {
 	MatDesc(Blacs* pblacs, arma::mat* pmat): ptr_blacs(pblacs) {
 		if (pblacs->id == 0) {

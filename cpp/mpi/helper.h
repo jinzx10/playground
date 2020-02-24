@@ -108,6 +108,111 @@ inline void gather(
 }
 
 
+struct Blacs
+{
+	void init() {
+		blacs_pinfo(&id, &nprocs);
+		blacs_get(&iZERO, &iZERO, &ctxt);
+		for (np_row = sqrt(nprocs); np_row != 1; --np_row)
+			if (nprocs % np_row == 0)
+				break;
+		np_col = nprocs / np_row;
+		blacs_gridinit(&ctxt, &layout, &np_row, &np_col);
+		blacs_gridinfo(&ctxt, &np_row, &np_col, &ip_row, &ip_col);
+	}
+
+	void exit() {
+		blacs_gridexit(&ctxt);
+	}
+
+	int iZERO = 0;
+	int ctxt;
+	int id;
+	int nprocs;
+	int np_row;
+	int np_col;
+	int ip_row;
+	int ip_col;
+	char layout = 'C';
+};
+
+
+struct MatDesc {
+	MatDesc(Blacs* pblacs, arma::mat* pmat): ptr_blacs(pblacs) {
+		if (pblacs->id == 0) {
+			sz_row = pmat->n_rows;
+			sz_col = pmat->n_cols;
+			sz_row_blk = sz_row / pblacs->np_row + (sz_row % pblacs->np_row != 0);
+			sz_col_blk = sz_col / pblacs->np_col + (sz_col % pblacs->np_col != 0);
+		}
+		bcast(sz_row, sz_col, sz_row_blk, sz_col_blk);
+		sz_row_loc = numroc(&sz_row, &sz_row_blk, &(pblacs->ip_row), &iZERO, &(pblacs->np_row));
+		sz_col_loc = numroc(&sz_col, &sz_col_blk, &pblacs->ip_col, &iZERO, &pblacs->np_col);
+		descinit(desc, &sz_row, &sz_col, &sz_row_blk, &sz_col_blk, &iZERO, &iZERO, &pblacs->ctxt, &sz_row_loc, &info);
+	}
+
+	Blacs* ptr_blacs;
+	int sz_row;
+	int sz_col;
+	int sz_row_blk;
+	int sz_col_blk;
+	int sz_row_loc;
+	int sz_col_loc;
+	int desc[9];
+	int info;
+	int iZERO = 0;
+};
+
+
+inline void scatter(arma::mat& A, arma::mat& A_loc, MatDesc& matdesc) {
+	scatter(matdesc.ptr_blacs->ctxt, A.memptr(), A_loc.memptr(), 
+			matdesc.sz_row, matdesc.sz_col, matdesc.sz_row_blk, matdesc.sz_col_blk, 
+			matdesc.ptr_blacs->ip_row, matdesc.ptr_blacs->ip_col, 
+			matdesc.ptr_blacs->np_row, matdesc.ptr_blacs->np_col);
+}
+
+
+inline void gather(arma::mat& A, arma::mat& A_loc, MatDesc& matdesc) {
+	gather( matdesc.ptr_blacs->ctxt, A.memptr(), A_loc.memptr(),
+			matdesc.sz_row, matdesc.sz_col, matdesc.sz_row_blk, matdesc.sz_col_blk,
+			matdesc.ptr_blacs->ip_row, matdesc.ptr_blacs->ip_col,
+			matdesc.ptr_blacs->np_row, matdesc.ptr_blacs->np_col );
+}
+
+
+void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
+	int iONE = 1;
+	double dZERO = 0.0, dONE = 1.0;
+
+	int id;
+	MPI_Comm_rank(MPI_COMM_WORLD, &id);
+
+	Blacs blacs;
+	blacs.init();
+
+	if (id == 0) {
+		C.set_size(A.n_rows, B.n_cols);
+	}
+
+	MatDesc mdA(&blacs, &A), mdB(&blacs, &A), mdC(&blacs, &C);
+
+	arma::mat A_loc(mdA.sz_row_loc, mdA.sz_col_loc);
+	arma::mat B_loc(mdB.sz_row_loc, mdB.sz_col_loc);
+	arma::mat C_loc(mdC.sz_row_loc, mdC.sz_col_loc);
+
+	scatter(A, A_loc, mdA);
+	scatter(B, B_loc, mdB);
+
+	char trans = 'N';
+	pdgemm(&trans, &trans, &mdA.sz_row, &mdB.sz_col, &mdA.sz_col, &dONE, A_loc.memptr(), &iONE, &iONE, mdA.desc, 
+			B_loc.memptr(), &iONE, &iONE, mdB.desc, &dZERO, C_loc.memptr(), &iONE, &iONE, mdC.desc);
+
+	gather(C, C_loc, mdC);
+
+	blacs.exit();
+}
+
+/*
 void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 	int iZERO = 0, iONE = 1;
 	double dZERO = 0.0, dONE = 1.0;
@@ -184,9 +289,7 @@ void pmatmul(arma::mat& A, arma::mat& B, arma::mat& C) {
 
 	blacs_gridexit(&ctxt);
 }
-
-
-
+*/
 
 
 

@@ -1,6 +1,5 @@
 #include <armadillo>
-#include "../utility/stopwatch.h"
-#include "../utility/readargs.h"
+#include "../utility/widgets.h"
 
 using namespace arma;
 using iclock = std::chrono::high_resolution_clock;

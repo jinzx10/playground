@@ -5,22 +5,37 @@
 #include <string>
 #include <armadillo>
 #include <type_traits>
+#include "../utility/widgets.h"
 
 using namespace std;
 
 int main() {
 
-	std::cout << std::is_trivial<std::string>::value << std::endl;
+	Stopwatch sw;
+	auto sleep = [] (double x) {
+		std::string cmd = "sleep " + std::to_string(x);
+		std::system(cmd.c_str());
+	};
 
-	std::string a = "good";
-	std::cout << a.size() << std::endl;
-	std::cout << a.data() << std::endl;
+	sw.run();
 
-	arma::mat b = arma::ones(3,5);
+	sleep(0.1);
 
-	auto sz = arma::size(b);
-	arma::cube v = arma::ones(4,5,6);
-	auto sz2 = arma::size(v);
+	sw.report(); // 0.1
+
+	sw.run(5);
+	sw.pause();
+
+	sleep(0.2);
+	sw.run();
+	sw.report(5); // 0.2
+	sw.report(3, "bad"); // no
+	sw.report(0, "?"); // 0.1
+	sw.reset(5);
+	sw.report(5); // 0
+	sw.run(5);
+	sleep(0.2);
+	sw.report(5, "good"); // 0.2
 
 	
 

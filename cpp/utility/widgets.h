@@ -11,6 +11,7 @@
 #include <type_traits>
 #include <typeinfo>
 #include <tuple>
+#include <map>
 
 // read arguments from the command line
 template <int N = 1>
@@ -42,8 +43,13 @@ inline int mkdir(std::string const& dir) {
 // a stopwatch class
 class Stopwatch
 {
-	using iclock	= std::chrono::high_resolution_clock;
-	using dur_t		= std::chrono::duration<double>;
+	using iclock		= std::chrono::high_resolution_clock;
+	using timepoint_t	= iclock::time_point;
+	using dur_t			= std::chrono::duration<double>;
+
+	std::map<unsigned int, timepoint_t> t_start;
+	std::map<unsigned int, dur_t> dur_store;
+	std::map<unsigned int, bool> is_running;
 
 	template <typename ...>
 	using void_t	= void;
@@ -62,46 +68,77 @@ class Stopwatch
 
 	public:
 
-	Stopwatch(): t_start(), dur_store(dur_t::zero()), is_running(false) {}
+	Stopwatch(): t_start(), dur_store(), is_running() {}
 
-	iclock::time_point t_start;	
-	dur_t dur_store;
-	bool is_running;
-
-	void run(std::string const& info = "") {
+	void run(unsigned int const& i = 0, std::string const& info = "") {
 		if (!info.empty())
 			std::cout << info << std::endl;
-		if (is_running) {
-			std::cout << "The stopwatch is already running. Nothing to do." << std::endl;
+		if (t_start.find(i) == t_start.end()) { // if stopwatch "i" does not exist
+			t_start[i] = iclock::now();
+			dur_store[i] = dur_t::zero();
+			is_running[i] = true;
+		} else { // if stopwatch "i" already exists
+			if (is_running[i]) {
+				std::cout << "Stopwatch #" << i << " is already running. Nothing to do." << std::endl;
+			} else {
+				t_start[i] = iclock::now();
+				is_running[i] = true;
+			}
+		}
+	}
+	
+	void run(std::string const& info) {
+		run(0, info);
+	}
+
+	void pause(unsigned int const& i = 0, std::string const& info = "") { 
+		if (!info.empty())
+			std::cout << info << std::endl;
+		if (t_start.find(i) == t_start.end()) {
+			std::cout << "Stopwatch #" << i << " does not exist." << std::endl;
 		} else {
-			t_start = iclock::now();
-			is_running = true;
+			if (is_running[i]) {
+				dur_store[i] += iclock::now() - t_start[i];
+				is_running[i] = false;
+			} else {
+				std::cout << "Stopwatch #" << i << " is not running. Nothing to do." << std::endl;
+			}
 		}
 	}
 
-	void pause(std::string const& info = "") { 
-		if (!info.empty())
-			std::cout << info << std::endl;
-		if (is_running) {
-			dur_store += iclock::now() - t_start;
-			is_running = false;
-		} else {
-			std::cout << "The stopwatch is not running. Nothing to do." << std::endl;
-		}
+	void pause(std::string const& info) {
+		pause(0, info);
 	}
 
-	void report(std::string const& info = "") { 
+	void report(unsigned int const& i = 0, std::string const& info = "") { 
 		if (!info.empty())
 			std::cout << info << ": "; 
-		dur_t dur = is_running ? dur_store + static_cast<dur_t>(iclock::now() - t_start) : dur_store;
-		std::cout << "elapsed time = " << dur.count() << " seconds" << std::endl; 
+		if (t_start.find(i) == t_start.end()) {
+			std::cout << "Stopwatch #" << i << " does not exist." << std::endl;
+		} else {
+			dur_t dur = is_running[i] ? 
+				dur_store[i] + static_cast<dur_t>(iclock::now() - t_start[i]) : dur_store[i];
+			std::cout << "elapsed time = " << dur.count() << " seconds (stopwatch #" << i << ")." << std::endl; 
+		}
 	}
 
-	void reset(std::string const& info = "") { 
+	void report(std::string const& info) {
+		report(0, info);
+	}
+
+	void reset(unsigned int const& i = 0, std::string const& info = "") { 
 		if (!info.empty())
 			std::cout << info << std::endl;
-		dur_store = dur_store.zero();
-		is_running = false;
+		if (t_start.find(i) == t_start.end()) {
+			std::cout << "Stopwatch #" << i << " does not exist." << std::endl;
+		} else {
+			dur_store[i] = dur_store[i].zero();
+			is_running[i] = false;
+		}
+	}
+
+	void reset(std::string const& info) {
+		reset(0, info);
 	}
 
 	template <typename F, typename ...Args>
@@ -112,7 +149,7 @@ class Stopwatch
 		dur = iclock::now() - start;
 		if (!info.empty())
 			std::cout << info << ": ";
-		std::cout << "average elapsed time for " << N << " trials = " << dur.count() / ( N ? N : 1 ) << " seconds" << std::endl;
+		std::cout << "average elapsed time for " << N << " trials = " << dur.count() / ( N ? N : 1 ) << " seconds." << std::endl;
 	}
 
 	template <typename F, typename ...Args>
@@ -132,7 +169,7 @@ class Stopwatch
 
 	template <typename F, typename ...Args>
 	void timeit(...) {
-		std::cerr << "Stopwatch error: timeit: invalid call" << std::endl;
+		std::cerr << "Stopwatch error: timeit: invalid call." << std::endl;
 	}
 };
 

@@ -5,32 +5,25 @@
 #include <initializer_list>
 #include "template_helper.h"
 
-// broadcasted operations between column and row vectors
-template <typename C, typename R, typename Op>
-typename std::enable_if< C::is_col && R::is_row && is_valid_call<Op, C, typename R::elem_type>::value, arma::Mat< typename is_valid_call<Op, C, typename R::elem_type>::return_type::elem_type > >::type bcast_op(C const& col, R const& row, Op op) {
-	arma::Mat< typename is_valid_call<Op, C, typename R::elem_type>::return_type::elem_type > result(arma::size(col).n_rows, arma::size(row).n_cols);
-	for (arma::uword j = 0; j != arma::size(row).n_cols; ++j) {
-		result.col(j) = op(col, arma::conv_to<arma::Row<typename R::elem_type>>::from(row)(j));
-	}
-	return result;
+// broadcasted plus/minus between column and row vectors
+template <typename R, typename C>
+typename std::enable_if< R::is_row && C::is_col, arma::Mat<decltype(std::declval<typename C::elem_type>()+std::declval<typename R::elem_type>())> >::type bcast_plus(C const& col, R const& row) {
+	return arma::repmat(col, 1, arma::size(row).n_cols).eval().each_row() + row;
 }
 
-template <typename R, typename C, typename Op>
-typename std::enable_if< R::is_row && C::is_col && is_valid_call<Op, typename R::elem_type, C>::value, arma::Mat< typename is_valid_call<Op, typename R::elem_type, C>::return_type::elem_type > >::type bcast_op(R const& row, C const& col, Op op) {
-	arma::Mat< typename is_valid_call<Op, typename R::elem_type, C>::return_type::elem_type > result(arma::size(col).n_rows, arma::size(row).n_cols);
-	for (arma::uword j = 0; j != arma::size(row).n_cols; ++j) {
-		result.col(j) = op(arma::conv_to<arma::Row<typename R::elem_type>>::from(row)(j), col);
-	}
-	return result;
+template <typename R, typename C>
+typename std::enable_if< R::is_row && C::is_col, arma::Mat<decltype(std::declval<typename R::elem_type>()+std::declval<typename C::elem_type>())> >::type bcast_plus(R const& row, C const& col) {
+	return arma::repmat(row, arma::size(col).n_rows, 1).eval().each_col() + col;
 }
 
-template <typename R, typename C, typename Op>
-typename std::enable_if< R::is_row && C::is_col && !is_valid_call<Op, typename R::elem_type, C, Op>::value && is_valid_call<Op, R, typename C::elem_type>::value, arma::Mat< typename is_valid_call<Op, R, typename C::elem_type>::return_type::elem_type > >::type bcast_op(R const& row, C const& col, Op op) {
-	arma::Mat< typename is_valid_call<Op, R, typename C::elem_type>::return_type::elem_type > result(arma::size(col).n_rows, arma::size(row).n_cols);
-	for (arma::uword i = 0; i != arma::size(col).n_rows; ++i) {
-		result.row(i) = op(row, arma::conv_to<arma::Col<typename C::elem_type>>::from(col)(i));
-	}
-	return result;
+template <typename R, typename C>
+typename std::enable_if< R::is_row && C::is_col, arma::Mat<decltype(std::declval<typename C::elem_type>()-std::declval<typename R::elem_type>())> >::type bcast_minus(C const& col, R const& row) {
+	return arma::repmat(col, 1, arma::size(row).n_cols).eval().each_row() - row;
+}
+
+template <typename R, typename C>
+typename std::enable_if< R::is_row && C::is_col, arma::Mat<decltype(std::declval<typename R::elem_type>()-std::declval<typename C::elem_type>())> >::type bcast_minus(R const& row, C const& col) {
+	return arma::repmat(row, arma::size(col).n_rows, 1).eval().each_col() - col;
 }
 
 

@@ -3,7 +3,6 @@
 
 #include <armadillo>
 #include <initializer_list>
-#include "template_helper.h"
 
 // broadcasted plus/minus between column and row vectors
 template <typename R, typename C>

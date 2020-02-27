@@ -10,14 +10,24 @@ int main() {
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
 	std::string dir;
+	int sz;
+	double val;
 	if (id == 0) {
 		dir = "/home/zuxin/playground/cpp";
+		sz = 5;
+		val = 3.14;
 	}
 
-	bcast(dir);
+	bcast(dir, sz, val);
 
-	if (id == 1) {
-		std::cout << dir << std::endl;
+	for (int i = 1; i != nprocs; ++i) {
+		if (id == i) {
+			std::cout << dir << std::endl;
+			std::cout << sz << std::endl;
+			std::cout << val << std::endl;
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
+		std::system("sleep 0.1");
 	}
 
 	MPI_Finalize();

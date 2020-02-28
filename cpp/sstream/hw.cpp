@@ -8,35 +8,11 @@ using namespace std;
 
 int main(int argc, char** argv) {
 	
-	std::string str;
-	int i;
-	std::stringstream ss;
+	double x;
 
-	ss << argv[1];
+	readargs(argv, x);
 
-	std::cout << "ss.str() = " << ss.str() << std::endl;
-
-	string sa,sb;
-	if (std::is_same<std::string, decltype(sa)>::value) {
-		std::getline(ss, sa);
-	}
-	std::cout << "sa = " << sa << std::endl;
-
-
-	/*
-	if (!ss.eof()) {
-		std::cout << "something left" << std::endl;
-	}
-
-	ss >> sb;
-	std::cout << "sb = " << sb << std::endl;
-	std::cout << ss.str() << std::endl;
-
-	*/
-
-	if (ss.eof()) {
-		std::cout << "nothing left" << std::endl;
-	}
+	std::cout << x << std::endl;
 
 
 	return 0;

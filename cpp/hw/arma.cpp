@@ -10,22 +10,18 @@ using iclock = std::chrono::high_resolution_clock;
 
 int main() {
 
-	vec v = {1,2,3.14};
-	std::cout << v.back() << std::endl;
+	int sz = 5;	
+	vec a = randu(sz);
+	vec b = randu(sz);
+	sp_mat s;
+	s = diagmat(join_cols(vec{0}, a));
 
-	v.resize(v.n_elem+1);
-	v.back() = 6.28;
-	v.print();
+	s(span(1,sz), 0) = b;
+	s(0, span(1,sz)) = b.t();
 
-	std::cout << GET_VARIABLE_NAME(v) << std::endl;
+	s.print();
 
-	
-	v.save("v.dat", arma::raw_binary);
-
-	vec u;
-	u.load("v.dat");
-	u.print();
-	
+	conv_to<mat>::from(s).print();
 
 
 	return 0;

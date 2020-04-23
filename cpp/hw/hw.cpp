@@ -7,35 +7,19 @@
 #include <type_traits>
 #include "../utility/widgets.h"
 
+using namespace arma;
 using namespace std;
 
-int main() {
+int main(int, char**argv) {
 
-	Stopwatch sw;
-	auto sleep = [] (double x) {
-		std::string cmd = "sleep " + std::to_string(x);
-		std::system(cmd.c_str());
-	};
+	vec a = randu(5,1);
+	vec b = a;
+	auto f = [] (double x) {return 1.0;};
+	b.for_each([&](double& elem) {elem = f(elem);});
 
-	sw.run();
+	b.print();
 
-	sleep(0.1);
-
-	sw.report(); // 0.1
-
-	sw.run(5);
-	sw.pause();
-
-	sleep(0.2);
-	sw.run();
-	sw.report(5); // 0.2
-	sw.report(3, "bad"); // no
-	sw.report(0, "?"); // 0.1
-	sw.reset(5);
-	sw.report(5); // 0
-	sw.run(5);
-	sleep(0.2);
-	sw.report(5, "good"); // 0.2
+	
 
 	
 

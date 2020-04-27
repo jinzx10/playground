@@ -18,16 +18,12 @@ typename std::enable_if< R::is_row && C::is_col, arma::Mat<decltype(std::declval
 */
 int main(int, char**argv) {
 
-	std::cout << "ready" << std::endl;
-	std::cout << "ready2" << std::endl;
-	for (int i = 0; i != 10; ++i) {
-		
-		printf("\033[A\33[2K\r");
-		std::cout << "i = " << i << std::endl;
-		std::system("sleep 0.5");
-	}
+	sp_mat a = sprandu(10,10, 0.2);
+	sp_mat b = sprandu(10,10, 0.2);
 
-	std::cout << std::endl;
+	vec c(join_cols(a.diag(), b.diag()));
+
+	c.print();
 
     return 0;
 }

@@ -12,6 +12,7 @@
 #include <typeinfo>
 #include <tuple>
 #include <map>
+#include <cstring>
 
 // read arguments from the command line
 template <int N = 1>
@@ -174,7 +175,90 @@ class Stopwatch
 };
 
 
+// remove the beginning and trailing whitespaces/tabs of a string
+std::string trim(std::string const& str, std::string whitespace =" \t") {
+	std::string out = str;
+	auto start = str.find_first_not_of(whitespace);
+	if (start == std::string::npos)
+		return "";
+	auto end = str.find_last_not_of(whitespace);
+	auto range = end - start + 1;
+	return str.substr(start, range);
+}
+
+// check if a string starts with a certain string
+bool start_with(std::string const& pre, std::string const& str) {
+	return (std::strncmp(pre.c_str(), str.c_str(), pre.size()) == 0);
+}
+
 // keyword parser
+struct Parser
+{
+	Parser(std::vector<std::string> const& keys_) : keys(keys_), vals(keys.size()) {}
+
+	void reset(std::vector<std::string> const& keys_) {
+		keys = keys_;
+		vals = std::vector<std::string>(keys.size(), "");
+	}
+
+	void parse(std::string const& file) {
+		std::fstream fs(file);
+		std::string line, str;
+		std::stringstream ss;
+		while (std::getline(fs, line)) {
+			ss << line;
+			while (std::getline(ss, str, ',')) {
+				auto start = str.find_first_not_of(" \t");
+				str.erase(0, start);
+				for (size_t i = 0; i != keys.size(); ++i) {
+					if (start_with(keys[i], str)) {
+						str.erase(0, keys[i].size());
+						vals[i] = trim(str);
+						break;
+					}
+				}
+			}
+			ss.str("");
+			ss.clear();
+		}
+	}
+
+	template <int N = 0>
+	void pour(std::string& val) {
+		size_check<N>();
+		val = vals[N];
+	}
+
+	template <int N = 0, typename T>
+	void pour(T& val) {
+		size_check<N>();
+		std::stringstream ss;
+		ss << vals[N];
+		ss >> val;
+	}
+
+	template <int N = 0, typename T, typename ...Rs>
+	void pour(T& val, Rs& ...args) {
+		pour<N>(val);
+		pour<N+1>(args...);
+	}
+
+	std::vector<std::string> keys;
+	std::vector<std::string> vals;
+
+
+	private:
+
+	template <int N>
+	void size_check() {
+		if ( N >= keys.size() ) {
+			std::cerr << "Parser error: too many variables: expect " << keys.size() << " or less." << std::endl;
+			exit(EXIT_FAILURE);
+		}
+	}
+};
+
+/*
 template <typename ...Ts>
 struct Parser
 {
@@ -185,21 +269,29 @@ struct Parser
 		}
 	}
 
+	void reset(std::vector<std::string> const& keys_) {
+		keys = keys_;
+		vals = std::vector<std::string>(keys.size(), "");
+	}
+
 	std::vector<std::string> keys;
 	std::vector<std::string> vals;
 
 	void parse(std::string const& file) {
 		std::fstream fs(file);
 		std::string line;
-		std::string str;
+		std::string str, first_word;
 		std::stringstream ss;
 		while (std::getline(fs, line)) {
 			ss << line;
 			while (std::getline(ss, str, ',')) {
+				auto start = str.find_first_not_of(" \t");
+				str.erase(0, start);
+				auto stop = str.find_first_of(" \t");
+				first_word = str.substr(0, stop);
 				for (size_t i = 0; i != keys.size(); ++i) {
-					auto pos = str.find(keys[i]);
-					if (pos != std::string::npos) {
-						str.erase(pos, keys[i].length());
+					if (first_word == keys[i]) {
+						str.erase(0, keys[i].length());
 						vals[i] = trim(str);
 						break;
 					}
@@ -274,7 +366,7 @@ struct Parser
 	}
 
 };
-
+*/
 
 
 #endif

@@ -1,6 +1,4 @@
-dir /home/zuxin/tmp/
-value     0.05
-size 3
-
-
-age -1, name tq, job 1
+name jack sparrow, age -1
+job pirate, birth city I don't know
+location Carribean sea
+birthday 00010101

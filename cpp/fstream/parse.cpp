@@ -9,27 +9,29 @@
 #include "../utility/widgets.h"
 
 int main() {
-	Parser<int, double, std::string, unsigned int, std::string, bool> p ({"size", "value", "dir", "age", "name", "job"});
-	//Parser<> p ({"size", "value", "dir", "age", "name", "job"});
+	Parser p ({"name", "age", "job", "birthday"});
 	p.parse("input.txt");
 
-	int sz;
-	double val;
-	std::string dir;
+	std::string name,
+				job,
+				location,
+				birth_city,
+				birthday;
 	unsigned int age;
-	std::string name;
-	bool job;
-	char tmp;
 
-	p.pour(sz, tmp, dir, age, name, job);
-	//p.pour(sz, val, dir, age, name, job);
+	p.pour(name, age, job, birthday);
 
-	std::cout << "size = " << sz << std::endl;
-	std::cout << "value = " << val << std::endl;
-	std::cout << "dir = " << dir << std::endl;
-	std::cout << "age = " << age << std::endl;
 	std::cout << "name = " << name << std::endl;
-	std::cout << std::boolalpha << "job = " << job << std::endl;
+	std::cout << "age = " << age << std::endl;
+	std::cout << "job = " << job << std::endl;
+	std::cout << "birthday = " << birthday << std::endl;
+
+	p.reset({"location", "birth city"});
+	p.parse("input.txt");
+	p.pour(location, birth_city);
+
+	std::cout << "location = " << location << std::endl;
+	std::cout << "birth city = " << birth_city << std::endl;
 
 	return 0;
 }

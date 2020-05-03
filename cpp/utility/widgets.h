@@ -196,6 +196,9 @@ struct Parser
 {
 	Parser(std::vector<std::string> const& keys_) : keys(keys_), vals(keys.size()) {}
 
+	std::vector<std::string> keys;
+	std::vector<std::string> vals;
+
 	void reset(std::vector<std::string> const& keys_) {
 		keys = keys_;
 		vals = std::vector<std::string>(keys.size(), "");
@@ -242,9 +245,6 @@ struct Parser
 		pour<N>(val);
 		pour<N+1>(args...);
 	}
-
-	std::vector<std::string> keys;
-	std::vector<std::string> vals;
 
 
 	private:

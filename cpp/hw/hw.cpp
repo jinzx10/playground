@@ -12,12 +12,16 @@ using namespace std;
 
 int main(int, char**argv) {
 
-	std::string str = "  good day";
+	arma::arma_rng::set_seed_random();
+	mat a = randu(3,3);
 
-	auto start = str.find_first_not_of(" \t");
+	mat b = a.t()*a;
 
-	str.erase(0, start);
-	std::cout << str << std::endl;
+	mat c = arma::sqrtmat_sympd(b);
+
+	std::cout << c.diag()(abs(c.diag()).index_max()) << std::endl;
+
+	c.print();
 
 
 

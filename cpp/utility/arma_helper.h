@@ -111,7 +111,7 @@ T join_c(T const& m1, T const& m2) {
 
 template <typename T, typename ...Ts>
 T join_c(T const& m, Ts const& ...ms) {
-    return join_cols( m, join_r(ms...) );
+    return join_cols( m, join_c(ms...) );
 }
 
 template <typename eT>

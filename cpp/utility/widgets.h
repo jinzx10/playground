@@ -41,6 +41,12 @@ inline int mkdir(std::string const& dir) {
 	return std::system(command.c_str());
 }
 
+// touch
+inline int touch(std::string const& file) {
+	std::string command = "touch " + file;
+	return std::system(command.c_str());
+}
+
 // a stopwatch class
 class Stopwatch
 {
@@ -176,18 +182,16 @@ class Stopwatch
 
 
 // remove the beginning and trailing whitespaces/tabs of a string
-std::string trim(std::string const& str, std::string whitespace =" \t") {
-	std::string out = str;
+inline std::string trim(std::string const& str, std::string whitespace =" \t") {
 	auto start = str.find_first_not_of(whitespace);
 	if (start == std::string::npos)
 		return "";
 	auto end = str.find_last_not_of(whitespace);
-	auto range = end - start + 1;
-	return str.substr(start, range);
+	return str.substr(start, end-start+1);
 }
 
 // check if a string starts with a certain string
-bool start_with(std::string const& pre, std::string const& str) {
+inline bool start_with(std::string const& pre, std::string const& str) {
 	return (std::strncmp(pre.c_str(), str.c_str(), pre.size()) == 0);
 }
 

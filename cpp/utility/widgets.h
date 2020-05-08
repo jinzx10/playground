@@ -13,6 +13,7 @@
 #include <tuple>
 #include <map>
 #include <cstring>
+#include <stdlib.h>
 
 // read arguments from the command line
 template <int N = 1>
@@ -261,6 +262,12 @@ struct Parser
 		}
 	}
 };
+
+inline std::string expand_leading_tilde(std::string const& dir) {
+	if (start_with("~/", dir))
+		return std::getenv("HOME") + std::string("/") + dir.substr(2, dir.size()-1);
+	return dir;
+}
 
 /*
 template <typename ...Ts>

@@ -5,14 +5,19 @@ using namespace std;
 
 int main() {
 
-	mat Zt, ovl;
+	mat Zt;
 	Zt.load("Zt.dat");
-	ovl.load("ovl2.dat");
 
 	mat ns;
-	bool status = null(ns, Zt);
+	bool null_status = null(ns, Zt);
+	cout << boolalpha << "null: " << null_status << endl;
 
-	cout << boolalpha << status << endl;
+
+	/*
+	vec sv;
+	bool svd_status = svd(sv, Zt);
+	cout << boolalpha << "svd: " << svd_status << endl;
+	*/
 
 
 	return 0;

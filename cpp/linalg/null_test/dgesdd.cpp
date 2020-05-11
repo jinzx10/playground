@@ -9,7 +9,8 @@ int main() {
 	mat A, S, U, VT, A_pre, A_raw, A_fin, Ss;
 	A_fin.load("A_fin.txt");
 	A_pre.load("A_pre.txt");
-	A_raw.load("A_raw.txt");
+	//A_raw.load("A_raw.txt");
+	A_raw.load("Zt.dat");
 
 	A = A_raw;
 

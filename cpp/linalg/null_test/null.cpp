@@ -1,5 +1,4 @@
 #include <armadillo>
-#include <lapacke.h>
 
 using namespace arma;
 using namespace std;

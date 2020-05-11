@@ -15,14 +15,14 @@ int main(int, char**argv) {
 	arma::arma_rng::set_seed_random();
 	mat a = randu(3,3);
 
-	mat b = a.t()*a;
+	a.print();
 
-	mat c = arma::sqrtmat_sympd(b);
+	arma::inplace_trans(a);
+	a.print();
 
-	std::cout << c.diag()(abs(c.diag()).index_max()) << std::endl;
-
-	c.print();
-
+	uvec i = {0,1};
+	uvec j = {2};
+	a(i,j).eval().save("a.txt", raw_ascii);
 
 
     return 0;

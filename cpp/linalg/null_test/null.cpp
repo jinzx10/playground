@@ -1,5 +1,4 @@
 #include <armadillo>
-#include <lapacke.h>
 
 using namespace arma;
 using namespace std;
@@ -9,7 +8,8 @@ int main() {
 	mat Zt;
 	Zt.load("Zt.dat");
 
-	mat identity = eye(size(Zt));
+	mat identity = zeros(size(Zt));
+	identity.diag(2) = ones(Zt.n_rows);
 	cout << "size: " << size(Zt) << std::endl;
 	std::cout << "dev from I = " << norm(identity-Zt) << std::endl;
 	mat ns;

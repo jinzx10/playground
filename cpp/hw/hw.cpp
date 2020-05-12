@@ -10,20 +10,37 @@
 using namespace arma;
 using namespace std;
 
+template <typename eT>
+int dim(arma::Col<eT> const&) {
+	return 1;
+}
+
+template <typename eT>
+int dim(arma::Row<eT> const&) {
+	return 1;
+}
+
+template <typename eT>
+int dim(arma::Mat<eT> const& ) {
+	return 2;
+}
+
+template <typename eT>
+int dim(arma::Cube<eT> const& ) {
+	return 3;
+}
+
 int main(int, char**argv) {
 
-	arma::arma_rng::set_seed_random();
-	mat a = randu(3,3);
-
+	arma::Col<int> a = arma::Col<int>{3};
 	a.print();
 
-	arma::inplace_trans(a);
-	a.print();
+	arma::mat b(3,5);
+	arma::cube c(2,3,4);
 
-	uvec i = {0,1};
-	uvec j = {2};
-	a(i,j).eval().save("a.txt", raw_ascii);
-
+	cout << dim(a) << endl;
+	cout << dim(c) << endl;
+	cout << dim(b) << endl;
 
     return 0;
 }

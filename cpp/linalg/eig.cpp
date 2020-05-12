@@ -2,7 +2,6 @@
 #include "../utility/widgets.h"
 
 using namespace arma;
-using iclock = std::chrono::high_resolution_clock;
 
 int main(int, char** argv) {
 
@@ -11,6 +10,8 @@ int main(int, char** argv) {
 	Stopwatch sw;
 
 	readargs(argv, sz, nt);
+	std::cout << sz << std::endl
+		<< nt << std::endl;
 
 	auto f = [](const mat& a) -> arma::vec { return arma::eig_sym(a); };
 

@@ -89,16 +89,15 @@ template <typename T>
 typename std::enable_if<arma::is_arma_type<T>::value, int>::type bcast(T& data) {
 	int id;
 	MPI_Comm_rank(MPI_COMM_WORLD, &id);
-	// how to broadcast size?
+	// the space of data needs to be preallocated!
 	return MPI_Bcast(data.memptr(), data.n_elem, mpi_type_helper<typename T::elem_type>(), 0, MPI_COMM_WORLD);
 }
 
 int bcast(std::string& data) {
 	int id, sz;
 	MPI_Comm_rank(MPI_COMM_WORLD, &id);
-	if (id == 0) {
+	if (id == 0)
 		sz = data.size();
-	}
 	bcast(sz);
 	char* content = new char[sz+1];
 	if (id == 0) {
@@ -106,9 +105,8 @@ int bcast(std::string& data) {
 		content[sz] = '\0';
 	}
 	int status = MPI_Bcast(content, sz+1, MPI_CHAR, 0, MPI_COMM_WORLD);
-	if (id != 0) {
+	if (id != 0)
 		data = content;
-	}
 	delete[] content;
 	return status;
 }
@@ -116,9 +114,7 @@ int bcast(std::string& data) {
 template <typename T, typename ...Ts>
 int bcast(T& data, Ts& ...args) {
 	int status = bcast(data);
-	if (status)
-		return status;
-	return bcast(args...);
+	return status ? status : bcast(args...);
 }
 
 
@@ -138,17 +134,13 @@ int gather(arma::Mat<eT> const& local, arma::Mat<eT>& global) {
 template <typename eT, typename ...Ts>
 int gather(eT const& local, arma::Mat<eT>& global, Ts& ...args) {
 	int status = gather(local, global);
-	if (status)
-		return status;
-	return gather(args...);
+	return status ? status : gather(args...);
 }
 
 template <typename eT, typename ...Ts>
 int gather(arma::Mat<eT> const& local, arma::Mat<eT>& global, Ts& ...args) {
 	int status = gather(local, global);
-	if (status)
-		return status;
-	return gather(args...);
+	return status ? status : gather(args...);
 }
 
 template <typename eT>
@@ -161,21 +153,15 @@ int gatherv(arma::Mat<eT> const& local, arma::Mat<eT>& global, int root = 0) {
    	if (id == root) 
 		local_counts = arma::zeros<arma::Col<int>>(nprocs);
 	gather(n_local, local_counts);
-	if (id == root) {
-		disp = arma::cumsum(local_counts);
-		disp.insert_rows(0,1,true);
-		disp.shed_row(disp.n_elem-1);
-	}
+	if (id == root)
+		disp = join_cols(arma::Col<int>{0}, arma::cumsum(local_counts.head(nprocs-1)));
 	return MPI_Gatherv(local.memptr(), local.n_elem, mpi_type_helper<eT>(), global.memptr(), local_counts.memptr(), disp.memptr(), mpi_type_helper<eT>(), root, MPI_COMM_WORLD);
 }
 
 template <typename eT, typename ...Ts>
 int gatherv(arma::Mat<eT> const& local, arma::Mat<eT>& global, Ts& ...args) {
 	int status = gatherv(local, global);
-	if (status) {
-		return status;
-	}
-	return gatherv(args...);
+	return status ? status : gatherv(args...);
 }
 
 

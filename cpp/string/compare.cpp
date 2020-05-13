@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <cstring>
+#include "../utility/widgets.h"
 
 using namespace std;
 
@@ -14,15 +16,13 @@ void check(string const& a) {
 }
 
 
-int main() {
-	string s1 = "good";
-	
-	std::cout << (s1 == "good") << std::endl;
-	std::cout << (s1 == "bad") << std::endl;
+int main(int, char** argv) {
+	string s1;
+	readargs(argv, s1);
 
-	check("good");
-	check("bad");
-	check("no");
+	cout << s1.compare("~") << endl;
+	cout << s1.compare("~/") << endl;
+	
 
 	return 0;
 }

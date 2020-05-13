@@ -2,11 +2,12 @@
 
 int main() {
 
-	//std::cout << "start: " << trim("I don't know") << std::endl;
-	//std::cout << "start: " << trim(" I don't know  ") << std::endl;
-	//std::cout << "start: " << trim("		I don't know  ") << std::endl;
-	//std::cout << "start: " << trim("	\tI don't know  ", " ") << std::endl;
-	std::cout << trim("	\tI don't know  ", " ") << std::endl;
+	std::cout << "start: " << trim("I don't know") << std::endl;
+	std::cout << "start: " << trim(" I don't know  ") << std::endl;
+	std::cout << "start: " << trim("		I don't know  ") << std::endl;
+	std::cout << "start: " << trim("	\tI don't know  ", " ") << std::endl;
+	std::cout << trim(" \tI don't know  ", " ") << std::endl;
+	std::cout << trim(" \tI don't know  ", " ") << std::endl;
 	std::cout << "\tI don't know" << std::endl;
 
 	
@@ -26,7 +27,6 @@ int main() {
 		++ptr;
 	}
 	std::cout << std::endl;
-
 
 	return 0;
 }

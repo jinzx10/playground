@@ -13,20 +13,17 @@
 #include <tuple>
 #include <map>
 #include <cstring>
-#include <stdlib.h>
 
 // read arguments from the command line
+// no bound check!
 template <int N = 1>
 void readargs(char** args, std::string& var) {
-	std::stringstream ss;
-	ss << args[N];
-	std::getline(ss, var);
+	var = args[N];
 }
 
 template <int N = 1, typename T>
 void readargs(char** args, T& var) {
-	std::stringstream ss;
-	ss << args[N];
+	std::stringstream ss(args[N]);
 	ss >> var;
 }
 
@@ -182,21 +179,32 @@ class Stopwatch
 };
 
 
-// remove the beginning and trailing whitespaces/tabs of a string
-inline std::string trim(std::string const& str, std::string whitespace =" \t") {
-	auto start = str.find_first_not_of(whitespace);
-	if (start == std::string::npos)
-		return "";
-	auto end = str.find_last_not_of(whitespace);
-	return str.substr(start, end-start+1);
+// remove the leading and trailing characters in char_rm of a string
+// by default char_rm contains whitespace and tab
+inline std::string trim(std::string const& str, std::string char_rm =" \t") {
+	auto start = str.find_first_not_of(char_rm);
+	return (start == std::string::npos) ? 
+		"" : str.substr(start, str.find_last_not_of(char_rm)-start+1);
 }
 
 // check if a string starts with a certain string
-inline bool start_with(std::string const& pre, std::string const& str) {
-	return (std::strncmp(pre.c_str(), str.c_str(), pre.size()) == 0);
+// leading characters in char_skip will be ignored
+inline bool start_with(std::string const& pre, std::string const& str, std::string char_skip = "") {
+	auto start = str.find_first_not_of(char_skip);
+	return (start == std::string::npos) ? (pre.size() ? false : true) : 
+		(std::strncmp(pre.c_str(), str.substr(start).c_str(), pre.size()) == 0);
+}
+
+// replace the leading "~" of a string with ${HOME}
+// leading and trailing characters in char_skip (whitespace and tab by default) will be ignored
+inline std::string expand_leading_tilde(std::string const& dir, std::string char_skip = " \t") {
+	auto start = dir.find_first_not_of(char_skip);
+	return (start == std::string::npos || dir[start] != '~') ? dir :
+		dir.substr(0, start) + std::getenv("HOME") + dir.substr(start+1);;
 }
 
 // keyword parser
+// basic usage: Parser p({"key1", "key2", ...}); p.parse(file); p.pour(val1, val2, ...);
 struct Parser
 {
 	Parser(std::vector<std::string> const& keys_) : keys(keys_), vals(keys.size()) {}
@@ -262,122 +270,6 @@ struct Parser
 		}
 	}
 };
-
-inline std::string expand_leading_tilde(std::string const& dir) {
-	if (start_with("~/", dir))
-		return std::getenv("HOME") + std::string("/") + dir.substr(2, dir.size()-1);
-	return dir;
-}
-
-/*
-template <typename ...Ts>
-struct Parser
-{
-	Parser(std::vector<std::string> const& keys_) : keys(keys_), vals(keys.size()) {
-		if ( sizeof...(Ts) > keys.size() ) {
-			std::cerr << "Parser error: too many types specified." << std::endl;
-			exit(EXIT_FAILURE);
-		}
-	}
-
-	void reset(std::vector<std::string> const& keys_) {
-		keys = keys_;
-		vals = std::vector<std::string>(keys.size(), "");
-	}
-
-	std::vector<std::string> keys;
-	std::vector<std::string> vals;
-
-	void parse(std::string const& file) {
-		std::fstream fs(file);
-		std::string line;
-		std::string str, first_word;
-		std::stringstream ss;
-		while (std::getline(fs, line)) {
-			ss << line;
-			while (std::getline(ss, str, ',')) {
-				auto start = str.find_first_not_of(" \t");
-				str.erase(0, start);
-				auto stop = str.find_first_of(" \t");
-				first_word = str.substr(0, stop);
-				for (size_t i = 0; i != keys.size(); ++i) {
-					if (first_word == keys[i]) {
-						str.erase(0, keys[i].length());
-						vals[i] = trim(str);
-						break;
-					}
-				}
-			}
-			ss.str("");
-			ss.clear();
-		}
-	}
-
-	template <int N = 0>
-	void pour(std::string& val) {
-		check<N, std::string>();
-		std::stringstream ss;
-		ss << vals[N];
-		std::getline(ss, val);
-	}
-
-	template <int N = 0, typename T>
-	void pour(T& val) {
-		check<N, T>();
-		std::stringstream ss;
-		ss << vals[N];
-		ss >> val;
-	}
-
-	template <int N = 0, typename T, typename ...Rs>
-	void pour(T& val, Rs& ...args) {
-		pour<N>(val);
-		pour<N+1, Rs...>(args...);
-	}
-
-
-	private:
-
-	std::string trim(std::string const& str, std::string whitespace =" \t") {
-		std::string out = str;
-		auto start = str.find_first_not_of(whitespace);
-		if (start == std::string::npos)
-			return "";
-		auto end = str.find_last_not_of(whitespace);
-		auto range = end - start + 1;
-		return str.substr(start, range);
-	}
-
-	template <int N, typename T>
-	typename std::enable_if< ( N >= sizeof...(Ts) ), void>::type type_check() {}
-
-	template <int N, typename T>
-	typename std::enable_if< ( N < sizeof...(Ts) ), void>::type type_check() {
-		using C = typename std::tuple_element<N, std::tuple<Ts...>>::type;
-		if ( !std::is_same<void, C>::value && !std::is_same<T, C>::value ) {
-			std::cerr << "Parser error: type mismatch: argument " << N << std::endl
-				<< "expected type: " << typeid(C).name() << std::endl
-				<< "detected type: " << typeid(T).name() << std::endl;
-			exit(EXIT_FAILURE);
-		}
-	}
-
-	template <int N>
-	void size_check() {
-		if ( N >= keys.size() ) {
-			std::cerr << "Parser error: too many variables." << std::endl;
-			exit(EXIT_FAILURE);
-		}
-	}
-
-	template <int N, typename T>
-	void check() {
-		size_check<N>();
-		type_check<N,T>();
-	}
-
-};
-*/
 
 
 #endif

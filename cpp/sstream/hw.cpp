@@ -25,18 +25,28 @@ void readargs(char** args, T& var, Ts& ...rest) {
 	readargs<N+1>(args, rest...);
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char* argv[]) {
 	
 	double x;
-	string str1, str2;
 	int y;
+	string z, w;
+	int a[5];
+	int* pa[5];
 
-	readargs(argv, str1, x, str2, y);
+	cout << sizeof(a)/sizeof(int) << endl;
+	cout << sizeof(pa)/sizeof(int*) << endl;
+	cout << sizeof(argv) << endl;
+	cout << sizeof(*argv) << endl;
+	cout << sizeof(argv[0]) << endl;
+
+	/*
+	readargs(argv, x, y, z, w);
 
 	std::cout << x << std::endl;
 	std::cout << y << std::endl;
-	std::cout << str1 << std::endl;
-	std::cout << str2 << std::endl;
+	std::cout << z << std::endl;
+	std::cout << w << std::endl;
+	*/
 
 
 	return 0;

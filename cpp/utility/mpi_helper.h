@@ -94,17 +94,19 @@ typename std::enable_if<arma::is_arma_type<T>::value, int>::type bcast(T& data) 
 }
 
 int bcast(std::string& data) {
-	int id, sz;
+	int id, sz, status;
 	MPI_Comm_rank(MPI_COMM_WORLD, &id);
 	if (id == 0)
 		sz = data.size();
-	bcast(sz);
+	status = bcast(sz);
+	if (status)
+		return status;
 	char* content = new char[sz+1];
 	if (id == 0) {
 		std::copy(data.begin(), data.end(), content);
 		content[sz] = '\0';
 	}
-	int status = MPI_Bcast(content, sz+1, MPI_CHAR, 0, MPI_COMM_WORLD);
+	status = MPI_Bcast(content, sz+1, MPI_CHAR, 0, MPI_COMM_WORLD);
 	if (id != 0)
 		data = content;
 	delete[] content;

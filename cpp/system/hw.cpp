@@ -1,12 +1,16 @@
 #include <cstdlib>
 #include <string>
+#include <stdlib.h>
+#include <iostream>
 
 using namespace std;
 
 int main() {
-	string cmd = "touch $(pwd)/../test.txt";
 
-	system(cmd.c_str());
+	string path = "~/playground/cpp/hw/hw.cpp";
+	string real = realpath(path.c_str(), nullptr);
+
+	cout << real << endl;
 
 	return 0;
 }

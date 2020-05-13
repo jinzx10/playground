@@ -30,7 +30,40 @@ int dim(arma::Cube<eT> const& ) {
 	return 3;
 }
 
+
+
+
+
+
+int sum(int i, int j, int k) {
+	return i+j+k;
+}
+
+struct Test
+{
+	Test(): x(0) {}
+	Test(int i): x(i) {}
+
+	int x;
+};
+
 int main(int, char**argv) {
+	Test t(;
+	int a, b, c;
+
+	sum(a,b,c);
+	
+
+
+
+
+
+
+
+
+
+
+
 
 	arma::Col<int> a = arma::Col<int>{3};
 	a.print();

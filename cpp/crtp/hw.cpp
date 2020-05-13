@@ -7,8 +7,10 @@ template <typename T>
 struct Solve
 {
 	void solve() {
-		T& m = static_cast<T&>(*this);
-		arma::eig_sym( m.eigval, m.eigvec, m.H );
+		//T& m = static_cast<T&>(*this);
+		//arma::eig_sym( m.eigval, m.eigvec, m.H );
+		T* m = static_cast<T*>(this);
+		arma::eig_sym( m->eigval, m->eigvec, m->H );
 	}
 };
 

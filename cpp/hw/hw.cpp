@@ -10,70 +10,36 @@
 using namespace arma;
 using namespace std;
 
-template <typename eT>
-int dim(arma::Col<eT> const&) {
-	return 1;
-}
-
-template <typename eT>
-int dim(arma::Row<eT> const&) {
-	return 1;
-}
-
-template <typename eT>
-int dim(arma::Mat<eT> const& ) {
-	return 2;
-}
-
-template <typename eT>
-int dim(arma::Cube<eT> const& ) {
-	return 3;
-}
-
-
-
-
-
-
-int sum(int i, int j, int k) {
-	return i+j+k;
-}
-
-struct Test
-{
-	Test(): x(0) {}
-	Test(int i): x(i) {}
-
-	int x;
-};
 
 int main(int, char**argv) {
-	Test t(;
-	int a, b, c;
-
-	sum(a,b,c);
 	
+	arma::Col<int> col1 = arma::Col<int>{3};
+	arma::Row<char> row1 = {'a','c','x'};
+
+	arma::mat mat1(3,5), mat2, mat3;
+	arma::cube cube1(2,3,4);
+
+	dim(col1).print();
+	dim(mat1).print();
+	dim(row1).print();
+	dim(cube1).print();
+
+	set_size({2,8}, mat1);
+	mat1.print();
+
+	set_size({3,3}, mat1, mat2, mat3);
+
+	cout << endl;
+	mat1.print();
+	cout << endl;
+	cout << endl;
+	mat2.print();
+	cout << endl;
+	cout << endl;
+	mat3.print();
+	cout << endl;
 
 
-
-
-
-
-
-
-
-
-
-
-	arma::Col<int> a = arma::Col<int>{3};
-	a.print();
-
-	arma::mat b(3,5);
-	arma::cube c(2,3,4);
-
-	cout << dim(a) << endl;
-	cout << dim(c) << endl;
-	cout << dim(b) << endl;
 
     return 0;
 }

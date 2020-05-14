@@ -10,35 +10,25 @@ int main(int, char** argv) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &id);
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-	int x, y;
-	arma::vec vx, vy;
-	if (id == 0) {
-		readargs(argv, x, y);
-	}
-
-	int status = bcast(x, y);
-	if (id == 0) {
-		std::cout << "bcast(x,y) return value = " << status << std::endl;
-	}
-
-	vx.set_size(x);
-	vy.set_size(y);
+	int root;
+	int sz;
 
 	if (id == 0) {
-		vx.zeros();
-		vy.ones();
-		x = 321;
-		y = 123;
+		readargs(argv, root);
+	}
+	bcast(0, root); // broadcast which proc is root
+
+
+	arma::vec v = id*arma::ones(id);
+	sz = id;
+	bcast(root, sz);
+
+	v.set_size(sz);
+
+	if (id == 0) {
+		v.print();
 	}
 
-	bcast(vx, x, y, vy);
-
-	if (id == nprocs-1) {
-		std::cout << x << std::endl;
-		std::cout << y << std::endl;
-		vx.print();
-		vy.print();
-	}
 
 	MPI_Finalize();
 

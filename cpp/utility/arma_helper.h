@@ -49,8 +49,54 @@ arma::uvec cat(T const& i, Ts const& ...args) {
 	return arma::join_cols(arma::uvec{i}, cat(args...));
 }
 
+// dimensions of armadillo Col/Row/Mat/Cube
+template <typename eT>
+arma::uvec dim(arma::Col<eT> const& a) {
+	return arma::uvec{a.n_elem};
+}
 
-// mass size setting
+template <typename eT>
+arma::uvec dim(arma::Row<eT> const& a) {
+	return arma::uvec{a.n_elem};
+}
+
+template <typename eT>
+arma::uvec dim(arma::Mat<eT> const& a) {
+	return arma::uvec{a.n_rows, a.n_cols};
+}
+
+template <typename eT>
+arma::uvec dim(arma::Cube<eT> const& a) {
+	return arma::uvec{a.n_rows, a.n_cols, a.n_slices};
+}
+
+// batch size setting
+template <typename eT>
+int set_size(arma::uvec const& sz, arma::Row<eT>& a) {
+	return sz.n_elem == 1 ? a.set_size(sz(0)), 0 : 1;
+}
+
+template <typename eT>
+int set_size(arma::uvec const& sz, arma::Col<eT>& a) {
+	return sz.n_elem == 1 ? a.set_size(sz(0)), 0 : 1;
+}
+
+template <typename eT>
+int set_size(arma::uvec const& sz, arma::Mat<eT>& a) {
+	return sz.n_elem == 2 ? a.set_size(sz(0), sz(1)), 0 : 1;
+}
+
+template <typename eT>
+int set_size(arma::uvec const& sz, arma::Cube<eT>& a) {
+	return sz.n_elem == 3 ? a.set_size(sz(0), sz(1), sz(2)), 0 : 1;
+}
+
+template <typename T, typename ...Ts>
+int set_size(arma::uvec const& sz, T& a, Ts& ...args) {
+	int status = set_size(sz, a);
+	return status ? status : set_size(sz, args...);
+}
+
 template <typename eT>
 void set_size(arma::uword const& sz, arma::Mat<eT>& m) {
 	m.set_size(sz);
@@ -74,7 +120,6 @@ void set_size(arma::uword const& sz_r, arma::uword const& sz_c, arma::Mat<eT>& m
 }
 
 
-
 // matrix concatenation
 template <typename T>
 T join_r(std::initializer_list<T> m) {
@@ -94,24 +139,24 @@ T join(std::initializer_list< std::initializer_list<T> > m) {
 	return z;
 }
 
-template <typename T>
-T join_r(T const& m1, T const& m2) {
+template <typename T1, typename T2>
+auto join_r(T1 const& m1, T2 const& m2) {
 	return arma::join_rows(m1, m2);
 }
 
 template <typename T, typename ...Ts>
-T join_r(T const& m, Ts const& ...ms) {
-    return join_rows( m, join_r(ms...) );
+auto join_r(T const& m, Ts const& ...ms) {
+    return arma::join_rows( m, join_r(ms...) );
 }
 
-template <typename T>
-T join_c(T const& m1, T const& m2) {
+template <typename T1, typename T2>
+auto join_c(T1 const& m1, T2 const& m2) {
 	return arma::join_cols(m1, m2);
 }
 
 template <typename T, typename ...Ts>
-T join_c(T const& m, Ts const& ...ms) {
-    return join_cols( m, join_c(ms...) );
+auto join_c(T const& m, Ts const& ...ms) {
+    return arma::join_cols( m, join_c(ms...) );
 }
 
 template <typename eT>
@@ -126,7 +171,6 @@ template <typename T, typename ...Ts>
 T join_d(T const& m, Ts const& ...ms) {
     return join_d(m, join_d(ms...));
 }
-
 
 // save/load
 template <arma::file_type F, typename T>

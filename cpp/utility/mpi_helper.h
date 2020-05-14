@@ -81,42 +81,40 @@ inline MPI_Datatype mpi_type_helper<unsigned long long>() {
 
 // broadcast
 template <typename T>
-typename std::enable_if<std::is_trivial<T>::value, int>::type bcast(T& data) {
-	return MPI_Bcast(&data, 1, mpi_type_helper<T>(), 0, MPI_COMM_WORLD);
+typename std::enable_if<std::is_trivial<T>::value, int>::type bcast(int const& root, T& data) {
+	return MPI_Bcast(&data, 1, mpi_type_helper<T>(), root, MPI_COMM_WORLD);
 }
 
 template <typename T>
-typename std::enable_if<arma::is_arma_type<T>::value, int>::type bcast(T& data) {
-	int id;
-	MPI_Comm_rank(MPI_COMM_WORLD, &id);
+typename std::enable_if<arma::is_arma_type<T>::value, int>::type bcast(int const& root, T& data) {
 	// the space of data needs to be preallocated!
-	return MPI_Bcast(data.memptr(), data.n_elem, mpi_type_helper<typename T::elem_type>(), 0, MPI_COMM_WORLD);
+	return MPI_Bcast(data.memptr(), data.n_elem, mpi_type_helper<typename T::elem_type>(), root, MPI_COMM_WORLD);
 }
 
-int bcast(std::string& data) {
+int bcast(int const& root, std::string& data) {
 	int id, sz, status;
 	MPI_Comm_rank(MPI_COMM_WORLD, &id);
-	if (id == 0)
+	if (id == root)
 		sz = data.size();
-	status = bcast(sz);
+	status = bcast(root, sz);
 	if (status)
 		return status;
 	char* content = new char[sz+1];
-	if (id == 0) {
+	if (id == root) {
 		std::copy(data.begin(), data.end(), content);
 		content[sz] = '\0';
 	}
-	status = MPI_Bcast(content, sz+1, MPI_CHAR, 0, MPI_COMM_WORLD);
-	if (id != 0)
+	status = MPI_Bcast(content, sz+1, MPI_CHAR, root, MPI_COMM_WORLD);
+	if (id != root)
 		data = content;
 	delete[] content;
 	return status;
 }
 
 template <typename T, typename ...Ts>
-int bcast(T& data, Ts& ...args) {
-	int status = bcast(data);
-	return status ? status : bcast(args...);
+int bcast(int const& root, T& data, Ts& ...args) {
+	int status = bcast(root, data);
+	return status ? status : bcast(root, args...);
 }
 
 
@@ -124,29 +122,52 @@ int bcast(T& data, Ts& ...args) {
 // use "gather" if the number of elements to gather is the same for every process
 // use "gatherv" otherwise
 template <typename eT>
+int gather(int const& root, eT const& local, arma::Mat<eT>& global) {
+	return MPI_Gather(&local, 1, mpi_type_helper<eT>(), global.memptr(), 1, mpi_type_helper<eT>(), root, MPI_COMM_WORLD);
+}
+
+template <typename eT>
 int gather(eT const& local, arma::Mat<eT>& global) {
-	return MPI_Gather(&local, 1, mpi_type_helper<eT>(), global.memptr(), 1, mpi_type_helper<eT>(), 0, MPI_COMM_WORLD);
+	return gather(0, local, global);
+}
+
+template <typename eT>
+int gather(int const& root, arma::Mat<eT> const& local, arma::Mat<eT>& global) {
+	return MPI_Gather(local.memptr(), local.n_elem, mpi_type_helper<eT>(), global.memptr(), local.n_elem, mpi_type_helper<eT>(), root, MPI_COMM_WORLD);
 }
 
 template <typename eT>
 int gather(arma::Mat<eT> const& local, arma::Mat<eT>& global) {
-	return MPI_Gather(local.memptr(), local.n_elem, mpi_type_helper<eT>(), global.memptr(), local.n_elem, mpi_type_helper<eT>(), 0, MPI_COMM_WORLD);
+	return gather(0, local, global);
 }
 
 template <typename eT, typename ...Ts>
-int gather(eT const& local, arma::Mat<eT>& global, Ts& ...args) {
-	int status = gather(local, global);
-	return status ? status : gather(args...);
+typename std::enable_if<!(sizeof...(Ts)%2),int>::type gather(int const& root, eT const& local, arma::Mat<eT>& global, Ts& ...args) {
+	int status = gather(root, local, global);
+	return status ? status : gather(root, args...);
 }
 
 template <typename eT, typename ...Ts>
-int gather(arma::Mat<eT> const& local, arma::Mat<eT>& global, Ts& ...args) {
-	int status = gather(local, global);
-	return status ? status : gather(args...);
+typename std::enable_if<!(sizeof...(Ts)%2),int>::type gather(eT const& local, arma::Mat<eT>& global, Ts& ...args) {
+	int status = gather(0, local, global);
+	return status ? status : gather(0, args...);
 }
+
+template <typename eT, typename ...Ts>
+typename std::enable_if<!(sizeof...(Ts)%2),int>::type gather(int const& root, arma::Mat<eT> const& local, arma::Mat<eT>& global, Ts& ...args) {
+	int status = gather(root, local, global);
+	return status ? status : gather(root, args...);
+}
+
+template <typename eT, typename ...Ts>
+typename std::enable_if<!(sizeof...(Ts)%2),int>::type gather(arma::Mat<eT> const& local, arma::Mat<eT>& global, Ts& ...args) {
+	int status = gather(0, local, global);
+	return status ? status : gather(0, args...);
+}
+
 
 template <typename eT>
-int gatherv(arma::Mat<eT> const& local, arma::Mat<eT>& global, int root = 0) {
+int gatherv(int const& root, arma::Mat<eT> const& local, arma::Mat<eT>& global) {
 	int id, nprocs;
 	MPI_Comm_rank(MPI_COMM_WORLD, &id);
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -160,11 +181,20 @@ int gatherv(arma::Mat<eT> const& local, arma::Mat<eT>& global, int root = 0) {
 	return MPI_Gatherv(local.memptr(), local.n_elem, mpi_type_helper<eT>(), global.memptr(), local_counts.memptr(), disp.memptr(), mpi_type_helper<eT>(), root, MPI_COMM_WORLD);
 }
 
+template <typename eT>
+int gatherv(arma::Mat<eT> const& local, arma::Mat<eT>& global) {
+	return gatherv(0, local, global);
+}
+
 template <typename eT, typename ...Ts>
-int gatherv(arma::Mat<eT> const& local, arma::Mat<eT>& global, Ts& ...args) {
+int gatherv(int const& root, arma::Mat<eT> const& local, arma::Mat<eT>& global, Ts& ...args) {
 	int status = gatherv(local, global);
 	return status ? status : gatherv(args...);
 }
 
+template <typename eT, typename ...Ts>
+int gatherv(arma::Mat<eT> const& local, arma::Mat<eT>& global, Ts& ...args) {
+	return gatherv(0, local, global, args...);
+}
 
 #endif

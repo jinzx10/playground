@@ -188,8 +188,8 @@ int gatherv(arma::Mat<eT> const& local, arma::Mat<eT>& global) {
 
 template <typename eT, typename ...Ts>
 int gatherv(int const& root, arma::Mat<eT> const& local, arma::Mat<eT>& global, Ts& ...args) {
-	int status = gatherv(local, global);
-	return status ? status : gatherv(args...);
+	int status = gatherv(root, local, global);
+	return status ? status : gatherv(root, args...);
 }
 
 template <typename eT, typename ...Ts>

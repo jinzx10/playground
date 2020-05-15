@@ -124,18 +124,16 @@ void set_size(arma::uword const& sz_r, arma::uword const& sz_c, arma::Mat<eT>& m
 template <typename T>
 T join_r(std::initializer_list<T> m) {
 	T z;
-	for (auto it = m.begin(); it != m.end(); ++it) {
+	for (auto it = m.begin(); it != m.end(); ++it)
 		z = join_rows(z, *it);
-	}
 	return z;
 }
 
 template <typename T>
 T join(std::initializer_list< std::initializer_list<T> > m) {
 	T z;
-	for (auto it = m.begin(); it != m.end(); ++it) {
+	for (auto it = m.begin(); it != m.end(); ++it)
 		z = join_cols(z, join_r(*it));
-	}
 	return z;
 }
 
@@ -146,7 +144,7 @@ auto join_r(T1 const& m1, T2 const& m2) {
 
 template <typename T, typename ...Ts>
 auto join_r(T const& m, Ts const& ...ms) {
-    return arma::join_rows( m, join_r(ms...) );
+    return arma::join_rows(m, join_r(ms...)).eval(); // slow, but it needs eval() to work, why?
 }
 
 template <typename T1, typename T2>
@@ -156,19 +154,19 @@ auto join_c(T1 const& m1, T2 const& m2) {
 
 template <typename T, typename ...Ts>
 auto join_c(T const& m, Ts const& ...ms) {
-    return arma::join_cols( m, join_c(ms...) );
+    return arma::join_cols(m, join_c(ms...)).eval();
 }
 
-template <typename eT>
-arma::Mat<eT> join_d(arma::Mat<eT> const& m1, arma::Mat<eT> const& m2) {
+template <typename T1, typename T2>
+auto join_d(T1 const& m1, T2 const& m2) {
     return join_cols(
-			join_rows( m1, arma::zeros<arma::Mat<eT>>(m1.n_rows, m2.n_cols) ),
-			join_rows( arma::zeros<arma::Mat<eT>>(m2.n_rows, m1.n_cols), m2 )
-	);
+			join_rows( m1, arma::zeros<arma::Mat<typename T1::elem_type>>(m1.n_rows, m2.n_cols) ),
+			join_rows( arma::zeros<arma::Mat<typename T2::elem_type>>(m2.n_rows, m1.n_cols), m2 )
+	).eval();
 }
 
 template <typename T, typename ...Ts>
-T join_d(T const& m, Ts const& ...ms) {
+auto join_d(T const& m, Ts const& ...ms) {
     return join_d(m, join_d(ms...));
 }
 

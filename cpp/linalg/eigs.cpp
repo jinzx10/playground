@@ -17,13 +17,15 @@ int main(int, char** argv) {
 	mat eigvec, evec;
 
 	Stopwatch sw;
+
 	sw.run();
-	eig_sym(eigval, eigvec, mat(a));
+	eigs_sym(eval, evec, a, sz_sub);
 	sw.report();
 
 	sw.reset();
+
 	sw.run();
-	eigs_sym(eval, evec, a, sz_sub);
+	eig_sym(eigval, eigvec, mat(a));
 	sw.report();
 
 	return 0;

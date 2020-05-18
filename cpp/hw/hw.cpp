@@ -6,6 +6,7 @@
 #include <type_traits>
 #include "../utility/widgets.h"
 #include "../utility/arma_helper.h"
+#include "../utility/math_helper.h" 
 
 using namespace arma;
 using namespace std;
@@ -13,32 +14,18 @@ using namespace std;
 
 int main(int, char**argv) {
 	
-	arma::Col<int> col1 = arma::Col<int>{3};
-	arma::Row<char> row1 = {'a','c','x'};
+	auto f = [] (vec const& v) -> vec {
+		vec r(3);
+		r(0) = v(0)*v(0)+v(1)*v(1)-1;
+		r(1) = v(2)-0.5;
+		r(2) = v(0)*v(0)-v(1)-0.25;
+		return r;
+	};
 
-	arma::mat mat1(3,5), mat2, mat3;
-	arma::cube cube1(2,3,4);
+	vec x0 = {1,1,1};
+	broydenroot(f, x0, "bad");
 
-	dim(col1).print();
-	dim(mat1).print();
-	dim(row1).print();
-	dim(cube1).print();
-
-	set_size({2,8}, mat1);
-	mat1.print();
-
-	set_size({3,3}, mat1, mat2, mat3);
-
-	cout << endl;
-	mat1.print();
-	cout << endl;
-	cout << endl;
-	mat2.print();
-	cout << endl;
-	cout << endl;
-	mat3.print();
-	cout << endl;
-
+	x0.print();
 
 
     return 0;

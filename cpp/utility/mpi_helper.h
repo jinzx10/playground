@@ -187,13 +187,13 @@ int gatherv(arma::Mat<eT> const& local, arma::Mat<eT>& global) {
 }
 
 template <typename eT, typename ...Ts>
-int gatherv(int const& root, arma::Mat<eT> const& local, arma::Mat<eT>& global, Ts& ...args) {
+typename std::enable_if<!(sizeof...(Ts)%2),int>::type gatherv(int const& root, arma::Mat<eT> const& local, arma::Mat<eT>& global, Ts& ...args) {
 	int status = gatherv(root, local, global);
 	return status ? status : gatherv(root, args...);
 }
 
 template <typename eT, typename ...Ts>
-int gatherv(arma::Mat<eT> const& local, arma::Mat<eT>& global, Ts& ...args) {
+typename std::enable_if<!(sizeof...(Ts)%2),int>::type gatherv(arma::Mat<eT> const& local, arma::Mat<eT>& global, Ts& ...args) {
 	return gatherv(0, local, global, args...);
 }
 

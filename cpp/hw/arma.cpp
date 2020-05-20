@@ -8,35 +8,25 @@
 
 using namespace arma;
 
-template <typename T1, typename T2>
-auto jr(T1 const& m1, T2 const& m2) {
-	return join_rows(m1, m2);
-}
-
-template <typename T, typename ...Ts>
-auto jr(T const& m, Ts const& ...args) {
-	return jr(m, jr(args...)).eval();
-}
 
 int main() {
-	mat a = randu(3,2);
-	vec b = zeros(3);
-	mat c = ones(3,4);
-	mat d;
 
-	Stopwatch sw;
+	vec a(10, fill::zeros);
+	a(4) = datum::nan;
+	a(7) = datum::inf;
+	a(9) = -1/0.0;
+	a(2) = 1/0.0;
 
-	//mat j0 = join_r(a,mat{b},c);
-	//j0.print();
+	a.print();
 
-	//auto f = [&](mat const& i, mat const& j, mat const& k, mat const& l) {return jr(i,j,k,l);};
-	//sw.timeit(10, f, a, b, c, a);
+	std::cout << std::endl;
 
-	d = join_d(a, b, c);
-	d.print();
+	a.replace(datum::inf, 1);
+	a.print();
+	std::cout << std::endl;
 
-
-	//j.print();
+	a(arma::find_nonfinite(a)).ones();
+	a.print();
 
 	return 0;
 }

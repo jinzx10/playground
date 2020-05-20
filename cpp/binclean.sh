@@ -10,9 +10,9 @@ if [ -z "$files" ]; then
 	exit 0
 fi
 
-echo -e "\nthe following binary executabls will be removed: \n"
+echo -e "\nthe following binary executables will be removed: \n"
 echo -e "$files\n"
-read -p "[y|n] ? (default=y) : " ans
+read -p "Proceed? [Y/n] " ans
 if [ -z "$ans" ]; then
 	ans=y
 fi

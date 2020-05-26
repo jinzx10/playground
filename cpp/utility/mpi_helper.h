@@ -86,7 +86,7 @@ typename std::enable_if<std::is_trivial<T>::value, int>::type bcast(int const& r
 }
 
 template <typename T>
-typename std::enable_if<arma::is_arma_type<T>::value, int>::type bcast(int const& root, T& data) {
+typename std::enable_if<arma::is_arma_type<T>::value || arma::is_arma_cube_type<T>::value, int>::type bcast(int const& root, T& data) {
 	// the space of data needs to be preallocated!
 	return MPI_Bcast(data.memptr(), data.n_elem, mpi_type_helper<typename T::elem_type>(), root, MPI_COMM_WORLD);
 }

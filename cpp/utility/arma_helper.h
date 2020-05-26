@@ -25,6 +25,65 @@ typename std::enable_if< R::is_row && C::is_col, arma::Mat<decltype(std::declval
 	return arma::repmat(row, arma::size(col).n_rows, 1).eval().each_col() - col;
 }
 
+template <typename T1, typename T2, char op>
+struct binary_return_t
+{};
+
+template <typename T1, typename T2>
+struct binary_return_t<T1, T2, '+'>
+{
+	using return_t = decltype(std::declval<T1>() + std::declval<T2>());
+};
+
+template <typename T1, typename T2>
+struct binary_return_t<T1, T2, '-'>
+{
+	using return_t = decltype(std::declval<T1>() - std::declval<T2>());
+};
+
+template <typename T1, typename T2>
+struct binary_return_t<T1, T2, '*'>
+{
+	using return_t = decltype(std::declval<T1>() * std::declval<T2>());
+};
+
+template <typename T1, typename T2>
+struct binary_return_t<T1, T2, '/'>
+{
+	using return_t = decltype(std::declval<T1>() / std::declval<T2>());
+};
+
+template <char op, typename R, typename C>
+typename std::enable_if< R::is_row && C::is_col, arma::Mat<typename binary_return_t<typename C::elem_type, typename R::elem_type, op>::return_t> >::type bcast_op(C const& col, R const& row) {
+	switch (op) {
+		case '+':
+			return col + arma::repmat(row, arma::size(col).n_rows, 1).eval().each_col();
+		case '-':
+			return col - arma::repmat(row, arma::size(col).n_rows, 1).eval().each_col();
+		case '*':
+			return col * row;
+		case '/':
+			return col / arma::repmat(row, arma::size(col).n_rows, 1).eval().each_col();
+		default:
+			return {};
+	}
+}
+
+template <char op, typename R, typename C>
+typename std::enable_if< R::is_row && C::is_col, arma::Mat<typename binary_return_t<typename R::elem_type, typename C::elem_type, op>::return_t> >::type bcast_op(R const& row, C const& col) {
+	switch (op) {
+		case '+':
+			return arma::repmat(row, arma::size(col).n_rows, 1).eval().each_col() + col;
+		case '-':
+			return arma::repmat(row, arma::size(col).n_rows, 1).eval().each_col() - col;
+		case '*':
+			return col * row;
+		case '/':
+			return arma::repmat(row, arma::size(col).n_rows, 1).eval().each_col() / col;
+		default:
+			return {};
+	}
+}
 
 // unit vector
 inline arma::vec unit_vec(arma::uword const& dim, arma::uword const& index) {

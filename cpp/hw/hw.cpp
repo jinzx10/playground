@@ -14,18 +14,26 @@ using namespace std;
 
 int main(int, char**argv) {
 	
-	auto f = [] (vec const& v) -> vec {
-		vec r(3);
-		r(0) = v(0)*v(0)+v(1)*v(1)-1;
-		r(1) = v(2)-0.5;
-		r(2) = v(0)*v(0)-v(1)-0.25;
-		return r;
-	};
+	vec a = {1,2,3};
+	rowvec b = {0, 1.1, 2.2, 3.3};
 
-	vec x0 = {1,1,1};
-	broydenroot(f, x0, "bad");
+	cout << "a = " << endl;
+	a.print();
+	cout << endl;
 
-	x0.print();
+	cout << "b = " << endl;
+	b.print();
+	cout << endl;
+
+	bcast_op<'+'>(a,b).print();
+	bcast_op<'-'>(a,b).print();
+	bcast_op<'*'>(a,b).print();
+	bcast_op<'/'>(a,b).print();
+
+	bcast_op<'+'>(b,a).print();
+	bcast_op<'-'>(b,a).print();
+	bcast_op<'*'>(b,a).print();
+	bcast_op<'/'>(b,a).print();
 
 
     return 0;

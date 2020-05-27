@@ -360,7 +360,7 @@ inline arma::mat null_qr(arma::mat const& A) {
 }
 
 inline arma::mat orth_lowdin(arma::mat const& A) {
-	return A * arma::inv_sympd( arma::sqrtmat_sympd(arma::symmatl(A.t()*A)) );
+	return arma::solve(arma::sqrtmat_sympd(A*A.t()), A);
 }
 
 

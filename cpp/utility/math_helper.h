@@ -360,7 +360,10 @@ inline arma::mat null_qr(arma::mat const& A) {
 }
 
 inline arma::mat orth_lowdin(arma::mat const& A) {
-	return arma::solve(arma::sqrtmat_sympd(A*A.t()), A);
+	arma::vec eigval;
+	arma::mat eigvec;
+	arma::eig_sym(eigval, eigvec, A*A.t());
+	return arma::solve(eigvec*arma::diagmat(arma::sqrt(eigval))*eigvec.t(), A);
 }
 
 

@@ -156,7 +156,7 @@ inline int newtonroot(std::function<arma::vec(arma::vec)> f, arma::vec& x, doubl
 
 // Broyden's quasi-Newton method
 // the good and bad Broyden's methods are identical in 1D
-inline int broydenroot(std::function<double(double)> f, double& x, double const& tol = 1e-12, unsigned int const& max_iter = 50) {
+inline int broydenroot(std::function<double(double)> f, double& x, double const& beta = 0.7, double const& tol = 1e-12, unsigned int const& max_iter = 50) {
 	double fx = f(x);
 	if (std::abs(fx) < tol)
 		return 0;
@@ -173,7 +173,7 @@ inline int broydenroot(std::function<double(double)> f, double& x, double const&
 			return 2;
 		}
 
-		dx = -fx / J;
+		dx = -fx / J * beta;
 		x += dx;
 		fx_new = f(x);
 		if (std::abs(fx_new) < tol)

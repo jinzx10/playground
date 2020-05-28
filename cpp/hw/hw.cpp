@@ -40,6 +40,7 @@ int main(int, char**argv) {
 
 	u.print();
 
+	cout << endl;
 	z.print();
 
 

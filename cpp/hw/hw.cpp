@@ -11,29 +11,37 @@
 using namespace arma;
 using namespace std;
 
+template <typename T>
+class OptBase
+{
+public:
+	OptBase(T const& v): val(v) {}
+
+	template <typename U = T>
+	typename std::enable_if<!std::is_same<U,T>::value, void>::type assign_to(U&) { }
+
+	template <typename U = T>
+	typename std::enable_if<std::is_same<U,T>::value, void>::type assign_to(U& u) { u = val; }
+
+private:
+	T val;
+};
 
 int main(int, char**argv) {
 	
-	vec a = {1,2,3};
-	rowvec b = {0, 1.1, 2.2, 3.3};
+	vec v = {1,2,3};
+	OptBase<arma::vec> opt(v);
 
-	cout << "a = " << endl;
-	a.print();
-	cout << endl;
+	vec u;
+	mat z;
 
-	cout << "b = " << endl;
-	b.print();
-	cout << endl;
+	opt.assign_to(u);
+	opt.assign_to(z);
 
-	bcast_op<'+'>(a,b).print();
-	bcast_op<'-'>(a,b).print();
-	bcast_op<'*'>(a,b).print();
-	bcast_op<'/'>(a,b).print();
+	u.print();
 
-	bcast_op<'+'>(b,a).print();
-	bcast_op<'-'>(b,a).print();
-	bcast_op<'*'>(b,a).print();
-	bcast_op<'/'>(b,a).print();
+	z.print();
+
 
 
     return 0;

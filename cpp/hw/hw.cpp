@@ -4,44 +4,41 @@
 #include <vector>
 #include <string>
 #include <type_traits>
-#include "../utility/widgets.h"
-#include "../utility/arma_helper.h"
-#include "../utility/math_helper.h" 
 
-using namespace arma;
 using namespace std;
 
-template <typename T>
-class OptBase
-{
-public:
-	OptBase(T const& v): val(v) {}
+vector<int> warmtemp(vector<int>& T) {
+	int high = T.back();
+	size_t sz = T.size();
+	vector<int> days(sz, 0);
+	days[sz-1] = 0;
+	for (int i = sz-2; i >= 0; --i) {
+		int Ti = T[i];
+		if (Ti >= high) {
+			days[i] = 0;
+			high = Ti;
+		} else {
+			int idx = i+1;
+			while (T[idx] <= Ti)
+				idx += days[idx];
+			days[i] = idx - i;
+		}
+	}
 
-	template <typename U = T>
-	typename std::enable_if<!std::is_same<U,T>::value, void>::type assign_to(U&) { }
-
-	template <typename U = T>
-	typename std::enable_if<std::is_same<U,T>::value, void>::type assign_to(U& u) { u = val; }
-
-private:
-	T val;
-};
+	return days;
+}
 
 int main(int, char**argv) {
 	
-	vec v = {1,2,3};
-	OptBase<arma::vec> opt(v);
+	vector<int> T = {89,62,70,58,47,47,46,76,100,70};
 
-	vec u;
-	mat z;
-
-	opt.assign_to(u);
-	opt.assign_to(z);
-
-	u.print();
-
+	for (auto& e : T)
+		cout << e << " ";
 	cout << endl;
-	z.print();
+	for (auto& e : warmtemp(T))
+		cout << e << " ";
+	cout << endl;
+	
 
 
 

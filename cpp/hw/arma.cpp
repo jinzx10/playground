@@ -11,22 +11,12 @@ using namespace arma;
 
 int main() {
 
-	vec a(10, fill::zeros);
-	a(4) = datum::nan;
-	a(7) = datum::inf;
-	a(9) = -1/0.0;
-	a(2) = 1/0.0;
+	rowvec a = randu(1,3);
+	vec b = randu(3,1);
 
-	a.print();
+	cout << dot(a,b) << endl;
 
-	std::cout << std::endl;
-
-	a.replace(datum::inf, 1);
-	a.print();
-	std::cout << std::endl;
-
-	a(arma::find_nonfinite(a)).ones();
-	a.print();
+	cout << as_scalar(a*b) << endl;
 
 	return 0;
 }

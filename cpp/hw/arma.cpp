@@ -11,12 +11,21 @@ using namespace arma;
 
 int main() {
 
-	rowvec a = randu(1,3);
-	vec b = randu(3,1);
+	size_t sz = 1000;
+	umat loc(2, sz, fill::zeros);
+	vec val = ones(sz);
+	loc.row(0) = regspace<urowvec>(0,sz-1);
 
-	cout << dot(a,b) << endl;
+	arma::arma_rng::set_seed_random();
+	urowvec P = loc.row(0);
+	P = shuffle(P);
+	loc.row(1) = P;
 
-	cout << as_scalar(a*b) << endl;
+
+	sp_mat a(loc, val, sz, sz); 
+
+	cout << det(conv_to<mat>::from(a)) << endl;
+
 
 	return 0;
 }

@@ -107,15 +107,31 @@ std::function<V(V)> grad(std::function<double(V)> const& f, double const& delta 
 
 
 // generate grid points according to some grid density
-inline arma::vec grid(double const& xmin, double const& xmax, std::function<double(double)> density) {
-	arma::vec g = {xmin};
-	double g_last = g.back();
-	while ( g_last < xmax ) {
-		g.resize(g.n_elem+1);
-		g.back() = g_last + 1.0 / density(g_last);
-		g_last = g.back();
+inline arma::vec grid(double const& xmin, double const& xmax, std::function<double(double)> density, double const& x0) {
+	if (x0 < xmin || x0 > xmax)
+		return arma::vec{};
+
+	arma::vec gr = {x0};
+	double gr_last = gr.back();
+	while ( gr_last < xmax ) {
+		gr.resize(gr.n_elem+1);
+		gr.back() = gr_last + 1.0 / density(gr_last);
+		gr_last = gr.back();
 	}
-	return g;
+
+	arma::vec gl = {x0};
+	double gl_last = gl.back();
+	while ( gl_last > xmin ) {
+		gl.resize(gl.n_elem+1);
+		gl.back() = gl_last - 1.0 / density(gl_last);
+		gl_last = gl.back();
+	}
+
+	return join_cols(flipud(gl.tail(gl.n_elem-1)), gr);
+}
+
+inline arma::vec grid(double const& xmin, double const& xmax, std::function<double(double)> density) {
+	return grid(xmin, xmax, density, xmin);
 }
 
 

@@ -2,7 +2,7 @@
 #include <iostream>
 #include <armadillo>
 #include <cassert>
-#include <variant>
+//#include <variant>
 
 
 template <typename ...Ts>                                                                        

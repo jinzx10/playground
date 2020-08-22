@@ -20,7 +20,7 @@ struct VarType
 
     struct Base { 
         virtual ~Base() {}; 
-        virtual Base* copy() const = 0;
+        virtual Base* clone() const = 0;
     };
                                                                                                  
     template <typename T> 
@@ -28,12 +28,11 @@ struct VarType
     {
         Data(T const& t): val(t) {}
         T val;
-        Data<T>* copy() const { return new Data<T>(*this); }
+        Data<T>* clone() const { return new Data<T>(*this); }
     };  
 
     VarType(): ptr(nullptr) {}                                                                   
-    //VarType(VarType<Ts...> const& var): ptr(nullptr) { clone<Ts...>(var); }
-    VarType(VarType<Ts...> const& var): ptr(var.ptr->copy()) {}
+    VarType(VarType<Ts...> const& var): ptr((var.ptr) ? var.ptr->clone() : nullptr) {}
 
     template <typename T, typename std::enable_if< exact_type_match<T, Ts...>(), int>::type = 0 >
     VarType(T const& val): ptr(new Data<T>(val)) {}
@@ -48,9 +47,8 @@ struct VarType
     }
 
     VarType<Ts...>& operator=(VarType<Ts...> const& var) {
-        //clone<Ts...>(var);
         delete ptr;
-        ptr = var.ptr->copy();
+        ptr = (var.ptr) ? var.ptr->clone() : nullptr;
         return *this;
     }
 
@@ -62,33 +60,6 @@ struct VarType
 
     private:
     Base* ptr;
-
-    // use RTTI to find the active type of v
-    template <typename R, typename R1, typename ...Rs>
-    void clone(VarType<Ts...> const& v) {
-        if (!v.ptr) {
-            delete ptr;
-            ptr = nullptr;
-            return;
-        }
-
-        if ( typeid(*v.ptr) == typeid(Data<R>) )
-            clone<R>(v);
-        else
-            clone<R1, Rs...>(v);
-    }
-
-    template <typename R>
-    void clone(VarType<Ts...> const& v) {
-        if (!v.ptr) {
-            delete ptr;
-            ptr = nullptr;
-            return;
-        }
-
-        delete ptr;
-        ptr = new Data<R>(v.get<R>());
-    }
 };
 
 
@@ -117,7 +88,6 @@ int main() {
 
     VarType<bool, int, size_t, double, std::string, arma::mat> vc(vb);
     std::cout << "size_t: " << vc.get<size_t>() << std::endl;
-
 
 
 

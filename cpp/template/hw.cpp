@@ -2,46 +2,25 @@
 #include <type_traits>
 #include <functional>
 #include <cmath>
+#include <string>
 
-/* get_return<Args...>(func)::type
- */
-
-template <typename ...Args>
-struct get_return
+template <typename C>
+struct Test
 {
-
-	//template <typename R>
-	//static const std::function<R(Args...)> get_type(R(*F)(Args...));
-
-	template <typename R>
-	static void get_type(std::function<R(Args...)>);
-	
-
+    template <typename T, typename std::enable_if<std::is_convertible<T, std::string>::value, int>::type = 0>
+    typename std::enable_if<std::is_convertible<T,C>::value, void>::type test(T const& t) {
+        std::cout << typeid(T).name() << std::endl;
+        str = t;
+    }
+    C str;
 };
-
-template<int, typename ...>
-void test(...) {}
-
-template <int N = 5, typename F>
-typename std::enable_if< N >= 0, void>::type test(F f) {
-	std::cout << N << std::endl;
-	test<N-1,F>(f);
-}
-
-
-
-int sum(int x, int y) {
-	return x+y;
-}
-
-double sum(double x, double y) {
-	return x+y;
-}
 
 int main() {
 
-	//std::cout << typeid( get_return<double,double>::get_type(std::pow) ).name() << std::endl;
-	test(1.0);
+    Test<std::string> t;
+    t.test("bad");
+
+    std::cout << t.str << std::endl;
 
 	return 0;
 }

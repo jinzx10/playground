@@ -12,6 +12,9 @@ struct Test
 	d2d F;
 };
 
+void func( int(*)(int) ) {
+}
+
 int main() {
 
 	d2d f1 = [](double x) { return x*x;};

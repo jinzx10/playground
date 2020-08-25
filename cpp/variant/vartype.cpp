@@ -28,7 +28,7 @@ struct VarType
     {
         Data(T const& t): val(t) {}
         T val;
-        Data<T>* clone() const { return new Data<T>(*this); }
+        Data* clone() const { return new Data(*this); }
     };  
 
     VarType(): ptr(nullptr) {}                                                                   

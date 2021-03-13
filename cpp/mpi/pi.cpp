@@ -29,7 +29,7 @@ int main(int, char** argv) {
 		ss << argv[1];
 		ss >> sz;
 	}
-	::MPI_Bcast(&sz, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+	::MPI_Bcast(&sz, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
 
 	std::srand(id+std::time(nullptr));
 
@@ -45,7 +45,7 @@ int main(int, char** argv) {
 			++local_count;
 	}
 
-	::MPI_Reduce(&local_count, &tot_count, 1, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	::MPI_Reduce(&local_count, &tot_count, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
 	if (id == 0) {
 		pi = 4.0 * tot_count / sz;

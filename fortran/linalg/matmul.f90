@@ -8,9 +8,7 @@ program test_matmul
 	print *, 'enter matrix size'
 	read *, sz
 
-	allocate(a(sz,sz))
-	allocate(b(sz,sz))
-	allocate(c(sz,sz))
+	allocate(a(sz,sz), b(sz,sz), c(sz,sz))
 
 	call random_number(a)
 	call random_number(b)
@@ -26,8 +24,7 @@ program test_matmul
 	call system_clock(t2)
 	print *, 'built-in matmul: time elapsed = ', real(t2-t1,dp)/rate, ' seconds'
 	
-	deallocate(a)
-	deallocate(b)
-	deallocate(c)
+	deallocate(a, b, c)
 
 end program test_matmul
+

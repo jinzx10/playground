@@ -1,14 +1,17 @@
+#include <functional>
 #include <iostream>
 #include <cassert>
+#include <algorithm>
+#include <numeric>
 
 
-template <typename T, char Format='C'>
+template <typename T, bool Is_C_Style=true>
 class MultiArray {
 
 public:
 
     template <typename ...Ts>
-    MultiArray(Ts... args) {
+    MultiArray(Ts... args) : is_c_style_(Is_C_Style) {
         _build<Ts...>(args...);
     }
 
@@ -23,7 +26,6 @@ public:
         return data_[_index(args...)];
     }
 
-
 //private:
 
     template <typename ...Ts>
@@ -36,34 +38,24 @@ public:
 
         size_ = new int[dim_];
         _set_size(args...);
-
-        nelem_ = 1;
-        for (int i = 0; i != dim_; ++i) {
-            nelem_ *= size_[i];
-        }
+        nelem_ = std::accumulate(size_, size_ + dim_, 1, std::multiplies<int>());
 
         stride_ = new int[dim_];
-
-        format_ = Format;
-        if (Format == 'C') {
+        if (is_c_style_) {
             stride_[dim_-1] = 1;
             for (int i = dim_-2; i >= 0; --i) {
                 stride_[i] = stride_[i+1]*size_[i+1];
             }
-        } else if (Format == 'F') {
+        } else  {
             stride_[0] = 1;
             for (int i = 1; i <= dim_-1; ++i) {
                 stride_[i] = stride_[i-1]*size_[i-1];
             }
-        } else {
-            std::cerr << "Error: Unknown format" << std::endl;
-            exit(1);
         }
-
         data_ = new T[nelem_];
     }
 
-    void _set_size(int n) {
+    inline void _set_size(int n) {
         size_[dim_-1] = n;
     }
 
@@ -82,12 +74,25 @@ public:
         return i*stride_[dim_-1-sizeof...(args)] + _index(args...);
     }
 
-    char format_ = 'C';
+    bool is_c_style_;
+
     int dim_ = 0;
     int nelem_ = 0;
     int* size_ = nullptr;
     int* stride_ = nullptr;
+
     T* data_ = nullptr;
+
+    void clear() {
+        delete[] size_;
+        delete[] stride_;
+        delete[] data_;
+        size_ = nullptr;
+        stride_ = nullptr;
+        data_ = nullptr;
+        dim_ = 0;
+        nelem_ = 0;
+    }
 };
 
 
@@ -101,7 +106,7 @@ int main() {
     }
     std::cout << std::endl;
 
-    MultiArray<double,'F'> fcube(4,5,6,7);
+    MultiArray<double,false> fcube(4,5,6,7);
     std::cout << fcube._index(1,2,3,4) << std::endl;
 
     for (int i = 0; i != 4; ++i) {

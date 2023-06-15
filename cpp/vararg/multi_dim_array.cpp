@@ -6,12 +6,12 @@
 
 
 template <typename T, bool Is_C_Style=true>
-class MultiArray {
+class MultiDimArray {
 
 public:
 
     template <typename ...Ts>
-    MultiArray(Ts... args) : is_c_style_(Is_C_Style) {
+    MultiDimArray(Ts... args) : is_c_style_(Is_C_Style) {
         _build<Ts...>(args...);
     }
 
@@ -24,6 +24,17 @@ public:
         assert(sizeof...(args) == dim_);
         assert(_index(args...) < nelem_);
         return data_[_index(args...)];
+    }
+
+    void clear() {
+        delete[] size_;
+        delete[] stride_;
+        delete[] data_;
+        size_ = nullptr;
+        stride_ = nullptr;
+        data_ = nullptr;
+        dim_ = 0;
+        nelem_ = 0;
     }
 
 //private:
@@ -83,22 +94,12 @@ public:
 
     T* data_ = nullptr;
 
-    void clear() {
-        delete[] size_;
-        delete[] stride_;
-        delete[] data_;
-        size_ = nullptr;
-        stride_ = nullptr;
-        data_ = nullptr;
-        dim_ = 0;
-        nelem_ = 0;
-    }
 };
 
 
 int main() {
 
-    MultiArray<float> ccube(4,5,6,7, 8);
+    MultiDimArray<float> ccube(4,5,6,7, 8);
     std::cout << ccube._index(1,2,3,4, 4) << std::endl;
 
     for (int i = 0; i != 4; ++i) {
@@ -106,7 +107,7 @@ int main() {
     }
     std::cout << std::endl;
 
-    MultiArray<double,false> fcube(4,5,6,7);
+    MultiDimArray<double,false> fcube(4,5,6,7);
     std::cout << fcube._index(1,2,3,4) << std::endl;
 
     for (int i = 0; i != 4; ++i) {

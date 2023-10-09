@@ -4,7 +4,7 @@
 #include <mkl_blacs.h>
 #include <mkl_pblas.h>
 #include <mkl_scalapack.h>
-#include <armadillo>
+//#include <armadillo>
 #include "../utility/mpi_helper.h"
 
 

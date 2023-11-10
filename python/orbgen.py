@@ -331,16 +331,18 @@ def c2e(c, lmax, nzeta, nq, fname, elem, rcut, jobdir, nthreads=2, nprocs=4):
 #                               main
 ########################################################################
 
-#coeff = read_siab('/home/zuxin/tmp/nao/yike/pd_04/49_In_DZP/info/10/ORBITAL_RESULTS.txt')
+coeff = read_siab('/home/zuxin/tmp/nao/yike/pd_04/49_In_DZP/info/10/ORBITAL_RESULTS.txt')
 
 
 
 # initial guess of spherical Bessel coefficients
-#c0 = list2array(read_siab(fname))
+c0 = list2array(read_siab(fname))
+
+print(c0)
 
 
 
-#print('original coeff = ', coeff)
+print('original coeff = ', coeff)
 #
 #c = list2array(coeff)
 #print(c)

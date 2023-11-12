@@ -1,3 +1,5 @@
+from numpy import array
+
 '''
 Converts a 1D array of (spherical Bessel) coefficients into a nested list.
 
@@ -37,7 +39,6 @@ Flattens a nested list of coefficients into a 1D array.
 This is the inverse of array2list.
 '''
 def list2array(coeff):
-    from numpy import array
     return array([clzq for cl in coeff for clz in cl for clzq in clz])
 
 
@@ -61,8 +62,33 @@ def merge(coeff, extra_coeff):
 ############################################################
 #                       Testing
 ############################################################
+def test_array2list():
+    print('Testing array2list...')
+
+    coeff = array([0,0,0,1,1,2,3,3,3,4,4,5])
+
+    coeff_ref = [[[0,0,0],[1,1]], [[2],[3,3,3]], [], [[4,4]], [[5]]]
+    coeff_list = array2list(coeff, 4, [2,2,0,1,1], [3,2,1,3,2,1])
+
+    assert coeff_ref == coeff_list
+    print('...Passed!')
+
+
+def test_list2array():
+    print('Testing list2array...')
+
+    coeff = [[[0,0,0],[1,1]], [[2],[3,3,3]], [], [[4,4]], [[5]]]
+
+    coeff_ref = array([0,0,0,1,1,2,3,3,3,4,4,5])
+    coeff_array = list2array(coeff)
+
+    assert (coeff_ref == coeff_array).all()
+    print('...Passed!')
+
+
 def test_merge():
     print('Testing merge...')
+
     coeff1 = [[[0,0], [1,1]], [], [[3,3,3]]]
     coeff2 = [[], [[2,2,2]], [[4,4]], [[5,5,5]]]
 
@@ -74,5 +100,8 @@ def test_merge():
 
 
 if __name__ == '__main__':
+    test_array2list()
+    test_list2array()
     test_merge()
+
 

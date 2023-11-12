@@ -61,8 +61,7 @@ def j2rad(coeff, q, rcut, dr=0.01, sigma=0.1):
 
             # smooth & normalize
             chi[l][izeta] = chi[l][izeta] * g
-            c = simpson((r*chi[l][izeta])**2, dx=dr)
-            chi[l][izeta] *= 1./np.sqrt(c)
+            chi[l][izeta] *= 1./np.sqrt(simpson((r*chi[l][izeta])**2, dx=dr))
 
     return chi
 

@@ -40,6 +40,9 @@ def ikebe(n, nroots):
     return 2. / np.sqrt(eigval[:nroots])
 
 
+############################################################
+#                       Testing
+############################################################
 def test_ikebe():
     from scipy.special import spherical_jn
 
@@ -55,3 +58,4 @@ def test_ikebe():
 
 if __name__ == '__main__':
     test_ikebe()
+

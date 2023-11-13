@@ -45,6 +45,7 @@ Returns
 '''
 def j2rad(coeff, q, rcut, dr=0.01, sigma=0.1):
     from scipy.integrate import simpson
+    from scipy.special import spherical_jn
 
     lmax = len(coeff)-1
     nzeta = [len(coeff[l]) for l in range(lmax+1)]

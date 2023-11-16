@@ -1,77 +1,8 @@
 import numpy as np
 
-from scipy.special import spherical_jn
-from scipy.integrate import simpson
-from scipy.linalg import eigvalsh_tridiagonal
 from scipy.optimize import minimize, fmin_bfgs, dual_annealing, basinhopping
 
-import subprocess
 
-
-'''
-Executes ABACUS in a directory.
-'''
-def xabacus(abacus_path, jobdir, nthreads, nprocs, stdout, stderr):
-    subprocess.run("cd {jobdir}; " \
-                   "OMP_NUM_THREADS={nthreads} mpirun -np {nprocs} {abacus_path}" \
-                   .format(jobdir=jobdir, nthreads=nthreads, nprocs=nprocs, abacus_path=abacus_path), \
-                   shell=True, stdout=stdout, stderr=stderr)
-
-
-'''
-Extracts the total energy from the ABACUS output.
-'''
-def grep_energy(jobdir, suffix='ABACUS'):
-    result = subprocess.run("grep '!FINAL' {jobdir}/OUT.{suffix}/running_scf.log | awk '{{print $2}}'" \
-                            .format(jobdir=jobdir, suffix=suffix),
-                            shell=True, capture_output=True, text=True)
-    return float(result.stdout)
-
-
-'''
-Spherical Bessel coefficients to energy.
-
-Given a set of spherical Bessel coefficients, this function generates an ABACUS orbital file
-and calls ABACUS to run an SCF calculation to get the energy.
-
-Parameters
-----------
-    coeff : list of list of list of float
-        A nested list containing the coefficients of spherical Bessel functions.
-    q : list of list of list of float
-        Wave numbers of each spherical Bessel component.
-    sigma : float
-        Smoothing parameter.
-    fname : str
-        Name of the orbital file to be generated.
-    elem : str
-        Element symbol.
-    rcut : int or float
-        Cutoff radius of the orbital.
-    jobdir : str
-        Directory to run the SCF calculation.
-    nthreads : int
-        Number of threads to be used in the SCF calculation.
-    nprocs : int
-        Number of MPI processes to be used in the SCF calculation.
-'''
-def coeff2energy(coeff, q, fname, elem, rcut, \
-        dr=0.01, sigma=0.1, orbdir='./', jobdir='./', nthreads=2, nprocs=4):
-
-    print('coeff = ', coeff)
-
-    # generates orbital file
-    filegen(orbdir+fname, elem, rcut, coeff, q, dr=dr, sigma=sigma)
-
-    # calls ABACUS to run SCF
-    xabacus('/home/zuxin/abacus-develop/bin/abacus', jobdir, \
-            nthreads, nprocs, subprocess.DEVNULL, subprocess.DEVNULL)
-
-    # extracts the total energy
-    energy = grep_energy(jobdir)
-    print('energy = ', result.stdout)
-
-    return energy
 
 
 '''
@@ -86,7 +17,7 @@ def nqfilt(coeff, nq):
 '''
 Plot the radial functions.
 '''
-def plot_chi(r, chi):
+def plot_chi(r, chi, chi2=None, label=None, label2=None):
     import matplotlib.pyplot as plt
 
     lmax = len(chi)-1
@@ -95,9 +26,12 @@ def plot_chi(r, chi):
     fig, ax = plt.subplots(max(nzeta), lmax+1, squeeze=False)
     for l in range(lmax+1):
         for izeta in range(nzeta[l]):
-            ax[izeta,l].plot(r, chi[l][izeta])
+            ax[izeta,l].plot(r, chi[l][izeta], label=label)
+            if chi2 is not None:
+                ax[izeta,l].plot(r, chi2[l][izeta], label=label2)
             ax[izeta,l].set_xlabel('r')
             ax[izeta,l].set_ylabel('chi')
+            ax[izeta,l].legend()
 
     plt.show()
 
@@ -107,8 +41,48 @@ def plot_chi(r, chi):
 ########################################################################
 #                               main
 ########################################################################
-l1 = [ [[1,2],[2,3]], [[4,5]] ]
-l2 = [ [], [[0,1]], [], [[6,7]] ]
+from radbuild import j2rad, qgen
+from jnroot import ikebe
+from fileio import read_coeff
+from listmanip import merge
+
+rcut = 7
+coeff_ref = read_coeff('/home/zuxin/tmp/nao/v2.0/SG15-Version1p0__AllOrbitals-Version2p0/49_In_DZP/info/7/ORBITAL_RESULTS.txt')
+
+# optimized minimal
+coeff_min_opt  =  [[[-0.22319273382936658, -0.1935692770353136, 0.011898484474316167, 0.11687347789973701, 0.12424724776710969, 0.082826751969036, 0.039426527485066025, 0.009350748438199118, -0.002711813172651745, -0.004928288984114024, -0.003067808241357446, -0.0010580361641553372, -0.0011439640018363016, -0.0002709781545847151, -0.001356846431694946, 0.0002785320787625634, -0.0012951057606575107, 0.000823205142996889, -0.001533729202231069, 0.0013267383747682941, -0.002243739821384359, 0.0028827686740655204]], [[0.31489881082247795, 0.23032926246318386, 0.07452029206069405, -0.011082935875728539, -0.040694592814021574, -0.03391193894336489, -0.019691111499707623, -0.005795739729858165, -0.0010559715835145814, 0.00021013426442062743, -0.0010804442170462983, -0.0018444567909232613, -0.0011416021931900022, -0.0013896905727685176, 0.00010567313703063635, -0.0013384021875936208, 0.0005445377048263758, -0.0017427974121259394, 0.0013164127584227412, -0.0024294995719134653, 0.0026845260388395496, -0.00962980040832163]], [[-0.07724511065901557, -0.24018330937918517, -0.41667348834272955, -0.5612345764271982, -0.6432834945639484, -0.6561132968855918, -0.5986469171723564, -0.49224502020309474, -0.36042136532934477, -0.23269166151240536, -0.12882682275958157, -0.058179644745669806, -0.019879759662448166, -0.0032359945413300128, 3.9697296477234794e-05, 0.0006239628995839741, -0.0009135870763134326, 0.00031130486079140147, -0.00047062473024814613, 0.0012295324888643904, -0.00012199965090200087, -0.003022552040389695]]]
+
+# optimized s2
+coeff_s2_opt =  [[[-1.0015057670927148, 1.070592032949412, 0.25800982539745304, -0.9949142819096615, -1.0801318639885973, -0.6040751569855636, 0.15102266517508775, 0.41617198194308785, 0.6468826306910692, 0.45230181267530184, 0.4523933582730802, 0.1621021220171285, 0.2486521588148511, 0.016149099108352633, 0.16781890114635395, -0.0516393703226241, 0.142803132169651, -0.07827873350920239, 0.13817720827070487, -0.11869133395516576, 0.19651068246713685, -0.2478793374867025]]]
+
+coeff_opt = merge(coeff_min_opt, coeff_s2_opt)
+
+# optimized p2
+coeff_p2_opt =  [[], [[1.5495871001609018, -1.7494958207723248, -0.2447651272030374, -0.24117121001938188, 0.2256338466895182, -0.08143314508381676, 0.14268490377431534, -0.23792631938942313, 0.0046811262478916186, -0.2523279599568605, 0.026571372733734923, -0.18364619426964574, 0.05660782095003873, -0.17383987557442881, 0.06217441978794814, -0.17539928787760842, 0.07484416691656243, -0.1746027575467987, 0.12545567705787156, -0.22468533990850564, 0.22564833046904137, -0.8837360087769349]]]
+
+
+coeff_opt = merge(coeff_opt, coeff_p2_opt)
+
+# old
+coeff_old = [[coeff_ref[0][0], coeff_ref[0][1]], [coeff_ref[1][0], coeff_ref[1][1]], [coeff_ref[2][0]]]
+
+
+lmax = len(coeff_old)-1
+nzeta = [len(coeff_old[l]) for l in range(lmax+1)]
+nq_ = len(coeff_ref[0][0])
+q = qgen(nzeta, nq_, rcut)
+dr = 0.01
+nr = int(rcut/dr) + 1
+rcut = 7
+r = dr * np.arange(nr)  
+
+chi_opt = j2rad(coeff_opt, q, rcut)
+chi_old = j2rad(coeff_old, q, rcut)
+
+plot_chi(r, chi_old, chi_opt, label='old', label2='opt')
+exit()
+
+
 
 #l1a = list2array(l1)
 #print(l1a)

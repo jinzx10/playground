@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.optimize import fmin_bfgs
+from scipy.optimize import minimize
 
 '''
 Spherical Bessel coefficients to energy.
@@ -27,18 +27,25 @@ Parameters
         Number of threads to be used in the SCF calculation.
     nprocs : int
         Number of MPI processes to be used in the SCF calculation.
+
 '''
-def coeff2energy(coeff, q, orbfile, elem, rcut, abacus_path, coeff_base=None, q_base=None, \
+def coeff2energy(coeff, orbfile, elem, rcut, abacus_path, coeff_base=None, q=None, q_base=None, \
         dr=0.01, sigma=0.1, orbdir='./', jobdirs=['./'], nthreads=2, nprocs=4, stdout=None, stderr=None):
+
     print('coeff = ', coeff)
+    from radbuild import qgen, j2rad
+
+    if q is None:
+        # if q is not given, use wave numbers such that spherical Bessel functions are zero at rcut
+        q = qgen(coeff, rcut)
+
     if coeff_base is not None:
         from listmanip import merge
         coeff = merge(coeff_base, coeff)
-        q = merge(q_base, q)
+        q = merge(q_base if q_base is not None else qgen(coeff_base, rcut), q)
 
     # generates radial functions
-    from radbuild import j2rad
-    chi = j2rad(coeff, q, rcut, dr, sigma)
+    chi, _ = j2rad(coeff, q, rcut, dr, sigma)
 
     # writes to an orbital file
     from fileio import write_orbfile
@@ -50,6 +57,7 @@ def coeff2energy(coeff, q, orbfile, elem, rcut, abacus_path, coeff_base=None, q_
     for jobdir in jobdirs:
         xabacus(abacus_path, jobdir, nthreads, nprocs, stdout, stderr)
         e += grep_energy(jobdir)
+
     print('total energy = ', e, '\n')
     return e
 
@@ -62,31 +70,26 @@ def test_coeff2energy():
     pass
 
 
+############################################################
+#                       Main
+############################################################
 if __name__ == '__main__':
 
     from fileio import read_coeff
-    from jnroot import ikebe
+    from radbuild import qgen
     
-    coeff = read_coeff('/home/zuxin/tmp/nao/v2.0/SG15-Version1p0__AllOrbitals-Version2p0/49_In_DZP/info/7/ORBITAL_RESULTS.txt')
-    lmax = len(coeff) - 1
-    nzeta = [len(coeff[l]) for l in range(lmax + 1)]
-    nq_ = len(coeff[0][0])
-    rcut = 7.0
-    q = [[ikebe(l, nq_)/rcut for izeta in range(nzeta[l])] for l in range(lmax+1)]
-    nq = [len(q[l][izeta]) for l in range(lmax+1) for izeta in range(nzeta[l])]
+    #coeff = read_coeff('/home/zuxin/tmp/nao/v2.0/SG15-Version1p0__AllOrbitals-Version2p0/49_In_DZP/info/7/ORBITAL_RESULTS.txt')
+    #lmax = len(coeff) - 1
+    #nzeta = [len(coeff[l]) for l in range(lmax + 1)]
+    #q = qgen(coeff, rcut)
+    #nq = [len(q[l][izeta]) for l in range(lmax+1) for izeta in range(nzeta[l])]
     
     elem = 'In'
     orbfile = 'In_opt_7au_100Ry_1s1p1d.orb'
     abacus_path = '/home/zuxin/abacus-develop/bin/abacus'
     dr = 0.01
     sigma = 0.1
-
-    #e = coeff2energy(coeff, q, orbfile, elem, rcut, abacus_path, coeff_base=None, q_base=None, \
-    #    dr=0.01, sigma=0.1, orbdir='./In/orb/', jobdir='./In/sg15v1.0/3.00/', \
-    #    nthreads=2, nprocs=4, stdout=None, stderr=None)
-    #print(e)
-    #exit()
-
+    rcut = 7.0
 
     orbdir = './In/orb/'
     lens = ['3.00', '3.20', '3.40', '3.60']
@@ -108,8 +111,10 @@ if __name__ == '__main__':
     nzeta_sz = [1, 1, 1]
     lmax_sz = len(nzeta_sz) - 1
 
-    coeff_sz = [ [ coeff[l][izeta] for izeta in range(nzeta_sz[l]) ] for l in range(lmax_sz+1) ]
-    q_sz = [ [ q[l][izeta] for izeta in range(nzeta_sz[l]) ] for l in range(lmax_sz+1) ]
+    #coeff_sz = [ [ coeff[l][izeta] for izeta in range(nzeta_sz[l]) ] for l in range(lmax_sz+1) ]
+    #q_sz = [ [ q[l][izeta] for izeta in range(nzeta_sz[l]) ] for l in range(lmax_sz+1) ]
+    coeff_sz = read_coeff('./backup/In_sg15v1.0_7au_1s1p1d_22j.txt') # initial guess
+    q_sz = qgen(coeff_sz, rcut)
     nq_sz = [len(q_sz[l][izeta]) for l in range(lmax_sz+1) for izeta in range(nzeta_sz[l])]
 
     # sanity check
@@ -126,37 +131,13 @@ if __name__ == '__main__':
                 dr=dr, sigma=sigma, orbdir=orbdir, jobdirs=jobdirs, \
                 nthreads=nthreads, nprocs=nprocs, stdout=stdout, stderr=stderr)
     
-    #print(func_sz(list2array(coeff_sz)))
-    #exit()
+    res = minimize(func_sz, list2array(coeff_sz), method='BFGS', options={'disp': True, 'eps': 1e-3})
 
-    res = fmin_bfgs(func_sz, list2array(coeff_sz), epsilon=1e-3)
-
-
+    from fileio import write_coeff
+    write_coeff(open('In_sg15v1.0_7au_1s1p1d_22j.txt', 'w'), array2list(res.x, lmax_sz, nzeta_sz, nq_sz), 'In')
 
 
 
-    exit()
     
     
     
-    
-    coeff_extra = [ [ coeff[l][izeta] for izeta in range(nzeta_base[l], nzeta[l]) ] for l in range(lmax+1) ]
-    q_extra = [ [ q[l][izeta] for izeta in range(nzeta_base[l], nzeta[l]) ] for l in range(lmax+1) ]
-    
-    orbdir = './In2/'
-    
-    
-    e = extra_coeff2target(coeff_base, q_base, coeff_extra, q_extra, 'In.orb', 'In', rcut, '/home/zuxin/abacus-develop/bin/abacus', orbdir=orbdir, jobdirs=jobdirs)
-    print('e = ', e)
-    
-    exit()
-    #e = coeff2energy(coeff, q, 'In.orb', 'In', rcut, '/home/zuxin/abacus-develop/bin/abacus', orbdir=orbdir, jobdir=jobdir)
-    #print('e = ', e)
-    #exit()
-    
-    e = coeff2energy(coeff_base, q_base, 'In.orb', 'In', rcut, '/home/zuxin/abacus-develop/bin/abacus', orbdir=orbdir, jobdir=jobdir)
-    print('e = ', e)
-    
-    
-    e = extra_coeff2energy(coeff_base, q_base, coeff_extra, q_extra, 'In.orb', 'In', rcut, '/home/zuxin/abacus-develop/bin/abacus', orbdir=orbdir, jobdir=jobdir)
-    print('e = ', e)

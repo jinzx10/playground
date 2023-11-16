@@ -22,6 +22,15 @@ def smoothing(r, rcut, sigma=0.1):
 
 
 '''
+Generates necessary spherical Bessel wave numbers q according to the given coeff
+such that spherical_jn(n, q*r) is zero at r=rcut.
+'''
+def qgen(coeff, rcut):
+    from jnroot import ikebe
+    return [[ikebe(l, len(coeff[l][izeta]))/rcut for izeta in range(len(coeff[l]))] for l in range(len(coeff))]
+
+
+'''
 Generates a set of numerical radial functions by linear combinations of spherical Bessel functions.
 
 Parameters
@@ -64,6 +73,6 @@ def j2rad(coeff, q, rcut, dr=0.01, sigma=0.1):
             chi[l][izeta] = chi[l][izeta] * g
             chi[l][izeta] *= 1./np.sqrt(simpson((r*chi[l][izeta])**2, dx=dr))
 
-    return chi
+    return chi, r
 
 

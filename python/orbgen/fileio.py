@@ -167,6 +167,23 @@ def read_coeff(fname):
             for izeta in range(nzeta[l])] for l in range(lmax+1)]
 
 
+'''
+Writes a nested list of spherical Bessel coefficients to a file object
+in a format like that of SIAB-generated ORBITAL_RESULTS.txt.
+'''
+def write_coeff(f, coeff, elem):
+    n = sum([len(coeff[l]) for l in range(len(coeff))])
+    f.write('<Coefficient>\n')
+    f.write('{0} Total number of radial orbitals.\n'.format(n))
+    for l in range(len(coeff)):
+        for izeta in range(len(coeff[l])):
+            f.write('Type   L   Zeta\n')
+            f.write('{elem} {angmom}  {izeta}\n'.format(elem=elem, angmom=l, izeta=izeta))
+            for i in range(len(coeff[l][izeta])):
+                f.write('{: 21.14f}\n'.format(coeff[l][izeta][i]))
+
+    f.write('</Coefficient>\n')
+
 ############################################################
 #                       Testing
 ############################################################
@@ -189,6 +206,18 @@ def test_read_coeff():
     print('...Passed!')
 
 
+def test_write_coeff():
+    print('Testing write_coeff...')
+
+    coeff = read_coeff('./testfiles/ORBITAL_RESULTS.txt')
+    with open('./testfiles/ORBITAL_RESULTS.txt.copy', 'w') as f:
+        write_coeff(f, coeff, 'Unknown')
+    coeff2 = read_coeff('./testfiles/ORBITAL_RESULTS.txt.copy')
+    assert coeff == coeff2
+
+    print('...Passed!')
+
+
 def test_write_orbfile():
     from jnroot import ikebe
 
@@ -206,7 +235,10 @@ def test_write_orbfile():
 
 if __name__ == '__main__':
     test_read_coeff()
+    test_write_coeff()
     test_write_orbfile()
     read_orbfile('./testfiles/C_gga_8au_100Ry_2s2p1d.orb')
-    #read_orbfile('./testfiles/Unknown.orb')
+
+    coeff =  [[[-0.22319273382936658, -0.1935692770353136, 0.011898484474316167, 0.11687347789973701, 0.12424724776710969, 0.082826751969036, 0.039426527485066025, 0.009350748438199118, -0.002711813172651745, -0.004928288984114024, -0.003067808241357446, -0.0010580361641553372, -0.0011439640018363016, -0.0002709781545847151, -0.001356846431694946, 0.0002785320787625634, -0.0012951057606575107, 0.000823205142996889, -0.001533729202231069, 0.0013267383747682941, -0.002243739821384359, 0.0028827686740655204]], [[0.31489881082247795, 0.23032926246318386, 0.07452029206069405, -0.011082935875728539, -0.040694592814021574, -0.03391193894336489, -0.019691111499707623, -0.005795739729858165, -0.0010559715835145814, 0.00021013426442062743, -0.0010804442170462983, -0.0018444567909232613, -0.0011416021931900022, -0.0013896905727685176, 0.00010567313703063635, -0.0013384021875936208, 0.0005445377048263758, -0.0017427974121259394, 0.0013164127584227412, -0.0024294995719134653, 0.0026845260388395496, -0.00962980040832163]], [[-0.07724511065901557, -0.24018330937918517, -0.41667348834272955, -0.5612345764271982, -0.6432834945639484, -0.6561132968855918, -0.5986469171723564, -0.49224502020309474, -0.36042136532934477, -0.23269166151240536, -0.12882682275958157, -0.058179644745669806, -0.019879759662448166, -0.0032359945413300128, 3.9697296477234794e-05, 0.0006239628995839741, -0.0009135870763134326, 0.00031130486079140147, -0.00047062473024814613, 0.0012295324888643904, -0.00012199965090200087, -0.003022552040389695]]]
+    write_coeff(open('./testfiles/In_sg15v1.0_7au_1s1p1d.coeff.txt', 'w'), coeff, 'In')
 

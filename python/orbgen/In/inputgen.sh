@@ -10,7 +10,6 @@ pp_class="sg15v1.0"
 pp_file="In_ONCV_PBE-1.0.upf"
 
 orb_file="In_opt_7au_100Ry_1s1p1d.orb"
-#orb_file="In_gga_7au_100Ry_2s2p2d1f.orb"
 
 for len in ${bond_length[@]}; do
     cd ${topdir}

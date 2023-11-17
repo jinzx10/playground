@@ -131,7 +131,8 @@ if __name__ == '__main__':
                 dr=dr, sigma=sigma, orbdir=orbdir, jobdirs=jobdirs, \
                 nthreads=nthreads, nprocs=nprocs, stdout=stdout, stderr=stderr)
     
-    res = minimize(func_sz, list2array(coeff_sz), method='BFGS', options={'disp': True, 'eps': 1e-3})
+    #res = minimize(func_sz, list2array(coeff_sz), method='BFGS', options={'disp': True, 'eps': 1e-3})
+    res = minimize(func_sz, list2array(coeff_sz), method='Nelder-Mead')
 
     from fileio import write_coeff
     write_coeff(open('In_sg15v1.0_7au_1s1p1d_22j.txt', 'w'), array2list(res.x, lmax_sz, nzeta_sz, nq_sz), 'In')

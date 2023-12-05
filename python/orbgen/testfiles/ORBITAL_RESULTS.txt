@@ -1,4 +1,4 @@
-<Coefficient>
+<Coefficient rcut=" 7" sigma=" 0.1 " element="In ">
 	 7 Total number of radial orbitals.
 	Type	L	Zeta-Orbital
 	  In 	0	    1

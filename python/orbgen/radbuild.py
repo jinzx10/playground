@@ -63,7 +63,7 @@ def j2rad(coeff, q, rcut, dr=0.01, sigma=0.1):
     r = dr * np.arange(nr)
     g = smoothing(r, rcut, sigma)
 
-    chi = [[np.zeros(nr)] * nzeta[l] for l in range(lmax+1)]
+    chi = [[np.zeros(nr) for _ in range(nzeta[l])] for l in range(lmax+1)]
     for l in range(lmax+1):
         for izeta in range(nzeta[l]):
             for iq in range(len(coeff[l][izeta])):

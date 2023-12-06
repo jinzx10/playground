@@ -1,4 +1,6 @@
 import numpy as np
+from scipy.special import spherical_jn
+
 
 '''
 Returns the first n roots of the l-th order spherical
@@ -40,12 +42,56 @@ def ikebe(n, nroots):
     return 2. / np.sqrt(eigval[:nroots])
 
 
+'''
+Returns the first n roots of the l-th order spherical
+Bessel function of the first kind.
+
+The roots of j_{l} and j_{l+1} are interlaced; so are
+the roots of j_{l} and j_{l+2}. This property is exploited
+to bracket the roots of j_{l} by the roots of j_{l-1}
+or j_{l-2} recursively.
+
+Parameters
+----------
+    l : int
+        Order of the spherical Bessel function.
+    n : int
+        Number of roots to be returned.
+
+Returns
+-------
+    roots : array
+        A 1-D array containing the first n roots of the l-th order spherical Bessel function.
+
+'''
+def bracket(l, nzeros):
+    from scipy.optimize import brentq
+
+    assert l >= 0 and nzeros > 0
+
+    nz = nzeros + (l+1)//2
+    buffer = np.arange(1, nz+1, dtype=float)*np.pi
+
+    ll = 1
+    jl = lambda x: spherical_jn(ll, x)
+
+    if l % 2 == 1:
+        for i in range(nz-1):
+            buffer[i] = brentq(jl, buffer[i], buffer[i+1], xtol=1e-14)
+        nz -= 1
+
+    for ll in range(2 + l%2, l+1, 2):
+        for i in range(nz-1):
+            buffer[i] = brentq(jl, buffer[i], buffer[i+1], xtol=1e-14)
+        nz -= 1
+
+    return buffer[:nzeros]
+
+
 ############################################################
 #                       Testing
 ############################################################
 def test_ikebe():
-    from scipy.special import spherical_jn
-
     print('Testing Ikebe\'s method...')
     
     for n in range(20):
@@ -56,6 +102,18 @@ def test_ikebe():
     print('...Passed!')
 
 
+def test_bracket():
+    print('Testing the bracketing method...')
+
+    for n in range(20):
+        for nroots in range(1, 50):
+            roots = bracket(n, nroots)
+            assert np.linalg.norm(spherical_jn(n, roots), np.inf) < 1e-14
+
+    print('...Passed!')
+
+
 if __name__ == '__main__':
     test_ikebe()
+    test_bracket() # slow!
 

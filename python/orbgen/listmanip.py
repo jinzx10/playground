@@ -53,6 +53,26 @@ def nest(x, pattern):
 
 
 '''
+Finds the nesting pattern of a nested list.
+'''
+def pattern(x):
+    result = []
+    count = 0
+    for i, xi in enumerate(x):
+        if isinstance(xi, list):
+            if count > 0:
+                result.append(count)
+                count = 0
+            result.append(pattern(xi))
+        else:
+            count += 1
+            if i == len(x) - 1:
+                result.append(count)
+
+    return result
+
+
+'''
 Converts a 1D array of (spherical Bessel) coefficients into a nested list.
 
 The 1D array is assumed to be a direct concatenation of spherical Bessel coefficients
@@ -155,6 +175,16 @@ def test_nest():
     print('...Passed!')
 
 
+def test_pattern():
+    print('Testing pattern...')
+
+    x = [[1,2], 3, [[4,5],6], 7]
+    p = pattern(x)
+    assert pattern(x) == [[2], 1, [[2],1], 1]
+
+    print('...Passed!')
+
+
 def test_array2list():
     print('Testing array2list...')
 
@@ -195,6 +225,7 @@ def test_merge():
 if __name__ == '__main__':
     test_flatten()
     test_nest()
+    test_pattern()
     test_array2list()
     #test_list2array()
     test_merge()

@@ -1,6 +1,3 @@
-from numpy import array
-import itertools
-
 '''
 Flattens a nested list.
 '''
@@ -39,6 +36,7 @@ For example, to nest [1,2,3,4,5] into [[1,2],[3,4,5]], one needs a pattern of [[
 
 '''
 def nest(x, pattern):
+    assert len(pattern) > 0 # empty list should be specified by [0]
     assert len(x) == sum(flatten(pattern))
     result = []
     idx = 0
@@ -49,11 +47,17 @@ def nest(x, pattern):
         else:
             result += x[idx:idx+stride]
         idx += stride
+
     return result
 
 
 '''
-Finds the nesting pattern of a nested list.
+Finds the nesting pattern of a list.
+
+The nesting pattern is a (nested) list of non-negative integers. For an empty list,
+the pattern is [0]. For a plain (i.e., not nested) list of length n, the pattern is [n].
+For a nested list like [[1,2], [[]], 3, 4, [5]], the pattern is [[2], [[0]], 2, [1]].
+
 '''
 def pattern(x):
     result = []
@@ -69,88 +73,27 @@ def pattern(x):
             if i == len(x) - 1:
                 result.append(count)
 
-    return result
+    return result if len(result) > 0 else [0]
 
 
 '''
-Converts a 1D array of (spherical Bessel) coefficients into a nested list.
-
-The 1D array is assumed to be a direct concatenation of spherical Bessel coefficients
-of different orbitals. The nested list is a list of list of list of float, where the first,
-second and third indices label the angular momentum, zeta number, and the wave number, respectively.
-
-This is the inverse of list2array.
-
-Parameters
-----------
-    c : 1D array
-        A 1D array containing the coefficients of spherical Bessel functions.
-    lmax : int
-        Maximum angular momentum.
-    nzeta : list of int
-        Number of orbitals for each angular momentum.
-    nq : list of int
-        Number of spherical Bessel wave numbers involved in each orbital.
-        This list should not contain any 0.
+Merges two (nested) lists at a specified depth.
 '''
-def array2list(c, lmax, nzeta, nq):
+def merge(l1, l2, depth):
+    assert depth >= 0
+    assert isinstance(l1, list) and isinstance(l2, list)
 
-    assert len(nzeta) == lmax+1
-    assert sum(nq) == len(c)
+    if depth == 0:
+        return l1 + l2
 
-    iq = [0] + list(itertools.accumulate(nq))
-    iz = [0] + list(itertools.accumulate(nzeta))
-    return [[list(c[iq[i]:iq[i+1]]) for i in range(iz[l], iz[l+1])] for l in range(lmax+1)]
+    l_long, l_short = (l1, l2) if len(l1) >= len(l2) else (l2, l1)
 
-
-'''
-Converts a plain list of spherical Bessel coefficients into a nested list.
-
-The plain list is assumed to be a direct concatenation of spherical Bessel coefficients from different orbitals.
-On exit, a nested list (list of list of list of float) will be returned, where the first, second and third
-indices label the angular momentum, zeta number and wave number, respectively.
-
-Parameters
-----------
-    c : list
-        A plain list containing the coefficients of spherical Bessel functions.
-    nq : list of list of int
-        nq[l][izeta] should contain the number of spherical Bessel wave numbers of orbital (l,izeta).
-'''
-def array2list2(c, nq_nested, nq_flat=None, lmax=None, nzeta=None):
-    lmax = len(nq) - 1
-    nzeta = [len(nq[l]) for l in range(lmax+1)]
-    assert sum([sum(nq[l]) for l in range(lmax+1)]) == len(c)
-
-    iq = [0] + list(accumulate([sum(nq[l]) for l in range(lmax+1)]))
-    iz = [0] + list(accumulate(nzeta))
-    return [[list(c[iq[i]:iq[i+1]]) for i in range(iz[l], iz[l+1])] for l in range(lmax+1)]
-
-
-#'''
-#Flattens a nested list of coefficients into a 1D array.
-#
-#This is the inverse of array2list.
-#'''
-#def list2array(coeff):
-#    return array([clzq for cl in coeff for clz in cl for clzq in clz])
-
-
-'''
-Merges two sets of spherical Bessel coefficients.
-'''
-def merge(coeff, extra_coeff):
     from copy import deepcopy
-    coeff_merged = deepcopy(coeff)
+    l = deepcopy(l_long)
+    for i in range(len(l_short)):
+        l[i] = merge(l1[i], l2[i], depth-1)
 
-    # pads with empty lists if extra_coeff is longer
-    coeff_merged += [[] for _ in range(len(extra_coeff)-len(coeff))]
-
-    # appends extra_coeff to coeff for each angular momentum
-    for l, cl in enumerate(extra_coeff):
-        coeff_merged[l] += cl
-
-    return coeff_merged
+    return l
 
 
 ############################################################
@@ -159,8 +102,17 @@ def merge(coeff, extra_coeff):
 def test_flatten():
     print('Testing flatten...')
 
-    x = [[1,[2,3],[], 4],[[[5]]], [[]]]
-    assert flatten(x) == [1,2,3,4,5]
+    x = [[[]]]
+    assert flatten(x) == []
+
+    x = [[], [], []]
+    assert flatten(x) == []
+
+    x = [[[], 1]]
+    assert flatten(x) == [1]
+
+    x = [[1, [2, 3], [], 4], [[[5]]], [[]]]
+    assert flatten(x) == [1, 2, 3, 4, 5]
 
     print('...Passed!')
 
@@ -168,8 +120,20 @@ def test_flatten():
 def test_nest():
     print('Testing nest...')
 
-    x = [0,1,2,3,4,5,6,7,8,9]
-    pattern = [[1,[2],[[1]]], [[2],1], [1], 2]
+    x = []
+    pattern = [[[0]]]
+    assert nest(x, pattern) == [[[]]]
+
+    x = [7]
+    pattern = [[0], [0], [[1]]]
+    assert nest(x, pattern) == [[], [], [[7]]]
+
+    x = [0, 1, 2, 3, 4]
+    pattern = [[3], 2, [0]]
+    assert nest(x, pattern) == [[0, 1, 2], 3, 4, []]
+
+    x = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    pattern = [[1, [2], [[1]]], [[2], 1], [1], 2]
     assert nest(x, pattern) == [[0, [1, 2], [[3]]], [[4, 5], 6], [7], 8, 9]
 
     print('...Passed!')
@@ -178,47 +142,43 @@ def test_nest():
 def test_pattern():
     print('Testing pattern...')
 
-    x = [[1,2], 3, [[4,5],6], 7]
-    p = pattern(x)
-    assert pattern(x) == [[2], 1, [[2],1], 1]
+    x = [1, 2, 3]
+    assert pattern(x) == [3]
+
+    x = [[1, 2], 3, [[4, 5], 6], 7]
+    assert pattern(x) == [[2], 1, [[2], 1], 1]
+
+    x = [[1, 2], 3, 4, [[]], [5], []]
+    assert pattern(x) == [[2], 2, [[0]], [1], [0]]
 
     print('...Passed!')
-
-
-def test_array2list():
-    print('Testing array2list...')
-
-    coeff = array([0,0,0,1,1,2,3,3,3,4,4,5])
-
-    coeff_ref = [[[0,0,0],[1,1]], [[2],[3,3,3]], [], [[4,4]], [[5]]]
-    coeff_list = array2list(coeff, 4, [2,2,0,1,1], [3,2,1,3,2,1])
-
-    assert coeff_ref == coeff_list
-    print('...Passed!')
-
-
-#def test_list2array():
-#    print('Testing list2array...')
-#
-#    coeff = [[[0,0,0],[1,1]], [[2],[3,3,3]], [], [[4,4]], [[5]]]
-#
-#    coeff_ref = array([0,0,0,1,1,2,3,3,3,4,4,5])
-#    coeff_array = list2array(coeff)
-#
-#    assert (coeff_ref == coeff_array).all()
-#    print('...Passed!')
 
 
 def test_merge():
     print('Testing merge...')
 
-    coeff1 = [[[0,0], [1,1]], [], [[3,3,3]]]
-    coeff2 = [[], [[2,2,2]], [[4,4]], [[5,5,5]]]
+    l1 = []
+    l2 = []
+    assert merge(l1, l2, 0) == []
 
-    coeff_ref = [[[0,0],[1,1]], [[2,2,2]], [[3,3,3],[4,4]], [[5,5,5]]]
-    coeff_merged = merge(coeff1, coeff2)
+    l1 = [7]
+    l2 = []
+    assert merge(l1, l2, 0) == [7]
 
-    assert coeff_ref == coeff_merged
+    l1 = [0]
+    l2 = [1, 2]
+    assert merge(l1, l2, 0) == [0, 1, 2]
+
+    l1 = [[0, 1], [2, 3]]
+    l2 = [[], [4, 5], [[6, 7]]]
+    assert merge(l1, l2, 0) == [[0, 1], [2, 3], [], [4, 5], [[6, 7]]]
+    assert merge(l1, l2, 1) == [[0, 1], [2, 3, 4, 5], [[6, 7]]]
+
+    l1 = [[[0], [1]], [[2, 3]]]
+    l2 = [[[4, 5]], [[6], [7]]]
+    assert merge(l1, l2, 1) == [[[0], [1], [4, 5]], [[2, 3], [6], [7]]]
+    assert merge(l1, l2, 2) == [[[0, 4, 5], [1]], [[2, 3, 6], [7]]]
+
     print('...Passed!')
 
 
@@ -226,8 +186,6 @@ if __name__ == '__main__':
     test_flatten()
     test_nest()
     test_pattern()
-    test_array2list()
-    #test_list2array()
     test_merge()
 
 

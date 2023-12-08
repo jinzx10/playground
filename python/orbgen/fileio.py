@@ -188,13 +188,15 @@ def read_param(fname):
     
     Returns
     -------
-        coeff : list of list of list of float
+        A dictionary containing the following key-value pairs:
+
+        'coeff' : list of list of list of float
             Spherical Bessel coefficients as coeff[l][zeta][iq].
-        rcut : float
+        'rcut' : float
             Cutoff radius of the orbital.
-        sigma : float
+        'sigma' : float
             Smoothing width.
-        symbol : str
+        'elem' : str
             Element symbol.
 
     '''
@@ -226,7 +228,8 @@ def read_param(fname):
     iorb = lambda l, zeta : nzeta_cumu[l] + zeta
     coeff = [[ list(map(float, data[delim[iorb(l,zeta)]+6:delim[iorb(l,zeta)+1]])) \
             for zeta in range(nzeta[l])] for l in range(lmax+1)]
-    return coeff, rcut, sigma, symbol
+
+    return {'coeff': coeff, 'rcut': rcut, 'sigma': sigma, 'elem': symbol}
 
 
 '''
@@ -268,15 +271,17 @@ import unittest
 
 class TestFileio(unittest.TestCase):
     def test_read_param(self):
-        coeff, rcut, sigma, symbol = read_param('./testfiles/ORBITAL_RESULTS.txt')
+        param = read_param('./testfiles/ORBITAL_RESULTS.txt')
     
+        self.assertEqual(param['elem'], 'In')
+        self.assertEqual(param['rcut'], 7.0)
+        self.assertEqual(param['sigma'], 0.1)
+
+        coeff = param['coeff']
         lmax = len(coeff)-1
         nzeta = [len(coeff[l]) for l in range(lmax+1)]
         nq = [len(coeff[l][zeta]) for l in range(lmax+1) for zeta in range(nzeta[l])]
 
-        self.assertEqual(symbol, 'In')
-        self.assertEqual(rcut, 7.0)
-        self.assertEqual(sigma, 0.1)
         self.assertEqual(lmax, 3)
         self.assertEqual(nzeta, [2, 2, 2, 1])
         self.assertEqual(nq, [31] * 7)
@@ -285,82 +290,46 @@ class TestFileio(unittest.TestCase):
         self.assertEqual(coeff[1][1][0], -0.78111126700600)
         self.assertEqual(coeff[3][0][30], -0.09444436877182)
 
-    def test_read_param(self):
-        coeff, rcut, sigma, symbol = read_param('./testfiles/ORBITAL_RESULTS.txt')
+
+    def test_write_param(self):
+        param = read_param('./testfiles/ORBITAL_RESULTS.txt')
+        tmpfile = './testfiles/ORBITAL_RESULTS.txt.tmp'
+        write_param(tmpfile, **param)
+        param2 = read_param(tmpfile)
+        os.remove(tmpfile)
+        self.assertDictEqual(param, param2)
     
-        lmax = len(coeff)-1
-        nzeta = [len(coeff[l]) for l in range(lmax+1)]
-        nq = [len(coeff[l][zeta]) for l in range(lmax+1) for zeta in range(nzeta[l])]
     
-        assert symbol == 'In'
-        assert rcut == 7.0
-        assert sigma == 0.1
-        assert lmax == 3
-        assert nzeta == [2, 2, 2, 1]
-        assert nq == [31] * 7
-        assert coeff[0][0][0] == 0.09780237320580
-        assert coeff[0][0][30] == 0.00021711814077
-        assert coeff[1][1][0] == -0.78111126700600
-        assert coeff[3][0][30] == -0.09444436877182
+    def test_read_nao(self):
+        nao = read_nao('./testfiles/C_gga_8au_100Ry_2s2p1d.orb')
+    
+        self.assertEqual(nao['elem'], 'C')
+        self.assertEqual(nao['rcut'], 8.0)
+        self.assertEqual(nao['ecut'], 100.0)
+        self.assertEqual(nao['dr'], 0.01)
+        self.assertEqual(nao['nr'], 801)
 
-def test_write_param():
-    print('Testing write_param...')
+        chi = nao['chi']
+        lmax = len(chi)-1
+        nzeta = [len(chi[l]) for l in range(lmax+1)]
 
-    data = read_param('./testfiles/ORBITAL_RESULTS.txt')
-    tmpfile = './testfiles/ORBITAL_RESULTS.txt.tmp'
-    write_param(tmpfile, *data)
-    data2 = read_param(tmpfile)
-
-    assert data == data2
-
-    os.remove(tmpfile)
-    print('...Passed!')
-
-
-def test_read_nao():
-    print('Testing read_nao...')
-    elem, ecut, rcut, nr, dr, chi = read_nao('./testfiles/C_gga_8au_100Ry_2s2p1d.orb')
-
-    assert elem == 'C'
-    assert ecut == 100.0
-    assert rcut == 8.0
-    assert nr == 801
-    assert dr == 0.01
-
-    lmax = len(chi)-1
-    nzeta = [len(chi[l]) for l in range(lmax+1)]
-    nr = [len(chi[l][zeta]) for l in range(lmax+1) for zeta in range(nzeta[l])]
-    assert lmax == 2
-    assert nzeta == [2, 2, 1]
-    assert nr == [801] * 5
-
-    assert chi[0][0][0] == 5.368426038998e-01
-    assert chi[0][0][800] == 0.000000000000e+00
-    assert chi[0][1][0] == -6.134205291735e-02
-    assert chi[1][1][799] == -2.773536551465e-06
-
-    print('...Passed!')
-
-
-def test_write_nao():
-    print('Testing write_nao...')
-
-    data = read_nao('./testfiles/C_gga_8au_100Ry_2s2p1d.orb')
-    tmpfile = './testfiles/C_gga_8au_100Ry_2s2p1d.orb.tmp'
-    write_nao(tmpfile, *data)
-    data2 = read_nao(tmpfile)
-
-    assert data == data2
-
-    os.remove(tmpfile)
-    print('...Passed!')
+        self.assertEqual(lmax, 2)
+        self.assertEqual(nzeta, [2, 2, 1])
+        self.assertEqual(chi[0][0][0], 5.368426038998e-01)
+        self.assertEqual(chi[0][0][800], 0.000000000000e+00)
+        self.assertEqual(chi[0][1][0], -6.134205291735e-02)
+        self.assertEqual(chi[1][1][799], -2.773536551465e-06)
+    
+    
+    def test_write_nao(self):
+        nao = read_nao('./testfiles/C_gga_8au_100Ry_2s2p1d.orb')
+        tmpfile = './testfiles/C_gga_8au_100Ry_2s2p1d.orb.tmp'
+        write_nao(tmpfile, **nao)
+        nao2 = read_nao(tmpfile)
+        os.remove(tmpfile)
+        self.assertDictEqual(nao, nao2)
 
 
 if __name__ == '__main__':
     unittest.main()
-
-    test_read_param()
-    test_write_param()
-    test_read_nao()
-    test_write_nao()
 

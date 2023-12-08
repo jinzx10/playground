@@ -232,23 +232,24 @@ def read_param(fname):
     return {'coeff': coeff, 'rcut': rcut, 'sigma': sigma, 'elem': symbol}
 
 
-'''
-Writes spherical Bessel coefficients.
-
-Parameters
-----------
-    fname : str
-        Name of the coefficient file to be (over)written.
-    coeff : list of list of list of float
-        Spherical Bessel coefficients as coeff[l][zeta][iq].
-    rcut : float
-        Cutoff radius of the orbital.
-    sigma : float
-        Smoothing width.
-    elem : str
-        Element symbol.
-'''
 def write_param(fname, coeff, rcut, sigma, elem):
+    '''
+    Writes orbital parameters to a file of the SIAB/PTG format.
+    
+    Parameters
+    ----------
+        fname : str
+            Name of the coefficient file to be (over)written.
+        coeff : list of list of list of float
+            Spherical Bessel coefficients as coeff[l][zeta][iq].
+        rcut : float
+            Cutoff radius of the orbital.
+        sigma : float
+            Smoothing width.
+        elem : str
+            Element symbol.
+
+    '''
     with open(fname, 'w') as f:
         lmax = len(coeff)-1
         nzeta = [len(coeff[l]) for l in range(lmax+1)]

@@ -1,42 +1,43 @@
-'''
-Flattens a nested list.
-'''
 def flatten(x):
+    '''
+    Flattens a nested list.
+
+    '''
     if isinstance(x, list):
         return [elem for i in x for elem in flatten(i)]
     else:
         return [x]
 
 
-'''
-Nests a plain list according to a nesting pattern.
-
-Parameters
-----------
-    x : list
-        A plain list (not nested).
-    pattern : list
-        A nested list of non-negative int
-
-Examples
---------
->>> x = [1,2,3,4,5]
->>> pattern = [[2], [2], [1]]
->>> print(nest(x, pattern))
-[[1, 2], [3, 4], [5]]
->>> pattern = [[2], 2, [1], [0]]
->>> print(nest(x, pattern))
-[[1, 2], 3, 4, [5], []]
-
-Notes
------
-Sublists must be specified explicitly in the pattern by enclosing their sizes in lists.
-For example, to nest [1,2,3,4,5] into [[1,2],[3,4,5]], one needs a pattern of [[2],[3]];
-[2,3] would not do anything.
-
-'''
 def nest(x, pattern):
-    assert len(pattern) > 0 # empty list should be specified by [0]
+    '''
+    Nests a plain list according to a nesting pattern.
+    
+    Parameters
+    ----------
+        x : list
+            A plain list (not nested).
+        pattern : list
+            A nested list of non-negative int
+    
+    Examples
+    --------
+    >>> x = [1,2,3,4,5]
+    >>> pattern = [[2], [2], [1]]
+    >>> print(nest(x, pattern))
+    [[1, 2], [3, 4], [5]]
+    >>> pattern = [[2], 2, [1], [0]]
+    >>> print(nest(x, pattern))
+    [[1, 2], 3, 4, [5], []]
+    
+    Notes
+    -----
+    Sublists must be specified explicitly in the pattern by enclosing their sizes in lists.
+    For example, to nest [1,2,3,4,5] into [[1,2],[3,4,5]], one needs a pattern of [[2],[3]];
+    [2,3] would not do anything. Empty lists must also be specified explicitly as [0].
+    
+    '''
+    assert len(pattern) > 0
     assert len(x) == sum(flatten(pattern))
     result = []
     idx = 0
@@ -51,15 +52,15 @@ def nest(x, pattern):
     return result
 
 
-'''
-Finds the nesting pattern of a list.
-
-The nesting pattern is a (nested) list of non-negative integers. For an empty list,
-the pattern is [0]. For a plain (i.e., not nested) list of length n, the pattern is [n].
-For a nested list like [[1,2], [[]], 3, 4, [5]], the pattern is [[2], [[0]], 2, [1]].
-
-'''
 def pattern(x):
+    '''
+    Finds the nesting pattern of a list.
+    
+    The nesting pattern is a (nested) list of non-negative integers.
+    For a plain (i.e., not nested) list of length n, the pattern is [n].
+    For a nested list like [[1,2], [[]], 3, 4, [5]], the pattern is [[2], [[0]], 2, [1]].
+    
+    '''
     result = []
     count = 0
     for i, xi in enumerate(x):
@@ -76,11 +77,15 @@ def pattern(x):
     return result if len(result) > 0 else [0]
 
 
-'''
-Merges two (nested) lists at a specified depth.
-'''
 def merge(l1, l2, depth):
-    assert depth >= 0
+    '''
+    Merges two (nested) lists at a specified depth.
+
+    A depth-0 merge concatenates two lists.
+    A depth-n merge applies depth-(n-1) merge to two lists element-wise.
+
+    '''
+    assert isinstance(depth, int) and depth >= 0
     assert isinstance(l1, list) and isinstance(l2, list)
 
     if depth == 0:
@@ -97,95 +102,78 @@ def merge(l1, l2, depth):
 
 
 ############################################################
-#                       Testing
+#                       Test
 ############################################################
-def test_flatten():
-    print('Testing flatten...')
+import unittest
+class TestListManip(unittest.TestCase):
 
-    x = [[[]]]
-    assert flatten(x) == []
-
-    x = [[], [], []]
-    assert flatten(x) == []
-
-    x = [[[], 1]]
-    assert flatten(x) == [1]
-
-    x = [[1, [2, 3], [], 4], [[[5]]], [[]]]
-    assert flatten(x) == [1, 2, 3, 4, 5]
-
-    print('...Passed!')
-
-
-def test_nest():
-    print('Testing nest...')
-
-    x = []
-    pattern = [[[0]]]
-    assert nest(x, pattern) == [[[]]]
-
-    x = [7]
-    pattern = [[0], [0], [[1]]]
-    assert nest(x, pattern) == [[], [], [[7]]]
-
-    x = [0, 1, 2, 3, 4]
-    pattern = [[3], 2, [0]]
-    assert nest(x, pattern) == [[0, 1, 2], 3, 4, []]
-
-    x = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    pattern = [[1, [2], [[1]]], [[2], 1], [1], 2]
-    assert nest(x, pattern) == [[0, [1, 2], [[3]]], [[4, 5], 6], [7], 8, 9]
-
-    print('...Passed!')
-
-
-def test_pattern():
-    print('Testing pattern...')
-
-    x = [1, 2, 3]
-    assert pattern(x) == [3]
-
-    x = [[1, 2], 3, [[4, 5], 6], 7]
-    assert pattern(x) == [[2], 1, [[2], 1], 1]
-
-    x = [[1, 2], 3, 4, [[]], [5], []]
-    assert pattern(x) == [[2], 2, [[0]], [1], [0]]
-
-    print('...Passed!')
-
-
-def test_merge():
-    print('Testing merge...')
-
-    l1 = []
-    l2 = []
-    assert merge(l1, l2, 0) == []
-
-    l1 = [7]
-    l2 = []
-    assert merge(l1, l2, 0) == [7]
-
-    l1 = [0]
-    l2 = [1, 2]
-    assert merge(l1, l2, 0) == [0, 1, 2]
-
-    l1 = [[0, 1], [2, 3]]
-    l2 = [[], [4, 5], [[6, 7]]]
-    assert merge(l1, l2, 0) == [[0, 1], [2, 3], [], [4, 5], [[6, 7]]]
-    assert merge(l1, l2, 1) == [[0, 1], [2, 3, 4, 5], [[6, 7]]]
-
-    l1 = [[[0], [1]], [[2, 3]]]
-    l2 = [[[4, 5]], [[6], [7]]]
-    assert merge(l1, l2, 1) == [[[0], [1], [4, 5]], [[2, 3], [6], [7]]]
-    assert merge(l1, l2, 2) == [[[0, 4, 5], [1]], [[2, 3, 6], [7]]]
-
-    print('...Passed!')
+    def test_flatten(self):
+        x = [[[]]]
+        self.assertEqual(flatten(x), [])
+    
+        x = [[], [], []]
+        self.assertEqual(flatten(x), [])
+    
+        x = [[[], 1]]
+        self.assertEqual(flatten(x), [1])
+    
+        x = [[1, [2, 3], [], 4], [[[5]]], [[]]]
+        self.assertEqual(flatten(x), [1, 2, 3, 4, 5])
+    
+    
+    def test_nest(self):
+        x = []
+        pattern = [[[0]]]
+        self.assertEqual(nest(x, pattern), [[[]]])
+    
+        x = [7]
+        pattern = [[0], [0], [[1]]]
+        self.assertEqual(nest(x, pattern), [[], [], [[7]]])
+    
+        x = [0, 1, 2, 3, 4]
+        pattern = [[3], 2, [0]]
+        self.assertEqual(nest(x, pattern), [[0, 1, 2], 3, 4, []])
+    
+        x = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        pattern = [[1, [2], [[1]]], [[2], 1], [1], 2]
+        self.assertEqual(nest(x, pattern), [[0, [1, 2], [[3]]], [[4, 5], 6], [7], 8, 9])
+    
+    
+    def test_pattern(self):
+        x = [1, 2, 3]
+        self.assertEqual(pattern(x), [3])
+    
+        x = [[1, 2], 3, [[4, 5], 6], 7]
+        self.assertEqual(pattern(x), [[2], 1, [[2], 1], 1])
+    
+        x = [[1, 2], 3, 4, [[]], [5], []]
+        self.assertEqual(pattern(x), [[2], 2, [[0]], [1], [0]])
+    
+    
+    def test_merge(self):
+        l1 = []
+        l2 = []
+        self.assertEqual(merge(l1, l2, 0), [])
+    
+        l1 = [7]
+        l2 = []
+        self.assertEqual(merge(l1, l2, 0), [7])
+    
+        l1 = [0]
+        l2 = [1, 2]
+        self.assertEqual(merge(l1, l2, 0), [0, 1, 2])
+    
+        l1 = [[0, 1], [2, 3]]
+        l2 = [[], [4, 5], [[6, 7]]]
+        self.assertEqual(merge(l1, l2, 0), [[0, 1], [2, 3], [], [4, 5], [[6, 7]]])
+        self.assertEqual(merge(l1, l2, 1), [[0, 1], [2, 3, 4, 5], [[6, 7]]])
+    
+        l1 = [[[0], [1]], [[2, 3]]]
+        l2 = [[[4, 5]], [[6], [7]]]
+        self.assertEqual(merge(l1, l2, 1), [[[0], [1], [4, 5]], [[2, 3], [6], [7]]])
+        self.assertEqual(merge(l1, l2, 2), [[[0, 4, 5], [1]], [[2, 3, 6], [7]]])
 
 
 if __name__ == '__main__':
-    test_flatten()
-    test_nest()
-    test_pattern()
-    test_merge()
-
+    unittest.main()
 

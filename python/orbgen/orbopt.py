@@ -1,55 +1,63 @@
 import numpy as np
-from scipy.optimize import minimize
 
-'''
-Spherical Bessel coefficients to energy.
-
-Given a set of spherical Bessel wave numbers and coefficients, this function generates
-an orbital file, executes ABACUS in a directory and gets the total energy.
-
-Parameters
-----------
-    coeff : list of list of list of float
-        A nested list containing the coefficients of spherical Bessel functions.
-    q : list of list of list of float
-        Wave numbers of each spherical Bessel component.
-    sigma : float
-        Smoothing parameter.
-    orbfile : str
-        Name of the orbital file to be generated.
-    elem : str
-        Element symbol.
-    rcut : int or float
-        Cutoff radius of the orbital.
-    jobdir : str
-        Directory to run the SCF calculation.
-    nthreads : int
-        Number of threads to be used in the SCF calculation.
-    nprocs : int
-        Number of MPI processes to be used in the SCF calculation.
-
-'''
 def coeff2energy(coeff, orbfile, elem, rcut, abacus_path, coeff_base=None, q=None, q_base=None, \
         dr=0.01, sigma=0.1, orbdir='./', jobdirs=['./'], nthreads=2, nprocs=4, stdout=None, stderr=None):
-
+    '''
+    Orbital parameters to energy.
+    
+    Given a set of orbital parameters (spherical Bessel coefficients, cutoff radius, smoothing sigma, etc,
+    this function generates an numerical atomic orbital file from those parameters, executes ABACUS in
+    specified directories and gets the total energy.
+    
+    Parameters
+    ----------
+        coeff : list of list of list of float
+            A nested list containing the spherical Bessel coefficients of orbitals in interest.
+        orbfile : str
+            Name of the orbital file to be generated. (Not include the directory)
+        elem : str
+            Element symbol.
+        rcut : float
+            Cutoff radius of the orbital.
+        abacus_path : str
+            Path to the ABACUS executable.
+        coeff_base : list of list of list of float
+            A nested list containing the spherical Bessel coefficients of 'fixed' orbitals.
+        q : list of list of list of float
+            Wave numbers of each spherical Bessel function in coeff.
+            If None, will be generated from rcut & the size of coeff.
+        q_base : list of list of list of float
+            Wave numbers of each spherical Bessel function in coeff_base.
+            If None, will be generated from rcut & the size of coeff_base.
+        dr : float
+            Grid spacing.
+        sigma : float
+            Smoothing parameter.
+        orbdir : str
+            Directory to write the orbital file.
+        jobdirs : list of str
+            Directories to where ABACUS is executed.
+        nthreads : int
+            Number of threads to be used by ABACUS.
+        nprocs : int
+            Number of MPI processes to be invoked by ABACUS.
+        stdout, stderr :
+            See the documentation of subprocess.
+    
+    '''
     print('coeff = ', coeff)
-    from radbuild import qgen, j2rad
-
-    if q is None:
-        # if q is not given, use wave numbers such that spherical Bessel functions are zero at rcut
-        q = qgen(coeff, rcut)
 
     if coeff_base is not None:
         from listmanip import merge
-        coeff = merge(coeff_base, coeff)
-        q = merge(q_base if q_base is not None else qgen(coeff_base, rcut), q)
+        coeff = merge(coeff_base, coeff, depth=1)
 
     # generates radial functions
-    chi, _ = j2rad(coeff, q, rcut, dr, sigma)
+    from radial import build
+    chi, r = build(coeff, rcut, dr, sigma, q=None, orth=False)
 
     # writes to an orbital file
-    from fileio import write_orbfile
-    write_orbfile(orbdir + '/' + orbfile, elem, rcut, chi, dr=dr)
+    from fileio import write_nao
+    write_nao(orbdir + '/' + orbfile, elem, 100, rcut, len(r), dr, chi)
 
     # calls ABACUS to run SCF & get energy
     from shelltask import xabacus, grep_energy
@@ -62,17 +70,26 @@ def coeff2energy(coeff, orbfile, elem, rcut, abacus_path, coeff_base=None, q=Non
     return e
 
 
-############################################################
-#                       Testing
-############################################################
+def inputgen():
+    '''
+    Generates ABACUS input files for orbital optimizations.
+    '''
+    pass
 
-def test_coeff2energy():
+############################################################
+#                       Test
+############################################################
+import unittest
+
+def TestOrbOpt(unittest.TestCase):
     pass
 
 
 ############################################################
 #                       Main
 ############################################################
+from scipy.optimize import minimize
+
 if __name__ == '__main__':
 
     from fileio import read_coeff

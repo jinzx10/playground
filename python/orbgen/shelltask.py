@@ -1,19 +1,21 @@
 import subprocess
 
-'''
-Executes ABACUS in a directory.
-'''
 def xabacus(abacus_path, jobdir, nthreads, nprocs, stdout, stderr):
+    '''
+    Executes ABACUS in a directory.
+
+    '''
     subprocess.run("cd {jobdir}; " \
                    "OMP_NUM_THREADS={nthreads} mpirun -np {nprocs} {abacus_path}" \
                    .format(jobdir=jobdir, nthreads=nthreads, nprocs=nprocs, abacus_path=abacus_path), \
                    shell=True, stdout=stdout, stderr=stderr)
 
 
-'''
-Extracts the total energy from the ABACUS output.
-'''
 def grep_energy(jobdir, suffix='ABACUS'):
+    '''
+    Extracts the total energy from the ABACUS output.
+
+    '''
     result = subprocess.run("grep '!FINAL' {jobdir}/OUT.{suffix}/running_scf.log | awk '{{print $2}}'" \
                             .format(jobdir=jobdir, suffix=suffix),
                             shell=True, capture_output=True, text=True)

@@ -80,7 +80,7 @@ def _write_chi(f, l, zeta, chi):
     f.write('                Type                   L                   N\n')
     f.write('                   0                   {0}                   {1}\n'.format(l, zeta))
     for ir, chi_of_r in enumerate(chi):
-        f.write('{: 21.12e}'.format(chi_of_r))
+        f.write('{: 23.14e}'.format(chi_of_r))
         if ir % 4 == 3 and ir != len(chi)-1:
             f.write('\n')
     f.write('\n')
@@ -215,7 +215,7 @@ def read_param(fname):
     # extract the parameters in header
     rcut = float(_extract('rcut', data))
     sigma = float(_extract('sigma', data))
-    symbol = _extract('element', data)
+    elem = _extract('element', data)
 
     # split the data into a list of strings
     data = list(filter(None, re.split('\t| ', data)))
@@ -229,7 +229,7 @@ def read_param(fname):
     coeff = [[ list(map(float, data[delim[iorb(l,zeta)]+6:delim[iorb(l,zeta)+1]])) \
             for zeta in range(nzeta[l])] for l in range(lmax+1)]
 
-    return {'coeff': coeff, 'rcut': rcut, 'sigma': sigma, 'elem': symbol}
+    return {'coeff': coeff, 'rcut': rcut, 'sigma': sigma, 'elem': elem}
 
 
 def write_param(fname, coeff, rcut, sigma, elem):
@@ -275,7 +275,7 @@ class TestFileio(unittest.TestCase):
         param = read_param('./testfiles/ORBITAL_RESULTS.txt')
     
         self.assertEqual(param['elem'], 'In')
-        self.assertEqual(param['rcut'], 7.0)
+        self.assertEqual(param['rcut'], 10.0)
         self.assertEqual(param['sigma'], 0.1)
 
         coeff = param['coeff']
@@ -284,12 +284,12 @@ class TestFileio(unittest.TestCase):
         nq = [len(coeff[l][zeta]) for l in range(lmax+1) for zeta in range(nzeta[l])]
 
         self.assertEqual(lmax, 3)
-        self.assertEqual(nzeta, [2, 2, 2, 1])
-        self.assertEqual(nq, [31] * 7)
-        self.assertEqual(coeff[0][0][0], 0.09780237320580)
-        self.assertEqual(coeff[0][0][30], 0.00021711814077)
-        self.assertEqual(coeff[1][1][0], -0.78111126700600)
-        self.assertEqual(coeff[3][0][30], -0.09444436877182)
+        self.assertEqual(nzeta, [3, 3, 3, 2])
+        self.assertEqual(nq, [31] * 11)
+        self.assertEqual(coeff[0][0][0], 0.09775364133148)
+        self.assertEqual(coeff[0][0][30], 0.00025319062647)
+        self.assertEqual(coeff[1][2][0], -0.31113835728419)
+        self.assertEqual(coeff[3][1][30], -0.39682668632947)
 
 
     def test_write_param(self):
@@ -302,29 +302,30 @@ class TestFileio(unittest.TestCase):
     
     
     def test_read_nao(self):
-        nao = read_nao('./testfiles/C_gga_8au_100Ry_2s2p1d.orb')
+        nao = read_nao('./testfiles/In_gga_10au_100Ry_3s3p3d2f.orb')
     
-        self.assertEqual(nao['elem'], 'C')
-        self.assertEqual(nao['rcut'], 8.0)
+        self.assertEqual(nao['elem'], 'In')
+        self.assertEqual(nao['rcut'], 10.0)
         self.assertEqual(nao['ecut'], 100.0)
         self.assertEqual(nao['dr'], 0.01)
-        self.assertEqual(nao['nr'], 801)
+        self.assertEqual(nao['nr'], 1001)
 
         chi = nao['chi']
         lmax = len(chi)-1
         nzeta = [len(chi[l]) for l in range(lmax+1)]
 
-        self.assertEqual(lmax, 2)
-        self.assertEqual(nzeta, [2, 2, 1])
-        self.assertEqual(chi[0][0][0], 5.368426038998e-01)
-        self.assertEqual(chi[0][0][800], 0.000000000000e+00)
-        self.assertEqual(chi[0][1][0], -6.134205291735e-02)
-        self.assertEqual(chi[1][1][799], -2.773536551465e-06)
+        self.assertEqual(lmax, 3)
+        self.assertEqual(nzeta, [3, 3, 3, 2])
+        self.assertEqual(chi[0][0][0], 3.63938508691915e-03)
+        self.assertEqual(chi[0][0][1000], 0.000000000000e+00)
+        self.assertEqual(chi[0][2][0], 2.96686754251501e+00)
+        self.assertEqual(chi[2][2][1], 6.64420946004809e-05)
+        self.assertEqual(chi[3][1][4], -1.08612755666000e-04)
     
     
     def test_write_nao(self):
-        nao = read_nao('./testfiles/C_gga_8au_100Ry_2s2p1d.orb')
-        tmpfile = './testfiles/C_gga_8au_100Ry_2s2p1d.orb.tmp'
+        nao = read_nao('./testfiles/In_gga_10au_100Ry_3s3p3d2f.orb')
+        tmpfile = './testfiles/In_gga_10au_100Ry_3s3p3d2f.orb.tmp'
         write_nao(tmpfile, **nao)
         nao2 = read_nao(tmpfile)
         os.remove(tmpfile)

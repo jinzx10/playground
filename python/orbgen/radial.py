@@ -45,6 +45,8 @@ Parameters
         Grid spacing.
     sigma : float
         Smoothing parameter.
+    orth : bool
+        Whether to orthonormalize the radial functions.
 
 Returns
 -------
@@ -52,7 +54,7 @@ Returns
         A nested list containing the numerical radial functions.
 
 '''
-def build(coeff, rcut, dr, sigma, q=None):
+def build(coeff, rcut, dr, sigma, q=None, orth=False):
     from scipy.integrate import simpson
     from scipy.special import spherical_jn
 
@@ -64,61 +66,72 @@ def build(coeff, rcut, dr, sigma, q=None):
 
     nr = int(rcut/dr) + 1
     r = dr * np.arange(nr)
-    g = smoothing(r, rcut, sigma)
+    g = smooth(r, rcut, sigma)
 
     chi = [[np.zeros(nr) for _ in range(nzeta[l])] for l in range(lmax+1)]
     for l in range(lmax+1):
-        for izeta in range(nzeta[l]):
-            for iq in range(len(coeff[l][izeta])):
-                chi[l][izeta] += coeff[l][izeta][iq] * spherical_jn(l, q[l][izeta][iq]*r)
+        for zeta in range(nzeta[l]):
+            for iq in range(len(coeff[l][zeta])):
+                chi[l][zeta] += coeff[l][zeta][iq] * spherical_jn(l, q[l][zeta][iq]*r)
 
-            chi[l][izeta] = chi[l][izeta] * g # apply tail-smoothing
-            chi[l][izeta] *= 1./np.sqrt(simpson((r*chi[l][izeta])**2, dx=dr)) # normalize
+            chi[l][zeta] = chi[l][zeta] * g # apply tail-smoothing
+
+            if orth:
+                for y in range(zeta):
+                    chi[l][zeta] -= simpson(r**2*chi[l][zeta]*chi[l][y], dx=dr) * chi[l][y]
+
+            chi[l][zeta] *= 1./np.sqrt(simpson((r*chi[l][zeta])**2, dx=dr)) # normalize
 
     return chi, r
 
 
 ############################################################
-#                       Testing
+#                       Test
 ############################################################
-def test_smooth():
-    print('Testing smooth...')
+import unittest
 
-    r = np.linspace(0, 10, 100)
-    rcut = 5.0
-    sigma = 0.0
-    g = smooth(r, rcut, sigma)
-    assert np.all(g[r < rcut] == 1.0) and np.all(g[r >= rcut] == 0.0)
+class TestRadial(unittest.TestCase):
 
-    sigma = 0.5
-    g = smooth(r, rcut, sigma)
-    assert np.all(g[r < rcut] == 1.0 - np.exp(-0.5*((r[r < rcut]-rcut)/sigma)**2))
-    assert np.all(g[r >= rcut] == 0.0)
+    def test_smooth(self):
+        r = np.linspace(0, 10, 100)
+        rcut = 5.0
 
-    print('...Passed!')
+        sigma = 0.0
+        g = smooth(r, rcut, sigma)
+        self.assertTrue(np.all(g[r < rcut] == 1.0) and np.all(g[r >= rcut] == 0.0))
+    
+        sigma = 0.5
+        g = smooth(r, rcut, sigma)
+        self.assertTrue(np.all(g[r < rcut] == 1.0 - np.exp(-0.5*((r[r < rcut]-rcut)/sigma)**2)))
+        self.assertTrue(np.all(g[r >= rcut] == 0.0))
+    
+    
+    def test_qgen(self):
+        from scipy.special import spherical_jn
+    
+        rcut = 7.0
+        coeff = [[[1.0]*5, [1.0]*3], [[1.0]*7], [[1.0]*8, [1.0]*4, [1.0]*2]]
+        q = qgen(coeff, rcut)
+        for l, ql in enumerate(q):
+            for zeta, qlz in enumerate(ql):
+                self.assertEqual(len(qlz), len(coeff[l][zeta]))
+                self.assertTrue(np.all(np.abs(spherical_jn(l, qlz * rcut)) < 1e-14))
+    
+    
+    def test_build(self):
+        from fileio import read_param, read_nao
 
+        param = read_param('./testfiles/ORBITAL_RESULTS.txt')
+        nao = read_nao('./testfiles/In_gga_10au_100Ry_3s3p3d2f.orb')
 
-def test_qgen():
-    print('Testing qgen...')
-    from scipy.special import spherical_jn
+        chi, r = build(param['coeff'], param['rcut'], nao['dr'], param['sigma'], orth=True)
 
-    rcut = 7.0
-    coeff = [[[1.0]*5, [1.0]*3], [[1.0]*7], [[1.0]*8, [1.0]*4, [1.0]*2]]
-    q = qgen(coeff, rcut)
-    for l, ql in enumerate(q):
-        for izeta, qlz in enumerate(ql):
-            assert len(qlz) == len(coeff[l][izeta])
-            assert np.all(np.abs(spherical_jn(l, qlz * rcut)) < 1e-14)
+        for l in range(len(chi)):
+            for zeta in range(len(chi[l])):
+                self.assertTrue(np.all(np.abs(chi[l][zeta] - np.array(nao['chi'][l][zeta])) < 1e-12))
 
-    print('...Passed!')
-
-
-def test_build():
-    pass
 
 if __name__ == '__main__':
-    test_smooth()
-    test_qgen()
-    test_build()
+    unittest.main()
 
 

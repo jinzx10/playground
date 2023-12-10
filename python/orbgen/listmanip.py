@@ -52,7 +52,7 @@ def nest(x, pattern):
     return result
 
 
-def pattern(x):
+def nestpat(x):
     '''
     Finds the nesting pattern of a list.
     
@@ -68,7 +68,7 @@ def pattern(x):
             if count > 0:
                 result.append(count)
                 count = 0
-            result.append(pattern(xi))
+            result.append(nestpat(xi))
         else:
             count += 1
             if i == len(x) - 1:
@@ -139,15 +139,15 @@ class TestListManip(unittest.TestCase):
         self.assertEqual(nest(x, pattern), [[0, [1, 2], [[3]]], [[4, 5], 6], [7], 8, 9])
     
     
-    def test_pattern(self):
+    def test_nestpat(self):
         x = [1, 2, 3]
-        self.assertEqual(pattern(x), [3])
+        self.assertEqual(nestpat(x), [3])
     
         x = [[1, 2], 3, [[4, 5], 6], 7]
-        self.assertEqual(pattern(x), [[2], 1, [[2], 1], 1])
+        self.assertEqual(nestpat(x), [[2], 1, [[2], 1], 1])
     
         x = [[1, 2], 3, 4, [[]], [5], []]
-        self.assertEqual(pattern(x), [[2], 2, [[0]], [1], [0]])
+        self.assertEqual(nestpat(x), [[2], 2, [[0]], [1], [0]])
     
     
     def test_merge(self):

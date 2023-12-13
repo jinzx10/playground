@@ -32,7 +32,7 @@ def nest(x, pattern):
     
     Notes
     -----
-    Sublists must be specified explicitly in the pattern by enclosing their sizes in lists.
+    Sublists must be specified in the pattern by enclosing their sizes in lists.
     For example, to nest [1,2,3,4,5] into [[1,2],[3,4,5]], one needs a pattern of [[2],[3]];
     [2,3] would not do anything. Empty lists must also be specified explicitly as [0].
     

@@ -1,6 +1,6 @@
 import numpy as np
 
-def coeff2energy(coeff, orbfile, elem, rcut, abacus_path, coeff_base=None, q=None, q_base=None, \
+def param2energy(coeff, orbfile, elem, rcut, abacus_path, q=None, coeff_base=None, q_base=None, \
         dr=0.01, sigma=0.1, orbdir='./', jobdirs=['./'], nthreads=2, nprocs=4, stdout=None, stderr=None):
     '''
     Orbital parameters to energy.
@@ -21,11 +21,11 @@ def coeff2energy(coeff, orbfile, elem, rcut, abacus_path, coeff_base=None, q=Non
             Cutoff radius of the orbital.
         abacus_path : str
             Path to the ABACUS executable.
-        coeff_base : list of list of list of float
-            A nested list containing the spherical Bessel coefficients of 'fixed' orbitals.
         q : list of list of list of float
             Wave numbers of each spherical Bessel function in coeff.
             If None, will be generated from rcut & the size of coeff.
+        coeff_base : list of list of list of float
+            A nested list containing the spherical Bessel coefficients of 'fixed' orbitals.
         q_base : list of list of list of float
             Wave numbers of each spherical Bessel function in coeff_base.
             If None, will be generated from rcut & the size of coeff_base.
@@ -142,7 +142,7 @@ if __name__ == '__main__':
     #nq_sz = nq
     
     from listmanip import array2list, list2array
-    func_sz = lambda c: coeff2energy(coeff=array2list(c, lmax_sz, nzeta_sz, nq_sz), q=q_sz, \
+    func_sz = lambda c: param2energy(coeff=array2list(c, lmax_sz, nzeta_sz, nq_sz), q=q_sz, \
                 orbfile=orbfile, elem=elem, rcut=rcut, abacus_path=abacus_path, \
                 coeff_base=None, q_base=None, \
                 dr=dr, sigma=sigma, orbdir=orbdir, jobdirs=jobdirs, \

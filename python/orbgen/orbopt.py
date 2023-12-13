@@ -1,7 +1,7 @@
 import numpy as np
 
-def param2energy(coeff, orbfile, elem, rcut, abacus_path, q=None, coeff_base=None, q_base=None, \
-        dr=0.01, sigma=0.1, orbdir='./', jobdirs=['./'], nthreads=2, nprocs=4, stdout=None, stderr=None):
+def param2energy(coeff, elem, rcut, sigma, dr, orbpath, abacus_path, jobdirs, \
+        coeff_base=None, nthreads=2, nprocs=4, stdout=None, stderr=None):
     '''
     Orbital parameters to energy.
     
@@ -13,30 +13,22 @@ def param2energy(coeff, orbfile, elem, rcut, abacus_path, q=None, coeff_base=Non
     ----------
         coeff : list of list of list of float
             A nested list containing the spherical Bessel coefficients of orbitals in interest.
-        orbfile : str
-            Name of the orbital file to be generated. (Not include the directory)
         elem : str
             Element symbol.
         rcut : float
             Cutoff radius of the orbital.
-        abacus_path : str
-            Path to the ABACUS executable.
-        q : list of list of list of float
-            Wave numbers of each spherical Bessel function in coeff.
-            If None, will be generated from rcut & the size of coeff.
-        coeff_base : list of list of list of float
-            A nested list containing the spherical Bessel coefficients of 'fixed' orbitals.
-        q_base : list of list of list of float
-            Wave numbers of each spherical Bessel function in coeff_base.
-            If None, will be generated from rcut & the size of coeff_base.
-        dr : float
-            Grid spacing.
         sigma : float
             Smoothing parameter.
-        orbdir : str
-            Directory to write the orbital file.
+        dr : float
+            Grid spacing.
+        orbpath: str
+            Path to the orbital file to be generated.
+        abacus_path : str
+            Path to the ABACUS executable.
         jobdirs : list of str
-            Directories to where ABACUS is executed.
+            Directories where ABACUS is executed.
+        coeff_base : list of list of list of float
+            A nested list containing the spherical Bessel coefficients of 'fixed' orbitals.
         nthreads : int
             Number of threads to be used by ABACUS.
         nprocs : int
@@ -53,11 +45,11 @@ def param2energy(coeff, orbfile, elem, rcut, abacus_path, q=None, coeff_base=Non
 
     # generates radial functions
     from radial import build
-    chi, r = build(coeff, rcut, dr, sigma, q=None, orth=False)
+    chi, r = build(coeff, rcut, dr, sigma, orth=False)
 
     # writes to an orbital file
     from fileio import write_nao
-    write_nao(orbdir + '/' + orbfile, elem, 100, rcut, len(r), dr, chi)
+    write_nao(orbpath, elem, 100, rcut, len(r), dr, chi)
 
     # calls ABACUS to run SCF & get energy
     from shelltask import xabacus, grep_energy

@@ -37,8 +37,6 @@ Parameters
 ----------
     coeff : list of list of list of float
         A nested list containing the coefficients of spherical Bessel functions.
-    q : list of list of list of float
-        Wave numbers of each spherical Bessel component.
     rcut : int or float
         Cutoff radius.
     dr : float
@@ -54,19 +52,18 @@ Returns
         A nested list containing the numerical radial functions.
 
 '''
-def build(coeff, rcut, dr, sigma, q=None, orth=False):
+def build(coeff, rcut, dr, sigma, orth=False):
     from scipy.integrate import simpson
     from scipy.special import spherical_jn
-
-    if q is None:
-        q = qgen(coeff, rcut)
 
     lmax = len(coeff)-1
     nzeta = [len(coeff[l]) for l in range(lmax+1)]
 
     nr = int(rcut/dr) + 1
     r = dr * np.arange(nr)
+
     g = smooth(r, rcut, sigma)
+    q = qgen(coeff, rcut)
 
     chi = [[np.zeros(nr) for _ in range(nzeta[l])] for l in range(lmax+1)]
     for l in range(lmax+1):
@@ -78,7 +75,7 @@ def build(coeff, rcut, dr, sigma, q=None, orth=False):
 
             if orth:
                 for y in range(zeta):
-                    chi[l][zeta] -= simpson(r**2*chi[l][zeta]*chi[l][y], dx=dr) * chi[l][y]
+                    chi[l][zeta] -= simpson(r**2 * chi[l][zeta] * chi[l][y], dx=dr) * chi[l][y]
 
             chi[l][zeta] *= 1./np.sqrt(simpson((r*chi[l][zeta])**2, dx=dr)) # normalize
 

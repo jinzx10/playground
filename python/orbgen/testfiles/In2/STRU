@@ -2,12 +2,10 @@
 #about the lattice structure.
 
 ATOMIC_SPECIES
-In 1.000 In.PD04.PBE.UPF
-#In 1.000 In_ONCV_PBE-1.0.upf
+In 1.000 In_ONCV_PBE-1.0.upf
 
 NUMERICAL_ORBITAL
-In.orb
-#In_gga_10au_100Ry_2s2p2d1f.orb
+In_gga_10au_100Ry_3s3p3d2f.orb
 
 LATTICE_CONSTANT
 20  			#Lattice constant

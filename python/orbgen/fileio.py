@@ -86,14 +86,14 @@ def _write_chi(f, l, zeta, chi):
     f.write('\n')
 
 
-def write_nao(fname, elem, ecut, rcut, nr, dr, chi):
+def write_nao(fpath, elem, ecut, rcut, nr, dr, chi):
     '''
     Generates a numerical atomic orbital file of the ABACUS format.
     
     Parameters
     ----------
-        fname : str
-            Name/path of the orbital file.
+        fpath : str
+            Path to the orbital file.
         elem : str
             Element symbol.
         ecut : float
@@ -111,21 +111,21 @@ def write_nao(fname, elem, ecut, rcut, nr, dr, chi):
     lmax = len(chi)-1
     nzeta = [len(chi[l]) for l in range(lmax+1)]
     
-    with open(fname, 'w') as f:
+    with open(fpath, 'w') as f:
         _write_header(f, elem, ecut, rcut, nzeta, nr, dr)
         for l in range(lmax+1):
             for zeta in range(nzeta[l]):
                 _write_chi(f, l, zeta, chi[l][zeta])
 
 
-def read_nao(fname):
+def read_nao(fpath):
     '''
     Reads a numerical atomic orbital file of the ABACUS format.
     
     Parameters
     ----------
-        fname : str
-            Name/path of the orbital file.
+        fpath : str
+            Path to the orbital file.
     
     Returns
     -------
@@ -145,7 +145,7 @@ def read_nao(fname):
             Numerical radial functions as chi[l][zeta][ir].
 
     '''
-    with open(fname, 'r') as f:
+    with open(fpath, 'r') as f:
         data = list(filter(None, re.split('\t| |\n', f.read())))
 
     elem = data[data.index('Element')+1]
@@ -177,14 +177,14 @@ def _extract(keyword, data):
     return result.group(1) if result else None
 
 
-def read_param(fname):
+def read_param(fpath):
     '''
     Reads an orbital parameter file of the SIAB/PTG format.
     
     Parameters
     ----------
-        fname : str
-            Name of the coefficient file to be read.
+        fpath : str
+            Path to the orbital parameter file.
     
     Returns
     -------
@@ -200,7 +200,7 @@ def read_param(fname):
             Element symbol.
 
     '''
-    with open(fname, 'r') as f:
+    with open(fpath, 'r') as f:
         data = f.read()
 
     # convert '\n' to ' ' for regex matching (.)
@@ -232,14 +232,14 @@ def read_param(fname):
     return {'coeff': coeff, 'rcut': rcut, 'sigma': sigma, 'elem': elem}
 
 
-def write_param(fname, coeff, rcut, sigma, elem):
+def write_param(fpath, coeff, rcut, sigma, elem):
     '''
     Writes orbital parameters to a file of the SIAB/PTG format.
     
     Parameters
     ----------
-        fname : str
-            Name of the coefficient file to be (over)written.
+        fpath : str
+            Path to the orbital parameter file.
         coeff : list of list of list of float
             Spherical Bessel coefficients as coeff[l][zeta][iq].
         rcut : float
@@ -250,7 +250,7 @@ def write_param(fname, coeff, rcut, sigma, elem):
             Element symbol.
 
     '''
-    with open(fname, 'w') as f:
+    with open(fpath, 'w') as f:
         lmax = len(coeff)-1
         nzeta = [len(coeff[l]) for l in range(lmax+1)]
         n = sum(nzeta)

@@ -68,7 +68,7 @@ def nestpat(x):
             yield 0
 
         streak_count = 0 # number of consecutive non-list elements
-        for i, xi in enumerate(x):
+        for xi in x:
             if isinstance(xi, list):
                 if streak_count > 0:
                     yield streak_count
@@ -76,8 +76,9 @@ def nestpat(x):
                 yield list(_patgen(xi))
             else:
                 streak_count += 1
-                if i == len(x) - 1:
-                    yield streak_count
+
+        if streak_count > 0: # trailing non-list elements
+            yield streak_count
 
     assert isinstance(x, list)
     return list(_patgen(x))
@@ -95,9 +96,7 @@ def merge(l1, l2, depth):
         if depth == 0:
             yield from l1 + l2
         else:
-            for i, j in zip(l1, l2): # zip stops at the shortest list
-                yield list(_mergegen(i, j, depth-1))
-
+            yield from (list(_mergegen(i, j, depth-1)) for i, j in zip(l1, l2))
             if len(l1) != len(l2):
                 l_long, l_short = (l1, l2) if len(l1) > len(l2) else (l2, l1)
                 yield from l_long[len(l_short):]

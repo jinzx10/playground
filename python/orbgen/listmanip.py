@@ -3,22 +3,23 @@ def flatten(x):
     Flattens a nested list.
 
     '''
-    if isinstance(x, list):
-        return [elem for i in x for elem in flatten(i)]
-    else:
-        return [x]
+    def _recursive_flatten(x):
+        return [elem for i in x for elem in _recursive_flatten(i)] if isinstance(x, list) else [x]
+
+    assert isinstance(x, list)
+    return _recursive_flatten(x)
 
 
 def nest(x, pattern):
     '''
-    Nests a plain list according to a nesting pattern.
+    Nests a list according to a nesting pattern.
     
     Parameters
     ----------
         x : list
-            A plain list (not nested).
-        pattern : list
-            A nested list of non-negative int
+            A list to be nested.
+        pattern : (nested) list
+            A nested list of non-negative int that specifies the nesting pattern.
     
     Examples
     --------
@@ -37,19 +38,20 @@ def nest(x, pattern):
     [2,3] would not do anything. Empty lists must also be specified explicitly as [0].
     
     '''
-    assert len(pattern) > 0
-    assert len(x) == sum(flatten(pattern))
-    result = []
-    idx = 0
-    for i in pattern:
-        stride = sum(flatten(i))
-        if isinstance(i, list):
-            result.append(nest(x[idx:idx+stride], i))
-        else:
-            result += x[idx:idx+stride]
-        idx += stride
+    def _nestgen(x, pattern):
+        idx = 0
+        for i in pattern:
+            if isinstance(i, list):
+                stride = sum(flatten(i))
+                yield list(_nestgen(x[idx:idx+stride], i))
+            else:
+                stride = i
+                yield from x[idx:idx+stride]
+            idx += stride
 
-    return result
+    assert isinstance(x, list) and isinstance(pattern, list)
+    assert len(x) == sum(flatten(pattern))
+    return list(_nestgen(x, pattern))
 
 
 def nestpat(x):
@@ -61,20 +63,24 @@ def nestpat(x):
     For a nested list like [[1,2], [[]], 3, 4, [5]], the pattern is [[2], [[0]], 2, [1]].
     
     '''
-    result = []
-    count = 0
-    for i, xi in enumerate(x):
-        if isinstance(xi, list):
-            if count > 0:
-                result.append(count)
-                count = 0
-            result.append(nestpat(xi))
-        else:
-            count += 1
-            if i == len(x) - 1:
-                result.append(count)
+    def _patgen(x):
+        if len(x) == 0:
+            yield 0
 
-    return result if len(result) > 0 else [0]
+        streak_count = 0 # number of consecutive non-list elements
+        for i, xi in enumerate(x):
+            if isinstance(xi, list):
+                if streak_count > 0:
+                    yield streak_count
+                    streak_count = 0
+                yield list(_patgen(xi))
+            else:
+                streak_count += 1
+                if i == len(x) - 1:
+                    yield streak_count
+
+    assert isinstance(x, list)
+    return list(_patgen(x))
 
 
 def merge(l1, l2, depth):
@@ -82,23 +88,23 @@ def merge(l1, l2, depth):
     Merges two (nested) lists at a specified depth.
 
     A depth-0 merge concatenates two lists.
-    A depth-n merge applies depth-(n-1) merge to two lists element-wise.
+    A depth-n merge applies a depth-(n-1) merge to two lists element-wise.
 
     '''
-    assert isinstance(depth, int) and depth >= 0
+    def _mergegen(l1, l2, depth):
+        if depth == 0:
+            yield from l1 + l2
+        else:
+            for i, j in zip(l1, l2): # zip stops at the shortest list
+                yield list(_mergegen(i, j, depth-1))
+
+            if len(l1) != len(l2):
+                l_long, l_short = (l1, l2) if len(l1) > len(l2) else (l2, l1)
+                yield from l_long[len(l_short):]
+    
     assert isinstance(l1, list) and isinstance(l2, list)
-
-    if depth == 0:
-        return l1 + l2
-
-    l_long, l_short = (l1, l2) if len(l1) >= len(l2) else (l2, l1)
-
-    from copy import deepcopy
-    l = deepcopy(l_long)
-    for i in range(len(l_short)):
-        l[i] = merge(l1[i], l2[i], depth-1)
-
-    return l
+    assert isinstance(depth, int) and depth >= 0
+    return list(_mergegen(l1, l2, depth))
 
 
 ############################################################

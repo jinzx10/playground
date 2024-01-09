@@ -90,6 +90,8 @@ def merge(l1, l2, depth):
 
     A depth-0 merge concatenates two lists.
     A depth-n merge applies a depth-(n-1) merge to two lists element-wise.
+    If the two lists are of different lengths, the longer part is simply
+    appended.
 
     '''
     def _mergegen(l1, l2, depth):
@@ -103,6 +105,7 @@ def merge(l1, l2, depth):
     
     assert isinstance(l1, list) and isinstance(l2, list)
     assert isinstance(depth, int) and depth >= 0
+    # maybe some depth checking?
     return list(_mergegen(l1, l2, depth))
 
 

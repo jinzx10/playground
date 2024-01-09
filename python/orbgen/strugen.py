@@ -151,6 +151,7 @@ def read_stru(fpath):
     -------
         
     '''
+    # TBD
     pass
 
 ############################################################
@@ -159,8 +160,8 @@ def read_stru(fpath):
 import unittest
 import os
 
-class TestInputGen(unittest.TestCase):
-    def test_strugen(self):
+class TestSTRUGen(unittest.TestCase):
+    def test_write_stru(self):
 
         fpath = './STRU.test'
 

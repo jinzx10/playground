@@ -71,52 +71,47 @@ def bracket(l, nzeros, return_all=False):
     '''
     from scipy.optimize import brentq
 
-    ll = 1 # active l
-    jl = lambda x: spherical_jn(ll, x)
-    zeros = []
+    def _zerogen():
+        ll = None # active l
+        jl = lambda x: spherical_jn(ll, x)
 
-    def append_to_zeros():
-        zeros.append(buffer[:nzeros])
+        if return_all:
+            nz = nzeros + l
+            stride = 1
+            l_start = 1
+        else:
+            # for odd  l: j_0 --> j_1 --> j_3 --> j_5 --> ... --> j_l
+            # for even l: j_0 --> j_2 --> j_4 --> j_6 --> ... --> j_l
+            nz = nzeros + (l+1)//2
+            stride = 2
+            l_start = 2 - l%2
 
-    if return_all:
-        nz = nzeros + l
-        stride = 1
-        l_start = 1
-        append_if_needed = append_to_zeros
-    else:
-        # for odd  l: j_0 --> j_1 --> j_3 --> j_5 --> ... --> j_l
-        # for even l: j_0 --> j_2 --> j_4 --> j_6 --> ... --> j_l
-        nz = nzeros + (l+1)//2
-        stride = 2
-        l_start = 2 - l%2
-        append_if_needed = lambda: None
+        zeros = [i * np.pi for i in range(1, nz+1)] # zeros of j_0
 
-    buffer = [i * np.pi for i in range(1, nz+1)]
+        for ll in range(l_start, l+1, stride):
+            return_all and (yield zeros[:nzeros]) # yield when return_all is True. Any better way?
+            zeros = [brentq(jl, zeros[i], zeros[i+1], xtol=1e-14) for i in range(nz-1)]
+            nz -= 1
 
-    for ll in range(l_start, l+1, stride):
-        append_if_needed()
-        buffer = [brentq(jl, buffer[i], buffer[i+1], xtol=1e-14) for i in range(nz-1)]
-        nz -= 1
+        yield zeros[:nzeros]
 
-    zeros.append(buffer[:nzeros])
-    return zeros
-
+    return list(_zerogen())
 
 ############################################################
 #                       Test
 ############################################################
 import unittest
 
-class TestJnRoot(unittest.TestCase):
-    def test_ikebe(self): # fast!
+class TestJlZeros(unittest.TestCase):
+    def test_ikebe(self):
         for l in range(20):
             for nzeros in range(1, 50):
                 zeros = ikebe(l, nzeros)
                 self.assertLess(np.linalg.norm(spherical_jn(l, zeros), np.inf), 1e-14)
     
     
-    def test_bracket(self): # slow!
-        for l in range(3):
+    def test_bracket(self):
+        for l in range(20):
             for nzeros in range(1, 5):
                 zeros = bracket(l, nzeros, return_all=False)
                 self.assertLess(np.linalg.norm(spherical_jn(l, zeros), np.inf), 1e-14)

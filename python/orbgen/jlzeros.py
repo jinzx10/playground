@@ -102,7 +102,7 @@ def bracket(l, nzeros, return_all=False):
 ############################################################
 import unittest
 
-class TestJlZeros(unittest.TestCase):
+class _TestJlZeros(unittest.TestCase):
     def test_ikebe(self):
         for l in range(20):
             for nzeros in range(1, 50):

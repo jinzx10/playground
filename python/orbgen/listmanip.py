@@ -113,7 +113,7 @@ def merge(l1, l2, depth):
 #                       Test
 ############################################################
 import unittest
-class TestListManip(unittest.TestCase):
+class _TestListManip(unittest.TestCase):
 
     def test_flatten(self):
         x = [[[]]]

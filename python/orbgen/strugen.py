@@ -160,7 +160,7 @@ def read_stru(fpath):
 import unittest
 import os
 
-class TestSTRUGen(unittest.TestCase):
+class _TestSTRUGen(unittest.TestCase):
     def test_write_stru(self):
 
         fpath = './STRU.test'
@@ -243,3 +243,4 @@ class TestSTRUGen(unittest.TestCase):
 ############################################################
 if __name__ == '__main__':
     unittest.main()
+

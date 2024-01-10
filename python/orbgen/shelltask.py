@@ -54,7 +54,7 @@ class TestShellTask(unittest.TestCase):
     def test_xabacus_and_grep(self):
         abacus_path = '/home/zuxin/abacus-develop/bin/abacus'
         jobdir = './testfiles/In2/'
-        suffix = 'In2'
+        suffix = 'ABACUS'
         nthreads = 2
         nprocs = 4
         stdout = subprocess.DEVNULL

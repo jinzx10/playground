@@ -1,6 +1,6 @@
 import numpy as np
 
-def smooth(r, rcut, sigma):
+def _smooth(r, rcut, sigma):
     '''
     Smoothing function used in the generation of numerical radial functions.
 
@@ -34,7 +34,7 @@ def smooth(r, rcut, sigma):
     return g
 
 
-def qgen(coeff, rcut):
+def _qgen(coeff, rcut):
     '''
     Wave numbers of spherical Bessel functions.
 
@@ -94,8 +94,8 @@ def build(coeff, rcut, dr, sigma, orth=False):
     nr = int(rcut/dr) + 1
     r = dr * np.arange(nr)
 
-    g = smooth(r, rcut, sigma)
-    q = qgen(coeff, rcut)
+    g = _smooth(r, rcut, sigma)
+    q = _qgen(coeff, rcut)
 
     chi = [[np.zeros(nr) for _ in range(nzeta[l])] for l in range(lmax+1)]
     for l in range(lmax+1):
@@ -126,11 +126,11 @@ class _TestRadial(unittest.TestCase):
         rcut = 5.0
 
         sigma = 0.0
-        g = smooth(r, rcut, sigma)
+        g = _smooth(r, rcut, sigma)
         self.assertTrue(np.all(g[r < rcut] == 1.0) and np.all(g[r >= rcut] == 0.0))
     
         sigma = 0.5
-        g = smooth(r, rcut, sigma)
+        g = _smooth(r, rcut, sigma)
         self.assertTrue(np.all(g[r < rcut] == 1.0 - np.exp(-0.5*((r[r < rcut]-rcut)/sigma)**2)))
         self.assertTrue(np.all(g[r >= rcut] == 0.0))
     
@@ -140,7 +140,7 @@ class _TestRadial(unittest.TestCase):
     
         rcut = 7.0
         coeff = [[[1.0]*5, [1.0]*3], [[1.0]*7], [[1.0]*8, [1.0]*4, [1.0]*2]]
-        q = qgen(coeff, rcut)
+        q = _qgen(coeff, rcut)
         for l, ql in enumerate(q):
             for zeta, qlz in enumerate(ql):
                 self.assertEqual(len(qlz), len(coeff[l][zeta]))

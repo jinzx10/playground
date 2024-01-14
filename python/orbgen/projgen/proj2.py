@@ -75,7 +75,7 @@ def quadsolve(A, y, z):
 
     return Q @ (ytilde / (e - l)) / np.sqrt(z)
 
-def projgen2(l, r, orb, rcut_proj, n_bes):
+def projgen2(l, r, orb, rcut_proj, n_bes, grad_only=False):
 
     nr_proj = np.argmax(r >= rcut_proj) + 1
 
@@ -98,9 +98,9 @@ def projgen2(l, r, orb, rcut_proj, n_bes):
     # y vector
     y = np.zeros(n_bes)
     for p in range(n_bes):
-        #y[p] = simpson(r[:nr_proj]**2 * orb[:nr_proj] * spherical_jn(l, theta[p]*r[:nr_proj]/rcut_proj), r[:nr_proj], even='simpson') \
-        #        + simpson(r[:nr_proj]**2 * dorb[:nr_proj] * spherical_jn(l, theta[p]*r[:nr_proj]/rcut_proj, True), r[:nr_proj], even='simpson') * theta[p]/rcut_proj
         y[p] = simpson(r[:nr_proj]**2 * dorb[:nr_proj] * spherical_jn(l, theta[p]*r[:nr_proj]/rcut_proj, True), r[:nr_proj], even='simpson') * theta[p]/rcut_proj
+        if not grad_only:
+            y[p] += simpson(r[:nr_proj]**2 * orb[:nr_proj] * spherical_jn(l, theta[p]*r[:nr_proj]/rcut_proj), r[:nr_proj], even='simpson')
 
     c = quadsolve(A, y, z)
 
@@ -164,6 +164,7 @@ nbes = 10
 
 r_proj, proj = projgen(l, r, orb, rcut_proj, nbes)
 r_proj2, proj2 = projgen2(l, r, orb, rcut_proj, nbes)
+r_proj3, proj3 = projgen2(l, r, orb, rcut_proj, nbes, True)
 #for i in range(20):
 #    print('%18.12e'%proj[i])
 #
@@ -172,7 +173,8 @@ r_proj2, proj2 = projgen2(l, r, orb, rcut_proj, nbes)
 plt.plot(r, orb, label='original orbital')
 plt.plot(r_proj, proj, label='projector (overlap)')
 plt.plot(r_proj2, proj2, label='projector (overlap+gradient)')
-plt.ylim([0, 1.1 * max(np.max(orb), np.max(proj), np.max(proj2))])
+plt.plot(r_proj3, proj3, label='projector (gradient only)')
+plt.ylim([0, 1.1 * max(np.max(orb), np.max(proj), np.max(proj2), np.max(proj3))])
 
 plt.legend(fontsize=16)
 

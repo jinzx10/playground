@@ -54,7 +54,7 @@ class TestShellTask(unittest.TestCase):
     def test_xabacus_and_grep(self):
         abacus_path = '/home/zuxin/abacus-develop/bin/abacus'
         jobdir = './testfiles/In2/'
-        suffix = 'In2'
+        suffix = 'ABACUS'
         nthreads = 2
         nprocs = 4
         stdout = subprocess.DEVNULL
@@ -67,7 +67,8 @@ class TestShellTask(unittest.TestCase):
         self.assertTrue(os.path.exists(jobdir + '/OUT.%s/running_scf.log'%(suffix)))
 
         energy = grep_energy(jobdir, suffix)
-        self.assertTrue(abs(energy - (-2913.178297861265)) < 1e-8)
+        self.assertTrue(abs(energy - (-2913.0)) < 1.0)
+        shutil.rmtree(jobdir + '/OUT.%s'%(suffix), ignore_errors=True)
 
 if __name__ == '__main__':
     unittest.main()

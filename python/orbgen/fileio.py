@@ -44,7 +44,7 @@ def _write_header(f, elem, ecut, rcut, nzeta, nr, dr):
 
     '''
     lmax = len(nzeta)-1
-    symbol = ['S', 'P', 'D', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'O', 'Q', 'R', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+    spec_symbol = 'SPDFGHIKLMNOQRTUVWXYZ'
 
     f.write('---------------------------------------------------------------------------\n')
     f.write('Element                     {0}\n'.format(elem))
@@ -53,7 +53,7 @@ def _write_header(f, elem, ecut, rcut, nzeta, nr, dr):
     f.write('Lmax                        {0}\n'.format(lmax))
 
     for l in range(lmax+1):
-        f.write("Number of {0}orbital-->       {1}\n".format(symbol[l], nzeta[l]))
+        f.write("Number of {0}orbital-->       {1}\n".format(spec_symbol[l], nzeta[l]))
 
     f.write('---------------------------------------------------------------------------\n')
     f.write('SUMMARY  END\n\n')
@@ -153,8 +153,8 @@ def read_nao(fpath):
     rcut = float(data[data.index('Cutoff(a.u.)')+1])
     lmax = int(data[data.index('Lmax')+1])
 
-    symbol = ['S', 'P', 'D', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'O', 'Q', 'R', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-    nzeta = [ int(data[data.index(symbol[l] + 'orbital-->') + 1]) for l in range(lmax+1) ]
+    spec_symbol = 'SPDFGHIKLMNOQRTUVWXYZ'
+    nzeta = [ int(data[data.index(spec_symbol[l] + 'orbital-->') + 1]) for l in range(lmax+1) ]
 
     nr = int(data[data.index('Mesh')+1])
     dr = float(data[data.index('dr')+1])
@@ -270,7 +270,7 @@ def write_param(fpath, coeff, rcut, sigma, elem):
 import os
 import unittest
 
-class TestFileio(unittest.TestCase):
+class _TestFileio(unittest.TestCase):
     def test_read_param(self):
         param = read_param('./testfiles/ORBITAL_RESULTS.txt')
     

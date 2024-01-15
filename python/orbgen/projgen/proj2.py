@@ -159,7 +159,7 @@ N = simpson((orb * r)**2, r)
 orb *= 1.0 / np.sqrt(N)
 
 # rcut for the projector
-rcut_proj = 6
+rcut_proj = 5
 nbes = 10
 
 r_proj, proj = projgen(l, r, orb, rcut_proj, nbes)

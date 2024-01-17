@@ -366,26 +366,27 @@ sccut                          3 #Maximal step size for lambda in eV/uB
 sc_file                        none #file name for parameters used in non-collinear spin-constrained DFT (json format)
 '''
 
-def write_input(fpath, **kwargs):
+def _check_keys(**kwargs):
     '''
+    Checks if the input keywords are valid.
 
     '''
     import re
-    input_keys = [re.search('([^ ]+)([ \\t]+)([^#]*)(#.*)?', line).group(1)
+    valid_keys = [re.search('([^ ]+)([ \\t]+)([^#]*)(#.*)?', line).group(1)
                      for line in _INPUT_DEFAULT.split('\n')[1:] if line != '' and line[0] != '#' ]
-    assert all(key in input_keys for key in kwargs.keys()), 'Invalid INPUT keywords.'
-    
-    key_width = max([len(key) for key in input_keys])
-    with open(fpath, 'w') as f:
+    assert all(key in valid_keys for key in kwargs.keys()), 'Invalid INPUT keywords.'
+
+def write_input(job_dir, **kwargs):
+    '''
+
+    '''
+    _check_keys(**kwargs)
+    key_width = max([len(key) for key in kwargs.keys()])
+    with open(job_dir+'/INPUT', 'w') as f:
         f.write('INPUT_PARAMETERS\n')
         for key in kwargs:
-            f.write('{key:<{width}}   {value}\n'.format(key=key, value=kwargs[key], width=key_width))
+            f.write('{key:<{width}}    {value}\n'.format(key=key, value=kwargs[key], width=key_width))
 
-
-def read_input(fpath):
-    '''
-    '''
-    pass
 
 ############################################################
 #                       Test
@@ -395,8 +396,8 @@ import unittest
 class _TestINPUTGen(unittest.TestCase):
 
     def test_write_input(self):
-        write_input('./INPUT.test', 
-                    calculation='scf', 
+        write_input('./',
+                    calculation='scf',
                     scf_nmax=100,
                     orbital_dir='./testfiles',
                     pseudo_dir='./testfiles')

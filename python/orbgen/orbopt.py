@@ -1,7 +1,7 @@
 import numpy as np
 
-def param2energy(coeff, elem, rcut, sigma, dr, orbpath, abacus_path, jobdirs, \
-        coeff_base=None, nthreads=2, nprocs=4, stdout=None, stderr=None):
+def param2energy(coeff, elem, rcut, sigma, dr, orb_path, abacus_path, jobdirs, \
+        coeff_base=None, nthreads=2, nprocs=4, stdout=None, stderr=None, suffix='ABACUS'):
     '''
     Orbital parameters to energy.
     
@@ -21,11 +21,11 @@ def param2energy(coeff, elem, rcut, sigma, dr, orbpath, abacus_path, jobdirs, \
             Smoothing parameter.
         dr : float
             Grid spacing.
-        orbpath: str
+        orb_path: str
             Path to the orbital file to be generated.
         abacus_path : str
             Path to the ABACUS executable.
-        jobdirs : list of str
+        jobdirs : str or list of str
             Directories where ABACUS is executed.
         coeff_base : list of list of list of float
             A nested list containing the spherical Bessel coefficients of 'fixed' orbitals.
@@ -37,27 +37,27 @@ def param2energy(coeff, elem, rcut, sigma, dr, orbpath, abacus_path, jobdirs, \
             See the documentation of subprocess.
     
     '''
-    print('coeff = ', coeff)
-
     if coeff_base is not None:
         from listmanip import merge
         coeff = merge(coeff_base, coeff, depth=1)
 
     # generates radial functions
     from radial import build
-    chi, r = build(coeff, rcut, dr, sigma, orth=False)
+    chi, r = build(coeff, rcut, dr, sigma, orth=True)
 
-    # writes to an orbital file
+    # writes NAO to an orbital file
     from fileio import write_nao
-    write_nao(orbpath, elem, 100, rcut, len(r), dr, chi)
+    write_nao(orb_path, elem, 100, rcut, len(r), dr, chi)
 
-    # calls ABACUS to run SCF & get energy
+    # executes ABACUS & get energy
     from shelltask import xabacus, grep_energy
     e = 0.0
+    jobdirs = [jobdirs] if isinstance(jobdirs, str) else jobdirs
     for jobdir in jobdirs:
         xabacus(abacus_path, jobdir, nthreads, nprocs, stdout, stderr)
-        e += grep_energy(jobdir)
+        e += grep_energy(jobdir, suffix)
 
+    print('coeff = ', coeff)
     print('total energy = ', e, '\n')
     return e
 
@@ -69,7 +69,14 @@ import unittest
 
 class TestOrbOpt(unittest.TestCase):
     def test_param2energy(self):
-        pass
+        from fileio import read_param
+        param = read_param('./testfiles/ORBITAL_RESULTS.txt')
+        dr = 0.01
+        orb_path = './testfiles/In_gga_10au_100Ry_3s3p3d2f.orb'
+        abacus_path = '/home/zuxin/abacus-develop/bin/abacus'
+        jobdirs = './testfiles/In2/'
+        e = param2energy(**param, dr=dr, orb_path=orb_path, abacus_path=abacus_path, jobdirs=jobdirs)
+        print(e)
 
 
 ############################################################

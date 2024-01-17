@@ -38,7 +38,7 @@ def _write_lattice(f, lattice):
     if 'latvec' in lattice and len(lattice['latvec']) > 0:
         assert len(lattice['latvec']) == 3
         f.write('\n')
-        f.write('LATTICE_VECTOR\n')
+        f.write('LATTICE_VECTORS\n')
         for vec in lattice['latvec']:
             f.write('{} {} {}\n'.format(vec[0], vec[1], vec[2]))
 
@@ -83,14 +83,14 @@ def _write_atoms(f, atoms):
             f.write('\n')
 
 
-def write_stru(fpath, species, lattice, atoms, orbitals=[]):
+def write_stru(job_dir, species, lattice, atoms, orbitals=[]):
     '''
     Generates a ABACUS STRU file.
 
     Parameters
     ----------
-    fpath : str
-        Path to the STRU file.
+    job_dir: str
+        Directory in which the STRU file is generated.
     species : list of dict
         List of atomic species. Each dict contains the following keys:
             - 'symbol' : str
@@ -133,7 +133,7 @@ def write_stru(fpath, species, lattice, atoms, orbitals=[]):
                 corresponding [x, y, z] or [r, polar, azimuth].
 
     '''
-    with open(fpath, 'w') as f:
+    with open(job_dir+'/STRU', 'w') as f:
         _write_atomic_species(f, species)
         f.write('\n')
         _write_numerical_orbital(f, orbitals)
@@ -163,7 +163,7 @@ import os
 class _TestSTRUGen(unittest.TestCase):
     def test_write_stru(self):
 
-        fpath = './STRU.test'
+        fpath = './'
 
         species = [
                 {'symbol':'Si', 'mass':28.0   , 'pp_file':'Si.upf', 'pp_type':'upf201' },
@@ -178,18 +178,17 @@ class _TestSTRUGen(unittest.TestCase):
                 ]
 
         lattice = {
-                'latconst': 22.2,
+                'latconst': 20.0,
                 'latvec': [
                             [1.0, 0.0, 0.0],
-                            [0.0, 2.0, 0.0],
-                            [0.0, 0.0, 3.0],
+                            [0.0, 1.0, 0.0],
+                            [0.0, 0.0, 1.0],
                             ],
-                'latparam': [1,2],
                 }
 
-        atoms = ['Direct',
+        atoms = ['Cartesian_angstrom',
                  {
-                     'Si': {'mag_each': 1.0,
+                    'In': {'mag_each': 0.0,
                             'num': 2,
                             'coord': [
                                 [0.0, 0.0, 0.0],

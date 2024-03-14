@@ -1,1 +1,0 @@
-/opt/gcc/8.3/bin/g++ -fPIC   -shared -Wl,-soname,libfib.so -o lib/libfib.so CMakeFiles/fib.dir/src/fib.cpp.o  -L/home/zuxin/playground/cmake/hw4/lib 

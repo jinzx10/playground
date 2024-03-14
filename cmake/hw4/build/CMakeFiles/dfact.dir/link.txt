@@ -1,2 +1,0 @@
-/usr/bin/ar qc lib/libdfact.a  CMakeFiles/dfact.dir/src/dfact.cpp.o
-/usr/bin/ranlib lib/libdfact.a

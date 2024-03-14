@@ -1,2 +1,0 @@
-/home/zuxin/playground/cmake/hw4/bin/main
-/home/zuxin/playground/cmake/hw4/bin/main2

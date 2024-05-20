@@ -2,23 +2,26 @@
 #include <iostream>
 
 using namespace std;
-using d2d = std::function<double(double)>;
 
-struct Test
-{
-	//Test(d2d F1, d2d F2) { F = [=] (double x) {return F1(x)-F2(x);}; } // OK
-	Test(d2d F1, d2d F2) : F([=](double x){return F1(x)-F2(x);}) {} // OK
+class Test {
+public:
+	Test(int i) : i_(i) {}
 
-	d2d F;
+	int i_;
+
+    void addone() { i_++; }
+    static void minusone(int i) { std::cout << --i << std::endl; }
+
+    void op() {
+        std::function<void()> f = std::bind(&Test::addone, this);
+        std::function<void(Test*)> f2 = &Test::addone;
+        std::function<void(int)> g = &Test::minusone;
 };
 
 void func( int(*)(int) ) {
 }
 
 int main() {
-
-	d2d f1 = [](double x) { return x*x;};
-	d2d f2 = [](double x) { return 2*x-1;};
 
 	Test t(f1, f2);
 

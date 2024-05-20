@@ -11,11 +11,11 @@ scf_thr         1e-8
 
 basis_type		lcao
 
-mixing_type     pulay
+mixing_type     broyden
 mixing_beta     0.5
 
 smearing_method gauss
-smearing_sigma  0.001
+smearing_sigma  0.005
 
 gamma_only 1
 symmetry 0

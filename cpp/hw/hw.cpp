@@ -6,44 +6,19 @@
 #include <string>
 #include <type_traits>
 #include <cassert>
-#include <armadillo>
+#include <memory>
 
-using namespace std;
-using namespace arma;
 
-struct State
-{
-    template <typename T, typename = typename std::enable_if< std::is_integral<T>::value, T>::type >
-    State(T const& state_) {
-        if (state_ != 0 && state_ != 1) {
-            std::cerr << "exceed:" << state_ << std::endl;
-            exit(EXIT_FAILURE);
-        }
-        state = state_;
-    }
+int main() {
 
-    operator bool() const {
-        return state;
-    }
+    typedef double complex[2];
 
-    bool state;
-};
+    double* a = new double[2];
 
-void foo(State const& S) {
-    bool state = S;
-    std::cout << state << std::endl;
-}
+    complex* b = reinterpret_cast<complex*>(a);
 
-int main(int, char**argv) {
+    std::cout << "a: " << a << std::endl;
+    std::cout << "b: " << b << std::endl;
 
-    arma::wall_clock timer;
-    timer.tic();
-    sleep(1);
-    double n = timer.toc();
-    std::cout << "time elapsed = " << n << std::endl;
-
-    timer.tic();
-    sleep(3);
-    n = timer.toc();
-    std::cout << "time elapsed = " << n << std::endl;
+    return 0;
 }

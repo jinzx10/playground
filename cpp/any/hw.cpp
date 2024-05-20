@@ -6,6 +6,7 @@
 #include <utility>
 #include <variant>
 #include <cassert>
+#include <vector>
 
 template <typename T>
 class TD;
@@ -209,28 +210,33 @@ int main() {
     //ANY s3 = std::move(str3);
     //assert(s3.type() == typeid(std::string));
 
-    ANY c0 = 'c';
-    ANY c1;
-    assert(c1.type() == typeid(void));
+    //ANY c0 = 'c';
+    //ANY c1;
+    //assert(c1.type() == typeid(void));
 
-    c1.reset();
-    c1 = c0;
-    assert(c1.type() == typeid(char));
+    //c1.reset();
+    //c1 = c0;
+    //assert(c1.type() == typeid(char));
 
-    c1.reset();
-    c1 = std::move(c0);
-    assert(c1.type() == typeid(char));
+    //c1.reset();
+    //c1 = std::move(c0);
+    //assert(c1.type() == typeid(char));
 
-    const ANY cc = 'b';
-    c1.reset();
-    c1 = cc;
-    assert(c1.type() == typeid(char));
+    //const ANY cc = 'b';
+    //c1.reset();
+    //c1 = cc;
+    //assert(c1.type() == typeid(char));
 
-    c1.reset();
-    c1 = std::move(cc);
-    assert(c1.type() == typeid(char));
+    //c1.reset();
+    //c1 = std::move(cc);
+    //assert(c1.type() == typeid(char));
 
-    std::cout << any_cast<int>(c1) << std::endl;;
+    //std::cout << any_cast<int>(c1) << std::endl;;
+
+    std::vector<ANY> nodes{1, 2, "good"};
+
+    std::cout << "nodes[0]: " << any_cast<int>(nodes[0]) << std::endl;
+    std::cout << "nodes[2]: " << any_cast<const char*>(nodes[2]) << std::endl;
 
     //std::unordered_map<std::string, ANY> anymap;
 

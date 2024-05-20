@@ -63,9 +63,9 @@ def _attrs2dict(attrs):
     return { k: v.strip(' ') for k, v in re.findall('([^ ]+?)="([^=]*)"', attrs)}
 
 
-def _number_only(string):
+def _is_numeric(string):
     '''
-    Checks if a string contains only numbers.
+    Checks if a string contains only (valid) numbers.
 
     '''
     num = '( *[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)? *)+' # decimal or scientific notation
@@ -73,7 +73,7 @@ def _number_only(string):
 
 
 def _cast(string):
-    if _number_only(string):
+    if _is_numeric(string):
         return list(map(float, string.split()))
     else:
         return string

@@ -1,26 +1,14 @@
 #include <iostream>
-#include <type_traits>
-#include <functional>
-#include <cmath>
-#include <string>
+#include <utility>
+#include <tuple>
 
-template <typename C>
-struct Test
-{
-    template <typename T, typename std::enable_if<std::is_convertible<T, std::string>::value, int>::type = 0>
-    typename std::enable_if<std::is_convertible<T,C>::value, void>::type test(T const& t) {
-        std::cout << typeid(T).name() << std::endl;
-        str = t;
-    }
-    C str;
-};
+template <size_t ...Is>
+void print(const std::tuple<std::index_sequence<Is>...>&) {
+    ((std::cout << Is << "  "), ...);
+    std::cout << std::endl;
+}
 
 int main() {
-
-    Test<std::string> t;
-    t.test("bad");
-
-    std::cout << t.str << std::endl;
-
+    print(std::make_tuple(std::index_sequence<3>{}, std::index_sequence<1>{}));
 	return 0;
 }

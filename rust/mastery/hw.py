@@ -1,9 +1,18 @@
 import numpy as np
 
+N = 6
 ##########################
 #       M = N-2
 ##########################
-
+# find all integer pairs (r,s) such that
+# 0 <= r,s <= N-3 and r+s <= N-3
+idx_rs = {}
+idx = 0
+for r in range(N-2):
+    for s in range(N-2-r):
+        idx_rs[(r,s)] = idx
+        idx += 1
+#print(idx_rs)
 
 
 

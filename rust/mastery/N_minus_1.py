@@ -9,7 +9,7 @@ def triul(p, N):
     return m
 
 
-N = sp.Integer(4)
+N = sp.Integer(5)
 p = sp.Rational(2,3)
 q = sp.Integer(1) - p
 

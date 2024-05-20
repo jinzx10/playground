@@ -41,17 +41,18 @@ fn quick(win_prob: f64, goal: u32) -> f64 {
 }
 
 fn main() {
-    let num_trials: u32 = 1000000;
-    let win_prob: f64 = 0.4;
+    let num_trials: u32 = 100000;
+    let win_prob: f64 = 0.9072;
 
-    let max_goal: u32 = 5;
+    let min_goal: u32 = 90;
+    let max_goal: u32 = 100;
     let stride: u32 = 1;
-    //let goal: u32;
 
     println!("Streak      Mean      Mean(theo.) StdDev    WinProb={:.2}%", win_prob*100.0);
-    for goal in (0..max_goal).step_by(stride as usize) {
-        let (mean, std_dev) = attempt(win_prob, goal, num_trials);
-        println!("{:6}   {:8.1}   {:8.1}   {:8.1}", goal, mean, quick(win_prob, goal), std_dev);
+    for goal in (min_goal..max_goal+1).step_by(stride as usize) {
+        //let (mean, std_dev) = attempt(win_prob, goal, num_trials);
+        //println!("{:6}   {:8.1}   {:8.1}   {:8.1}", goal, mean, quick(win_prob, goal), std_dev);
+        println!("{:6}   {:8.1}", goal, quick(win_prob, goal));
     }
 
 }

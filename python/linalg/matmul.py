@@ -1,9 +1,9 @@
 import timeit
-from numpy import random
+import numpy as np
 
-n = 4000
-a = random.rand(n,n)
-b = random.rand(n,n)
+n = 1000
+a = np.random.rand(n,n)
+b = np.random.rand(n,n)
 
 start = timeit.default_timer()
 
@@ -12,3 +12,5 @@ c = a@b
 elapsed = timeit.default_timer() - start
 
 print("elapsed time = ", elapsed)
+
+print(timeit.timeit('a@b', setup = 'import numpy as np; a = np.random.rand(1000,1000); b = np.random.rand(1000,1000)', number=100))

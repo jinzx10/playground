@@ -1,24 +1,28 @@
-#include <chrono>
+#include <array>
 #include <iostream>
-#include <string>
-#include <sstream>
+#include <cstdio>
 #include <vector>
-#include <string>
-#include <type_traits>
-#include <cassert>
-#include <memory>
 
 
 int main() {
 
-    typedef double complex[2];
+    std::vector<int> v{1,2,3};
 
-    double* a = new double[2];
+    std::cout << "before" << std::endl;
+    for (auto i : v) {
+        std::cout << i << std::endl;
+    }
 
-    complex* b = reinterpret_cast<complex*>(a);
+    std::vector<int> v2;
 
-    std::cout << "a: " << a << std::endl;
-    std::cout << "b: " << b << std::endl;
+    bool b = true;
+    std::vector<int>& x = b ? v : v2;
+
+    v = std::move(x);
+    std::cout << "after" << std::endl;
+    for (auto i : v) {
+        std::cout << i << std::endl;
+    }
 
     return 0;
 }

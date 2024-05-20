@@ -10,7 +10,7 @@ BDIR = ${ROOTDIR}/bin
 vpath %.h ${IDIR}
 vpath %.cpp ${SDIR}
 
-CC = g++
+CC = $(CXX)
 CPPFLAGS = -I${IDIR}
 
 OBJ0 = main fib

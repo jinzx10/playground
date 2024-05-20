@@ -1,9 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-x = np.linspace(0,1)
-y = x*x
+x = np.linspace(-10, 10, 1000)
 
-plt.plot(x,y)
+f = 1. / (np.exp(x) + 1.)
+fermi = -(f * np.log(f) + (1. - f) * np.log(1. - f))
+gauss = np.exp(-x*x) / np.sqrt(np.pi)
 
+plt.plot(x,fermi, label='fermi')
+plt.plot(x,gauss, label='gauss')
+
+plt.legend()
 plt.show()

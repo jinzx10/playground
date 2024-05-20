@@ -1,4 +1,4 @@
-from jlzeros import ikebe
+from jlzeros import ikebe, bracket_d
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.special import spherical_jn
@@ -18,7 +18,7 @@ l = 2
 rcut = 7
 nbes = 20
 
-q = ikebe(l, nbes) / rcut
+q = [zero / rcut for zero in ikebe(l, nbes)]
 
 dr = 0.01
 r = dr * np.arange(0, int(rcut/dr) + 1)
@@ -35,7 +35,7 @@ if plot_raw:
     
     plt.show()
 
-M = 5
+M = 1
 
 # the 1, 2, ..., M th derivatives of the spherical Bessel function at rcut
 dmat = np.zeros((M, nbes))

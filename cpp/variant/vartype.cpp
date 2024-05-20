@@ -1,6 +1,5 @@
 #include <type_traits>
 #include <iostream>
-#include <armadillo>
 #include <cassert>
 //#include <variant>
 
@@ -109,6 +108,8 @@ public:
     int update(T const& val) { return updater<T, Ts...>(val); }
 
     void print() const { std::cout << (*this) << std::endl; }
+
+    std::string type() const { return (ptr) ? typeid(*ptr).name() : typeid(void).name(); }
 };
 
 
@@ -117,10 +118,10 @@ int main() {
     int* ptr = nullptr;
     std::cout << typeid(*ptr).name() << std::endl;
 
-    VarType<bool, int, size_t, double, std::string, arma::mat> vd;
+    VarType<bool, int, size_t, double, std::string> vd;
 
     {
-    VarType<bool, int, size_t, double, std::string, arma::mat> va(std::string("good"));
+    VarType<bool, int, size_t, double, std::string> va(std::string("good"));
 
     std::cout << "string: " << va.get<std::string>() << std::endl;
 
@@ -130,13 +131,16 @@ int main() {
     }
     std::cout << "string: " << vd.get<std::string>() << std::endl;
 
-    VarType<bool, int, size_t, double, std::string, arma::mat> vb = size_t(5);
+    VarType<bool, int, size_t, double, std::string> vb = size_t(5);
     std::cout << "size_t: " << vb.get<size_t>() << std::endl;
     vb.get<size_t>() = 12;
     std::cout << "size_t: " << vb.get<size_t>() << std::endl;
 
-    VarType<bool, int, size_t, double, std::string, arma::mat> vc(vb);
+    VarType<bool, int, size_t, double, std::string> vc(vb);
     std::cout << "size_t: " << vc.get<size_t>() << std::endl;
+
+
+    std::cout << vc.type() << std::endl;
 
 
 

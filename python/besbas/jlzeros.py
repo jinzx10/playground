@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.special import spherical_jn
+from scipy.optimize import brentq
 
 def ikebe(l, nzeros):
     '''
@@ -38,18 +39,17 @@ def ikebe(l, nzeros):
     A_subdiag = 1. / ( (alpha-1) * np.sqrt(alpha*(alpha-2)) )
 
     eigval = eigvalsh_tridiagonal(A_diag, A_subdiag)[::-1]
-    return 2. / np.sqrt(eigval[:nzeros])
+    return (2. / np.sqrt(eigval[:nzeros])).tolist()
 
 
 def bracket(l, nzeros, return_all=False):
     '''
     Returns the first few zeros of the l-th order spherical Bessel
-    function by recursively using the bracketing method.
+    function by iteratively using the bracketing method.
     
     The zeros of j_{l} and j_{l+1} are interlaced; so are
     the zeros of j_{l} and j_{l+2}. This property is exploited
-    to bracket the zeros of j_{l} by the zeros of j_{l-1}
-    or j_{l-2} recursively until j_{0}.
+    to find the zeros iteratively from the zeros of j_0.
     
     Parameters
     ----------
@@ -65,11 +65,10 @@ def bracket(l, nzeros, return_all=False):
         zeros : list
             If return_all is False, zeros[i] is the i-th zero of the
             l-th order spherical Bessel function.
-            If return_all is True, zeros[n][i] is i-th zero of the
-            n-th order spherical Bessel function (n = 0, 1, ..., l).
+            If return_all is True, zeros[l][i] is the i-th zero of the
+            l-th order spherical Bessel function.
 
     '''
-    from scipy.optimize import brentq
 
     def _zerogen():
         ll = None # active l
@@ -93,9 +92,43 @@ def bracket(l, nzeros, return_all=False):
             zeros = [brentq(jl, zeros[i], zeros[i+1], xtol=1e-14) for i in range(nz-1)]
             nz -= 1
 
-        yield zeros[:nzeros]
+        if return_all:
+            yield zeros[:nzeros]
+        else:
+            yield from zeros[:nzeros]
 
     return list(_zerogen())
+
+
+def bracket_d(l, nzeros):
+    '''
+    Returns the first few positive zeros of (d/dx)j_l(x).
+
+    The positive zeros of (d/dx)j_l(x) and (d/dx)j_{l+1}(x) are interlaced.
+    This property is exploited to iteratively find the zeros of (d/dx)j_l(x) from
+    the zeros of (d/dx)j_0(x).
+
+    Note
+    ----
+    It is tempting to use the zeros of j_l(x) to find the zeros of (d/dx)j_l(x). However,
+    this method is not satisfactory until one finds a nice way to bracket the first positive
+    zero of (d/dx)j_l(x). While it's true that the first positive zero of (d/dx)j_l(x) lies
+    between 0 and the first positive zero of j_l(x), this hardly makes a good bracketing
+    interval: the plateau of j_l(x) near x = 0 is very wide and flat for large l.
+
+    '''
+    if l == 0: # (d/dx)j_0(x) = -j_1(x)
+        return ikebe(1, nzeros)
+
+    # The first positive zero of (d/dx)j_1(x) lies between x = 0 and the first
+    # positive zero of j_1(x).
+    zeros = np.concatenate(([0.0], ikebe(1, nzeros + l - 1)))
+    ll = None
+    djl = lambda x: spherical_jn(ll, x, True)
+    for ll in range(1, l+1):
+        zeros = [brentq(djl, zeros[i], zeros[i+1], xtol=1e-14) for i in range(nzeros + l - ll)]
+
+    return zeros[:nzeros]
 
 ############################################################
 #                       Test
@@ -121,6 +154,12 @@ class _TestJlZeros(unittest.TestCase):
         zeros = bracket(lmax, nzeros, return_all=True)
         for l in range(lmax+1):
             self.assertLess(np.linalg.norm(spherical_jn(l, zeros[l]), np.inf), 1e-14)
+
+    def test_bracket_d(self):
+        for l in range(20):
+            for nzeros in range(1, 5):
+                zeros = bracket_d(l, nzeros)
+                self.assertLess(np.linalg.norm(spherical_jn(l, zeros, True), np.inf), 1e-14)
 
 
 if __name__ == '__main__':

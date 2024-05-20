@@ -56,10 +56,10 @@ class GenSol:
             self.cache[(k, M)] = sol
             return sol
 
-M = 3
+M = 5
 N = 6
 
-p = 2. / 3.
+p = 1. / 2.
 q = 1. - p
 
 gensol = GenSol()
@@ -68,7 +68,7 @@ sz = len(sol)
 index_map = { s: i for i, s in enumerate(sol)}
 
 ################################
-#       numerical solution
+#       numerical
 ################################
 A = np.eye(sz)
 b = np.zeros(sz)
@@ -83,7 +83,7 @@ E = np.linalg.solve(A, b)
 print(E[0])
 
 ################################
-#       symbolic solution
+#       symbolic
 ################################
 
 q = sp.Symbol('q')
@@ -96,5 +96,7 @@ for i, s in enumerate(sol):
 
 x = sp.linsolve((A, b)).args[0][0]
 #print(x.factor())
-print(x.evalf(subs={q: 1-p}))
+#print(x.evalf(subs={q: 1-p}))
+#print(x.subs({q: sp.Rational(1,2)}))
+print(x.subs({q: sp.Symbol('p')}).factor())
 

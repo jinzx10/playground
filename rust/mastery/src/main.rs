@@ -36,9 +36,9 @@ fn stats(win_prob: f64, goal: u32, range: u32, num_attempts: u32) -> (f64, f64) 
 }
 
 fn main() {
-    let num_trials: u32 = 20000000;
-    let win_prob: f64 = 2./3.;
-    let range: u32 = 14;
+    let num_trials: u32 = 1000000;
+    let win_prob: f64 = 2.0/3.0;
+    let range: u32 = 8;
 
     let min_goal: u32 = 7;
     let max_goal: u32 = 7;
@@ -47,7 +47,7 @@ fn main() {
     println!("Mastery/{}      Mean      StdDev    WinProb={:.2}%", range, win_prob*100.0);
     for goal in (min_goal..max_goal+1).step_by(stride as usize) {
         let (mean, std_dev) = stats(win_prob, goal, range, num_trials);
-        println!("{:6}       {:8.4}    {:8.1}", goal, mean, std_dev);
+        println!("{:6}       {:8.5}    {:8.5}", goal, mean, std_dev);
     }
 
 }

@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <mpi.h>
 #include <unistd.h>
+#include <cassert>
 
 extern "C"
 {
@@ -14,75 +15,156 @@ extern "C"
     void Cblacs_pcoord(int icontxt, int pnum, int *prow, int *pcol);
 	void Cblacs_exit(int icontxt);
 
-	void blacs_pinfo_(int *myid, int *nprocs);
-	void blacs_get_(int* icontxt, int* what, int *val);
-	void blacs_gridinit_( int *ictxt, const char *order, const int *nprow, const int *npcol );
-	void blacs_gridinfo_( const int *ictxt, int *nprow, int *npcol, int *myprow, int *mypcol );
-
-	int numroc_( const int *n, const int *nb, const int *iproc, const int *srcproc, const int *nprocs );
-	void descinit_( 
-		int *desc, 
-		const int *m, const int *n, const int *mb, const int *nb, const int *irsrc, const int *icsrc, 
-		const int *ictxt, const int *lld, int *info);
+	int numroc_(const int *n, const int *nb, const int *iproc, const int *srcproc, const int *nprocs);
+	void descinit_(int *desc, const int *m, const int *n, const int *mb, const int *nb, const int *irsrc, const int *icsrc, const int *ictxt, const int *lld, int *info);
 
 }
 
 int main() {
     MPI_Init(nullptr, nullptr);
 
+    /***************************************************************************
+     *                  MPI rank and number of processes
+     ***************************************************************************/
     int nprocs, rank;
-    int group_rank = -1;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-    int ngrid = 4;
-
-    MPI_Comm comm_sub;
-    //MPI_Comm_split(MPI_COMM_WORLD, rank / ngrid, rank, &comm_sub);
-    MPI_Comm_split(MPI_COMM_WORLD, (rank % 2) ? MPI_UNDEFINED : (rank / ngrid), rank, &comm_sub);
-    if (rank % 2 == 0) {
-        MPI_Comm_rank(comm_sub, &group_rank);
-    }
-
-    for (int i = 0; i < nprocs; i++) {
-        if (i == rank) {
-            printf("global rank = %d    group_rank = %d\n", rank, group_rank);
-        }
-        usleep(10000);
-    }
-
+    /***************************************************************************
+     *                  BLACS rank and number of processes
+     ***************************************************************************/
     int np, id;
-    blacs_pinfo_(&id, &np);
+    Cblacs_pinfo(&id, &np);
+    // this is not very useful because it gives the same rank as MPI
+    // see https://netlib.org/scalapack/explore-html/d6/dd3/blacs__pinfo___8c_source.html
 
-    //int ctxt = 0;
-    char layout[] = "Row";
+    /***************************************************************************
+     *                      split the MPI communicator
+     ***************************************************************************/
+    // number of disjoint communicators
+    // each of which will be used to create a BLACS context
+    int nctxt = 4;
+    int rank_sub = -1;
+    int nprocs_sub = 0;
+    MPI_Comm comm_sub;
+    MPI_Comm_split(MPI_COMM_WORLD, rank / nctxt, rank, &comm_sub);
+    MPI_Comm_rank(comm_sub, &rank_sub);
+    MPI_Comm_size(comm_sub, &nprocs_sub);
 
-    int ctxt = 0;
-    //MPI_Fint fcomm = MPI_Comm_c2f(comm_sub);
-    //Cblacs_get(0, 0, &ctxt);
-    ctxt = Csys2blacs_handle(comm_sub);
+    assert(nctxt <= nprocs);
+
+    /***************************************************************************
+     *                              ranks
+     ***************************************************************************/
     for (int i = 0; i < nprocs; i++) {
         if (i == rank) {
-            printf("(before init) MPI rank=%d/%d    BLACS id=%d/%d    ctxt = %d\n",
-                    rank, nprocs, id, np, ctxt);
+            printf("MPI rank (world) = %i/%i    MPI rank (sub) = %i/%i    BLACS rank = %i\n",
+                    rank, nprocs, rank_sub, nprocs_sub, id);
         }
         usleep(10000);
     }
+    if (rank == 0) printf("\n");
 
-    int nrow = 2, ncol = 2;
-    Cblacs_gridinit(&ctxt, layout, nrow, ncol);
 
-    int irow, icol;
-    //Cblacs_pcoord(ctxt, id, &irow, &icol);
-    Cblacs_gridinfo(ctxt, &nrow, &ncol, &irow, &icol);
+    /***************************************************************************
+     *                          system context
+     ***************************************************************************/
+    // MPI communicator to BLACS context (will be used in grid_init)
+    int ctxt_world = Csys2blacs_handle(MPI_COMM_WORLD);
+    int ctxt_sub = Csys2blacs_handle(comm_sub);
 
+    if (rank == 0) printf("system ctxt id (i.e., MPI communicator index):\n");
     for (int i = 0; i < nprocs; i++) {
         if (i == rank) {
-            printf("global rank=%d/%d    local rank = %d    BLACS id=%d/%d    (%d,%d)    ctxt = %d\n",
-                    rank, nprocs, group_rank, id, np, irow, icol, ctxt);
+            printf("MPI rank (world) = %i    ctxt (world) = %i    ctxt (sub) = %i\n",
+                    rank, ctxt_world, ctxt_sub);
         }
         usleep(10000);
     }
+    if (rank == 0) printf("\n");
+
+    /***************************************************************************
+     *                          BLACS grid init
+     ***************************************************************************/
+    int nrow, ncol, irow, icol;
+    char layout = 'r'; // 'c' or 'C' for column major; anything else yields row major
+
+    // initialized a BLACS grid from MPI_COMM_WORLD
+    nrow = 2, ncol = 3;
+    Cblacs_gridinit(&ctxt_world, &layout, nrow, ncol);
+
+    //Cblacs_pcoord(ctxt_world, id, &irow, &icol);
+    Cblacs_gridinfo(ctxt_world, &nrow, &ncol, &irow, &icol);
+
+    // NOTE: blacs_gridinfo is preferred over blacs_pcoord because it can handle
+    // the case where some processes are not part of the grid, in which case irow
+    // and icol are set to -1. For blacs_pcoord, error is thrown in this case.
+
+    if (rank == 0) printf("%ix%i BLACS grid from MPI_COMM_WORLD:\n", nrow, ncol);
+    for (int i = 0; i < nprocs; i++) {
+        if (i == rank) {
+            printf("MPI rank (world) = %i    pcoord (%i,%i)    BLACS ctxt = %i\n",
+                    rank, irow, icol, ctxt_world);
+        }
+        usleep(10000);
+    }
+    if (rank == 0) printf("\n");
+
+    /****************************************************************************/
+
+    // initialize a BLACS grid from comm_sub
+    ctxt_sub = Csys2blacs_handle(comm_sub);
+
+    nrow = 1, ncol = 3;
+    Cblacs_gridinit(&ctxt_sub, &layout, nrow, ncol);
+    Cblacs_gridinfo(ctxt_sub, &nrow, &ncol, &irow, &icol);
+
+    if (rank == 0) printf("%ix%i BLACS grid from comm_sub:\n", nrow, ncol);
+    for (int i = 0; i < nprocs; i++) {
+        if (i == rank) {
+            printf("MPI rank (sub) = %i    pcoord (%i,%i)    BLACS ctxt = %i\n",
+                    rank_sub, irow, icol, ctxt_sub);
+        }
+        usleep(10000);
+    }
+    if (rank == 0) printf("\n");
+
+    /****************************************************************************/
+
+    // initialize another BLACS grid from comm_sub
+    ctxt_sub = Csys2blacs_handle(comm_sub);
+
+    nrow = 2, ncol = 2;
+    Cblacs_gridinit(&ctxt_sub, &layout, nrow, ncol);
+    Cblacs_gridinfo(ctxt_sub, &nrow, &ncol, &irow, &icol);
+
+    if (rank == 0) printf("%ix%i BLACS grid from comm_sub:\n", nrow, ncol);
+    for (int i = 0; i < nprocs; i++) {
+        if (i == rank) {
+            printf("MPI rank (sub) = %i    pcoord (%i,%i)    BLACS ctxt = %i\n",
+                    rank_sub, irow, icol, ctxt_sub);
+        }
+        usleep(10000);
+    }
+    if (rank == 0) printf("\n");
+
+
+    // NOTE: the second argument passed to pcoord should be the rank within the
+    // relevant communicator (which may not be the rank in MPI_COMM_WORLD)
+    MPI_Comm_rank(comm_sub, &id);
+    Cblacs_pcoord(ctxt_sub, id, &irow, &icol);
+    if (rank == 0) printf("%ix%i BLACS grid from comm_sub:\n", nrow, ncol);
+    for (int i = 0; i < nprocs; i++) {
+        if (i == rank) {
+            printf("MPI rank (sub) = %i    pcoord (%i,%i)    BLACS ctxt = %i\n",
+                    rank_sub, irow, icol, ctxt_sub);
+        }
+        usleep(10000);
+    }
+    if (rank == 0) printf("\n");
+
+
+
 
     MPI_Finalize();
 }

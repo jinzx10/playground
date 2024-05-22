@@ -48,7 +48,7 @@ int main()
     }
 
     int m = 7, n = 11;
-    int mb = 4, nb = 3;
+    int mb = 1, nb = 1;
 
     std::vector<double> A_glb;
     std::vector<double> A_loc;

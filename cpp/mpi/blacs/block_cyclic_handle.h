@@ -13,8 +13,24 @@ public:
     enum class ProcGrid { Square, Row, Column };
 
     /**
-     * @brief
+     * @brief Initializes a block-cyclic distribution handle.
      *
+     * @param   mg      number of rows in the global matrix
+     * @param   ng      number of columns in the global matrix
+     * @param   mb      number of rows in a block
+     * @param   nb      number of columns in a block
+     * @param   layout  process grid layout, could be Row, Column, or Square
+     * @param   comm    MPI communicator over which BLACS grid is created
+     *
+     * @note The BLACS grid always exhausts the number of available processes in
+     * the given communicator. The size of the grid is determined by "layout". If
+     * "layout" is Row, the grid has only one row and as many columns as there are
+     * processes. If "layout" is Column, the grid has only one column; if "layout"
+     * is Square, the grid is made to have the largest possible greatest common
+     * divisor between the number of rows and columns.
+     *
+     * @note If comm is a disjoint communicator created by MPI_Comm_split, the
+     * resulting BLACS grid will also be disjoint.
      *
      */
     BlockCyclicHandle(
@@ -76,14 +92,14 @@ public:
     std::vector<int> l2g_col_;
 
     /// greatest common divisor
-    int _gcd(int a, int b) { return b == 0 ? a : _gcd(b, a % b); }
+    static int _gcd(int a, int b) { return b == 0 ? a : _gcd(b, a % b); }
 
     /**
      * @brief Factorizes w = p * q such that p and q have the largest possible
      * greatest common divisor.
      *
      */
-    void _fact(int w, int& p, int& q);
+    static void _fact(int w, int& p, int& q);
 };
 
 

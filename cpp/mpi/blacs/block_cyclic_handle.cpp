@@ -65,17 +65,6 @@ BlockCyclicHandle::BlockCyclicHandle(
     ml_ = numroc_(&mg, &mb, &ip_, &zero, &mp_);
     nl_ = numroc_(&ng, &nb, &jp_, &zero, &np_);
 
-    //int rank = 0;
-    //MPI_Comm_rank(comm, &rank);
-    //for (int i = 0; i < num_proc; ++i)
-    //{
-    //    if (i == rank)
-    //    {
-    //        printf("rank = %i    local size = %i x %i\n", rank, ml_, nl_);
-    //    }
-    //    usleep(10000);
-    //}
-
     // initialize ScaLAPACK descriptor
     int lld = std::max(ml_, 1); // suppress warning when ml_ = 0
     descinit_(desc_.data(), &mg, &ng, &mb, &nb, &zero, &zero, &ctxt, &lld, &zero);
@@ -84,14 +73,14 @@ BlockCyclicHandle::BlockCyclicHandle(
     l2g_row_.resize(ml_);
     for (int i = 0; i < ml_; ++i)
     {
-        l2g_row_[i] = i / mb * mp_ * mb + ip_ * mb + i % mb;
+        l2g_row_[i] = (i / mb * mp_ + ip_) * mb + i % mb;
         g2l_row_[l2g_row_[i]] = i;
     }
 
     l2g_col_.resize(nl_);
     for (int j = 0; j < nl_; ++j)
     {
-        l2g_col_[j] = j / nb * np_ * nb + jp_ * nb + j % nb;
+        l2g_col_[j] = (j / nb * np_ + jp_) * nb + j % nb;
         g2l_col_[l2g_col_[j]] = j;
     }
 }

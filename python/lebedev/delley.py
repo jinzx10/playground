@@ -235,53 +235,32 @@ def gridgen(npoints, x, y, w):
     return grid, weight
 
 
+# assume f = \sum coef[i] * Y[l[i], m[i]]
+# \int |f|^2 d\Omega = \sum_i coef[i]**2
 
 # generate some random function from a combination of spherical harmonics
-coef = []
-l = []
-m = []
-for i in range(9):
-    coef.append(np.random.randn())
-    l.append(i)
-    m.append(np.random.randint(-l[i], l[i]+1)) # m in [-l, l]
-
+# the function will be squared, so lmax=8 for Lebedev grid of order 17
+lmax = 9
+coef = np.random.randn(lmax + 1)
+m = [np.random.randint(-l, l+1) for l in range(lmax+1)]
 
 def f2(r): # r is a unit vector
     from scipy.special import sph_harm
 
     assert(np.abs(np.linalg.norm(r)-1)<1e-12)
-
     polar = np.arccos(r[2])
     azimuth = np.arctan2(r[1], r[0])
 
-    f = 0.0
-    for i, c in enumerate(coef):
-        f += c * sph_harm(m[i], l[i], azimuth, polar)
-
+    f = sum(c * sph_harm(m[l], l, azimuth, polar) for l, c in enumerate(coef))
     return np.abs(f)**2
 
-#print(coef)
-#print(l)
-#print(m)
-
-# assume f = \sum coef[i] * Y[l[i], m[i]]
-# \int |f|^2 d\Omega = \sum_i coef[i]**2
 
 # NOTE: scipy's sph_harm is not normalized!
 ref = sum([c**2 for c in coef]) / 4 / np.pi
 print(f'ref = {ref}')
 
-
 grid, weight = gridgen(npoints, x, y, w)
-#print(len(grid))
-#print('sum of weight = ', sum(weight))
-#print(weight)
-
-leb = 0
-
-for i, r in enumerate(grid):
-    leb += f2(r) * weight[i]
-
+leb = sum(f2(r) * w for r, w in zip(grid, weight))
 print(f'leb = {leb}')
 
 print('abs(leb - ref) = ', np.abs(leb-ref))

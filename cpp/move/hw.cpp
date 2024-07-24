@@ -1,15 +1,22 @@
-#include <armadillo>
 #include <iostream>
+#include <vector>
 
-using namespace arma;
+struct Test {
+
+    std::vector<int> v{10, 5};
+
+};
 
 int main() {
 
-	mat a = randu(3,3);
-	a.print();
-	mat b;
-	b = std::move(a);
-	b.print();
-	a.print();
+    Test t1;
+
+    Test t2;
+
+    t1.v[0] = 10;
+
+    t2 = std::move(t1);
+
+    std::cout << t1.v.size() << std::endl;
 	return 0;
 }

@@ -1,8 +1,50 @@
 #include "block_cyclic_handle.h"
 
-#include <cstdio>
 #include <cassert>
 #include <unistd.h>
+
+void print_loc(double* A, int m, int n, const std::string& msg, MPI_Comm comm = MPI_COMM_WORLD)
+{
+    int rank, nprocs;
+    MPI_Comm_size(comm, &nprocs);
+    MPI_Comm_rank(comm, &rank);
+
+    for (int i = 0; i < nprocs; ++i)
+    {
+        if (i == rank)
+        {
+            printf("rank = %i    %s: \n", rank, msg.c_str());
+            for (int i = 0; i < m; ++i)
+            {
+                for (int j = 0; j < n; ++j)
+                {
+                    printf("%6.2f ", A[i+j*m]);
+                }
+                printf("\n");
+            }
+        }
+        usleep(10000);
+    }
+}
+
+void print_glb(double* A, int m, int n, const std::string& msg, MPI_Comm comm = MPI_COMM_WORLD, int iprint = 0)
+{
+    int rank;
+    MPI_Comm_rank(comm, &rank);
+
+    if (rank == iprint)
+    {
+        printf("%s: \n", msg.c_str());
+        for (int i = 0; i < m; ++i)
+        {
+            for (int j = 0; j < n; ++j)
+            {
+                printf("%6.2f ", A[i+j*m]);
+            }
+            printf("\n");
+        }
+    }
+}
 
 
 int main()
@@ -63,39 +105,14 @@ int main()
         {
             A_glb[i] = i;
         }
-
-        printf("A (global): \n");
-        for (int i = 0; i < m; ++i)
-        {
-            for (int j = 0; j < n; ++j)
-            {
-                printf("%6.2f ", A_glb[i+j*m]);
-            }
-            printf("\n");
-        }
     }
-    MPI_Barrier(MPI_COMM_WORLD);
+
+    print_glb(A_glb.data(), m, n, "original (global)");
 
     A_loc.resize(bcd_loc.ml() * bcd_loc.nl());
     Cpdgemr2d(m, n, A_glb.data(), 1, 1, bcd_glb.desc(), A_loc.data(), 1, 1, bcd_loc.desc(), bcd_glb.ctxt());
 
-    for (int i = 0; i < nprocs; ++i)
-    {
-        if (i == rank)
-        {
-            // print A_loc
-            printf("rank = %i    A (local): \n", rank);
-            for (int i = 0; i < bcd_loc.ml(); ++i)
-            {
-                for (int j = 0; j < bcd_loc.nl(); ++j)
-                {
-                    printf("%6.2f ", A_loc[i+j*bcd_loc.ml()]);
-                }
-                printf("\n");
-            }
-        }
-        usleep(10000);
-    }
+    print_loc(A_loc.data(), bcd_loc.ml(), bcd_loc.nl(), "scattered (local)");
 
     std::vector<double> B;
     if (rank == 0)
@@ -105,18 +122,7 @@ int main()
 
     Cpdgemr2d(m, n, A_loc.data(), 1, 1, bcd_loc.desc(), B.data(), 1, 1, bcd_glb.desc(), bcd_glb.ctxt());
 
-    if (rank == 0)
-    {
-        printf("B (global): \n");
-        for (int i = 0; i < m; ++i)
-        {
-            for (int j = 0; j < n; ++j)
-            {
-                printf("%6.2f ", B[i+j*m]);
-            }
-            printf("\n");
-        }
-    }
+    print_glb(B.data(), m, n, "gathered (global)");
 
     MPI_Finalize();
 }

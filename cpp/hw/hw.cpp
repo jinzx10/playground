@@ -4,7 +4,7 @@
 
 class Test {
 
-private:
+public:
     void print() { printf("hello world!\n"); }
 
 };

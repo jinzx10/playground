@@ -56,7 +56,13 @@ def aims(f, n, R, mult):
     return np.sum(w * f(r))
 
 
-def ta3(f, n, R, alpha):
+def ta3(f, n, R):
+    x = np.cos(np.arange(1, n+1) * np.pi / (n+1))
+    w = np.pi / (n+1) * (R/np.log(2))**3 * np.sqrt((1+x)/(1-x)) * np.log(2/(1-x))**2
+    r = R/np.log(2) * np.log(2/(1-x))
+    return np.sum(w * f(r))
+
+def ta4(f, n, R, alpha):
     x = np.cos(np.arange(1, n+1) * np.pi / (n+1))
     w = np.pi / (n+1) * R**3 * (1+x)**(3*alpha) / np.log(2)**3 * (np.sqrt((1+x)/(1-x))*np.log((1-x)/2)**2 \
             -alpha * np.sqrt((1-x)/(1+x)) * np.log((1-x)/2)**3)
@@ -89,6 +95,7 @@ val_mur = []
 val_bak = []
 val_kno = []
 val_ta3 = []
+val_ta4 = []
 val_de2 = []
 val_aims_2 = []
 val_aims_4 = []
@@ -103,7 +110,8 @@ for R in Rs:
     val_mur.append(murray(g, n, R))
     val_bak.append(baker(g, n, R))
     val_kno.append(knowles(g, n, R))
-    val_ta3.append(ta3(g, n, R, 0.6)) # alpha=0.6
+    val_ta3.append(ta3(g, n, R))
+    val_ta4.append(ta4(g, n, R, 0.6)) # alpha=0.6
     val_de2.append(de2(g, n, 0.1/R, 2.5)) # change the scaling parameter, not cutoff
     val_aims_2.append(aims(g, n, R, 2))
     val_aims_4.append(aims(g, n, R, 4))
@@ -114,6 +122,7 @@ plt.plot(Rs, np.abs(val_mur - val_ref), label='murray')
 plt.plot(Rs, np.abs(val_bak - val_ref), label='baker')
 plt.plot(Rs, np.abs(val_kno - val_ref), label='knowles')
 plt.plot(Rs, np.abs(val_ta3 - val_ref), label='ta3')
+plt.plot(Rs, np.abs(val_ta4 - val_ref), label='ta4')
 plt.plot(Rs, np.abs(val_de2 - val_ref), label='de2')
 plt.plot(Rs, np.abs(val_aims_2 - val_ref), label='AIMS-2')
 plt.plot(Rs, np.abs(val_aims_4 - val_ref), label='AIMS-4')

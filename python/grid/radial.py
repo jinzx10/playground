@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 '''
     
     / inf
-    |    x**2 * f(x) dx
+    |    r**2 * f(r) dx ~ \sum_i w[i] * f(r[i])
     / 0
 
 
@@ -77,16 +77,50 @@ def knowles(f, n, R):
     return np.sum(w * f(r))
 
 
-def de2(f, n, R, alpha):
-    h = R
-    x = (np.arange(1, n+1) - n//2 )* h
-    w = h * np.exp(3*alpha*x-3*np.exp(-x)) * (alpha + np.exp(-x))
-    r = np.exp(alpha*x - np.exp(-x))
+def de2_qchem(f, n, alpha):
+    h = 2.0 / (n - 1)
+    x = h * np.arange(n) - 1.0
+    ax = alpha * x
+    emx = np.exp(-x)
+    w = h * np.exp(3*(ax-emx)) * (alpha + emx)
+    r = np.exp(ax - emx)
+    print(f"h = {h}    x[0] = {x[0]}    x[-1] = {x[-1]}    r[0] = {r[0]}    r[-1] = {r[-1]}")
+    return np.sum(w * f(r))
+
+def de2(f, n, alpha, rmin=1e-7, rmax=10):
+    #xmax = np.log(rmax) / alpha
+    #xmin = -np.log(-np.log(rmin))
+    #h = (xmax - xmin) / (n - 1)
+    #x = xmin + h * np.arange(n)
+    h = 5.0 / (n - 1)
+    x = h * np.arange(n) - 1.0
+    ax = alpha * x
+    emx = np.exp(-x)
+    w = h * np.exp(3*(ax-emx)) * (alpha + emx)
+    r = np.exp(ax - emx)
+    #print(f"h = {h}    x[0] = {x[0]}    x[-1] = {x[-1]}    r[0] = {r[0]}    r[-1] = {r[-1]}")
     return np.sum(w * f(r))
 
 
 def g(x):
     return np.exp(-x**2)
+
+
+def de_x(x, alpha):
+    return np.exp(alpha * x - np.exp(-x))
+
+
+#x = np.linspace(-1, 1, 20)
+#plt.plot(x, np.log(de_x(x, 0.5)), label='0.5')
+#plt.plot(x, np.log(de_x(x, 1.0)), label='1.0')
+#plt.plot(x, np.log(de_x(x, 2.0)), label='2.0')
+#plt.plot(x, np.log(de_x(x, 3.0)), label='3.0')
+#plt.plot(x, np.log(de_x(x, 5.0)), label='5.0')
+#plt.legend()
+#plt.show()
+#exit()
+
+
 
 val_ref = np.sqrt(np.pi)/4
 val_lag = []
@@ -100,7 +134,7 @@ val_de2 = []
 val_aims_2 = []
 val_aims_4 = []
 
-Rs = np.linspace(0.1, 10, 100)
+Rs = np.linspace(0.5, 7, 100)
 n = 30
 
 
@@ -112,7 +146,7 @@ for R in Rs:
     val_kno.append(knowles(g, n, R))
     val_ta3.append(ta3(g, n, R))
     val_ta4.append(ta4(g, n, R, 0.6)) # alpha=0.6
-    val_de2.append(de2(g, n, 0.1/R, 2.5)) # change the scaling parameter, not cutoff
+    val_de2.append(de2_qchem(g, n, R)) # the parameter is used as scaling, not cutoff
     val_aims_2.append(aims(g, n, R, 2))
     val_aims_4.append(aims(g, n, R, 4))
 

@@ -1,7 +1,14 @@
 import numpy as np
 from itertools import permutations, product
 
-delley_table = [
+'''
+Delley's Lebedev quadrature grid & weights.
+
+Delley, B. (1996). High order integration schemes on the unit sphere.
+Journal of computational chemistry, 17(9), 1152-1155.
+
+'''
+_delley_table = [
     [
         17, 110, [1, 1, 0, 3, 1, 0],
         [
@@ -198,6 +205,8 @@ delley_table = [
     ]
 ]
 
+#NOTE set(permutations(...)) is not efficient, but the size here is small
+
 # vertex
 def group6(x, y):
     for one in (-1, 1):
@@ -207,15 +216,15 @@ def group6(x, y):
 # face center
 def group8(x, y):
     a = 1.0 / np.sqrt(3)
-    for sign1, sign2, sign3 in product((-1, 1), repeat=3):
-        yield (sign1 * a, sign2 * a, sign3 * a)
+    for sgn1, sgn2, sgn3 in product((-1, 1), repeat=3):
+        yield (sgn1 * a, sgn2 * a, sgn3 * a)
 
 
 # edge center
 def group12(x, y):
     a = 1.0 / np.sqrt(2)
-    for sign1, sign2 in ((1, 1), (-1, 1), (-1, -1)):
-        yield from set(permutations([sign1 * a, sign2 * a, 0]))
+    for sgn1, sgn2 in ((1, 1), (-1, 1), (-1, -1)):
+        yield from set(permutations([sgn1 * a, sgn2 * a, 0]))
 
 
 # (u, u, sqrt(1-2u**2)) 
@@ -224,8 +233,8 @@ def group12(x, y):
 def group24a(x, y):
     u = x if x == y else np.sqrt(1.0 - x**2 - y**2)
     v = np.sqrt(1.0 - 2.0*u**2)
-    for (sign1, sign2), sign3 in product(((1, 1), (-1, 1), (-1, -1)), (-1, 1)):
-        yield from set(permutations([sign1 * u, sign2 * u, sign3 * v]))
+    for (sgn1, sgn2), sgn3 in product(((1, 1), (-1, 1), (-1, -1)), (-1, 1)):
+        yield from set(permutations([sgn1 * u, sgn2 * u, sgn3 * v]))
 
 
 # (u, 0, sqrt(1-u**2))
@@ -234,8 +243,8 @@ def group24a(x, y):
 def group24b(x, y):
     u = x if abs(x) > 0 else y
     v = np.sqrt(1.0 - u**2)
-    for sign1, sign2 in product((-1, 1), repeat=2):
-        yield from set(permutations([sign1 * u, 0, sign2 * v]))
+    for sgn1, sgn2 in product((-1, 1), repeat=2):
+        yield from set(permutations([sgn1 * u, 0, sgn2 * v]))
 
 
 # (r, s, sqrt(1-r**2-s**2))
@@ -243,8 +252,8 @@ def group24b(x, y):
 # permutation -> 6
 def group48(x, y):
     r, s, t = x, y, np.sqrt(1.0 - x**2 - y**2)
-    for sign1, sign2, sign3 in product([-1, 1], repeat=3):
-        yield from set(permutations([sign1 * r, sign2 * s, sign3 * t]))
+    for sgn1, sgn2, sgn3 in product([-1, 1], repeat=3):
+        yield from set(permutations([sgn1 * r, sgn2 * s, sgn3 * t]))
 
 
 group_gen = [group6, group8, group12, group24a, group24b, group48]
@@ -253,10 +262,10 @@ group_size = [6, 8, 12, 24, 24, 48]
 
 def _find(lmax):
     '''
-    Returns the Delley table that has the required order of accuracy.
+    Returns the minimal Delley table with the required order of accuracy.
     
     '''
-    return next((tab for tab in delley_table if tab[0] >= lmax), None)
+    return next((tab for tab in _delley_table if tab[0] >= lmax), None)
 
 
 def delley(lmax):
@@ -282,40 +291,34 @@ from scipy.special import sph_harm
 class _TestDelley(unittest.TestCase):
 
     def test_group_gen(self):
-        self.assertEqual(len(list(group6  (0.1, 0.2))),  6)
-        self.assertEqual(len(list(group8  (0.1, 0.2))),  8)
-        self.assertEqual(len(list(group12 (0.1, 0.2))), 12)
+        # arguments are not referenced for group 6/8/12
+        self.assertEqual(len(list(group6  (0.0, 0.0))),  6)
+        self.assertEqual(len(list(group8  (0.0, 0.0))),  8)
+        self.assertEqual(len(list(group12 (0.0, 0.0))), 12)
+
         self.assertEqual(len(list(group24a(0.1, 0.1))), 24)
-        self.assertEqual(len(list(group24b(0.1, 0.2))), 24)
+        self.assertEqual(len(list(group24b(0.1, 0.0))), 24)
         self.assertEqual(len(list(group48 (0.1, 0.2))), 48)
 
 
     def test_integral(self):
         '''
-        Verifies that the integral of a linear combination of spherical harmonics
+        Verifies that integrals of linear combinations of spherical harmonics
         on the unit sphere is correctly computed by the Delley grid.
 
         '''
         for lmax in range(15, 55, 5):
             coef = np.random.randn(lmax+1)
-            val = sum(sum(coef[l] * sph_harm(0, l, np.arctan2(r[1], r[0]), np.arccos(r[2]))
+            grid, weight = delley(lmax)
+            val = sum(sum(sph_harm(0, l, np.arctan2(r[1], r[0]),
+                                   np.arccos(r[2])) * coef[l]
                           for l in range(lmax+1)) * w
-                      for r, w in zip(*delley(lmax))) * np.sqrt(np.pi) * 2
-
-            # the following is too slow
-            #coef = np.random.randn((lmax+1)**2)
-            #val = sum(sum(coef[l**2 + l + m] *
-            #              sph_harm(m, l, np.arctan2(r[1], r[0]), np.arccos(r[2]))
-            #              for l in range(lmax+1) for m in range(-l, l+1)) * w
-            #          for r, w in zip(*delley(lmax))) * np.sqrt(np.pi) * 2
+                      for r, w in zip(grid, weight)) * np.sqrt(np.pi) * 2
 
             self.assertAlmostEqual(val, coef[0], places=13)
 
 
 if __name__ == '__main__':
     unittest.main()
-
-
-
 
 

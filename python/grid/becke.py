@@ -15,11 +15,16 @@ def s_stratmann(mu, a=0.64):
             x * (35 + x2 * (-35 + x2 * (21 - 5 * x2))) / 16)
 
 
-def s_knuth(mu, Rc, a=0.64, b=0.8): # modified stratmann
-    pass
+def u_knuth(y, b=0.8):
+    core = y <= b
+    edge = (not core) and (y < 1.0)
+    return core + edge * 0.5 * (np.cos(np.pi * (y - b) / (1.0 - b)) + 1.0);
+
+def s_knuth(mu, y, a=0.64, b=0.8): # modified stratmann
+    return 1.0 + u_knuth(y, b) * (s_stratmann(mu, a) - 1.0)
 
 
-def becke_part(R, r):
+def becke_part(drR, dRR):
     '''
     Becke partition weights.
 
@@ -29,15 +34,27 @@ def becke_part(R, r):
     '''
     s = s_becke
     #s = s_stratmann
+    #s = s_knuth
 
-    P = np.ones(R.shape[0])
-    for I, RI in enumerate(R):
-        for J, RJ in enumerate(R):
-            if I == J:
-                continue
-            mu = (np.linalg.norm(r-RI) - np.linalg.norm(r-RJ)) \
-                    / (np.linalg.norm(RI-RJ))
-            P[I] *= s(mu)
+    nR = len(drR) 
+    P = np.ones(nR)
+
+    for I in range(nR):
+        for J in range(I+1,nR):
+            mu = (drR[I] - drR[J]) / (dRR[I,J])
+            tmp = s(mu)
+            P[I] *= tmp
+            P[J] *= (1-tmp)
+
+    #for I in range(nR):
+    #    for J in range(nR):
+    #        if I == J:
+    #            continue
+    #        mu = (drR[I] - drR[J]) / (dRR[I,J])
+    #        P[I] *= s(mu)
+    #        #rcut = 7
+    #        #y = np.linalg.norm(r-RJ) / rcut
+    #        #P[I] *= s(mu, y)
 
     return P / np.sum(P)
 
@@ -48,6 +65,7 @@ def becke_part(R, r):
 ############################################################
 import unittest
 import matplotlib.pyplot as plt
+import time
 
 from radial import baker, murray
 from delley import delley
@@ -104,9 +122,9 @@ if __name__ == '__main__':
     nR = R.shape[0]
     print(f'nR = {nR}')
 
-    r_rad, w_rad = baker(30, 5, 2)
+    r_rad, w_rad = baker(30, 8, 2)
     #r_rad, w_rad = murray(40, 3.0)
-    r_ang, w_ang = delley(40)
+    r_ang, w_ang = delley(20)
 
     r = []
     w = []
@@ -120,11 +138,25 @@ if __name__ == '__main__':
     print(f'number of grid points = {r.shape[0]}')
     print(f'radial max = {r_rad[-1]}')
 
+    dRR = np.zeros((nR, nR))
+    for I in range(nR):
+        for J in range(nR):
+            dRR[I,J] = np.linalg.norm(R[I] - R[J])
+
+    elapsed = 0.0
+
     val = 0.0
     for iR in range(nR):
         for wi, ri in zip(w, r):
-            w_becke = becke_part(R, ri + R[iR])
+            drR = np.zeros(nR)
+            for I in range(nR):
+                drR[I] = np.linalg.norm(ri + R[iR] - R[I])
+            start = time.time()
+            w_becke = becke_part(drR, dRR)
+            elapsed += time.time() - start
             val += wi * func(ri + R[iR], R, a) * w_becke[iR]
+
+    print(f'time elapsed = {elapsed} s')
 
     val *= 4 * np.pi
     ref = np.sum((np.pi/a)**1.5)

@@ -1,5 +1,9 @@
 import numpy as np
 
+###################################################################
+#                       cell function
+###################################################################
+
 def s_becke(mu):
     p1 = 0.5 * mu * (3 - mu*mu)
     p2 = 0.5 * p1 * (3 - p1*p1)
@@ -7,25 +11,31 @@ def s_becke(mu):
     return 0.5 * (1 - p3)
 
 
-def s_stratmann(mu, a=0.64):
-    x = mu / a;
+stratmann_a = 0.64
+def s_stratmann(mu):
+    x = mu / stratmann_a;
     x2 = x * x;
     h = 0.0625 * x * (35 + x2 * (-35 + x2 * (21 - 5 * x2)));
-    mid = abs(x) < 1;
-    g = (not mid) * np.sign(x) + mid * h;
+    mid = np.abs(x) <= 1;
+    g = np.logical_not(mid) * np.sign(x) + mid * h;
     return 0.5 * (1.0 - g);
 
 
+###################################################################
 def u_knuth(y, b=0.8):
     core = y <= b
     edge = (not core) and (y < 1.0)
     return core + edge * 0.5 * (np.cos(np.pi * (y - b) / (1.0 - b)) + 1.0);
 
 
-def s_knuth(mu, y, a=0.64, b=0.8): # modified stratmann
-    return 1.0 + u_knuth(y, b) * (s_stratmann(mu, a) - 1.0)
+def s_knuth(mu, y, b=0.8): # modified stratmann
+    return 1.0 + u_knuth(y, b) * (s_stratmann(mu) - 1.0)
+###################################################################
 
 
+###################################################################
+#                       partition weight
+###################################################################
 def becke(drR, dRR, iR, c):
     '''
     Becke partition weights.
@@ -35,7 +45,7 @@ def becke(drR, dRR, iR, c):
         drR : array
             Distance between the grid point and centers.
         dRR : array
-            Cistance between centers.
+            Distance between centers.
         iR : array
             Indices of relevant centers. The partition weight is
             computed only for these centers, not all centers.
@@ -57,16 +67,16 @@ def becke(drR, dRR, iR, c):
     return P[c] / np.sum(P)
 
 
-def stratmann0(drR, dRR, iR, c):
+def stratmann_raw(drR, dRR, iR, c):
     '''
-    Stratmann partition weights (computed without screening).
+    Stratmann partition weights (computed in a crude way).
 
     Parameters
     ----------
         drR : array
             Distance between the grid point and centers.
         dRR : array
-            Cistance between centers.
+            Distance between centers.
         iR : array
             Indices of relevant centers. The partition weight is
             computed only for these centers, not all centers.
@@ -88,50 +98,9 @@ def stratmann0(drR, dRR, iR, c):
     return P[c] / np.sum(P)
 
 
-def f_mod(x, Rc, c=0.6):
-    if x <= c*Rc:
-        return x
-    elif x < Rc:
-        return x + np.exp(-(Rc-c*Rc) / (x-c*Rc)) / (Rc - x)
-    else:
-        return 1e10
-
-
-def stratmann_mod1(drR, dRR, iR, c, Rcut):
-    '''
-    My modified stratmann partition weights (computed without screening).
-
-    Parameters
-    ----------
-        drR : array
-            Distance between the grid point and centers.
-        dRR : array
-            Cistance between centers.
-        iR : array
-            Indices of relevant centers. The partition weight is
-            computed only for these centers, not all centers.
-        c : int
-            The index of the center whom the grid point belongs to.
-
-    '''
-    nR = len(iR)
-    P = np.ones(nR)
-    for i in range(nR):
-        I = iR[i]
-        for j in range(i+1, nR):
-            J = iR[j]
-            #mu = (drR[I] - drR[J]) / dRR[I,J]
-            mu = (f_mod(drR[I], Rcut[I]) - f_mod(drR[J], Rcut[J])) / dRR[I,J]
-            s = s_stratmann(mu)
-            P[I] *= s
-            P[J] *= (1.0 - s)
-
-    return P[c] / np.sum(P)
-
-
 def stratmann(drR, dRR, drR_thr, iR, c):
     '''
-    Stratmann partition weights.
+    Stratmann partition weights (computed in the right way).
 
     '''
     # If r falls within the exclusive zone of a center, return immediately.
@@ -174,6 +143,50 @@ def stratmann(drR, dRR, drR_thr, iR, c):
 
     iR[0], iR[c] = iR[c], iR[0]
     return P[0] / np.sum(P)
+
+
+def f_mod(x, Rc, c=0.6):
+    if x <= c*Rc:
+        return x
+    elif x < Rc:
+        return x + np.exp(-(Rc-c*Rc) / (x-c*Rc)) / (Rc - x)
+    else:
+        return 1e10
+
+
+def stratmann_mod_raw(drR, dRR, iR, c, Rcut):
+    '''
+    My modified stratmann partition weights (computed in a crude way).
+
+    Parameters
+    ----------
+        drR : array
+            Distance between the grid point and centers.
+        dRR : array
+            Distance between centers.
+        iR : array
+            Indices of relevant centers. The partition weight is
+            computed only for these centers, not all centers.
+        c : int
+            The index of the center whom the grid point belongs to.
+        Rcut : array
+            Cutoff radii.
+
+    '''
+    nR = len(iR)
+    P = np.ones(nR)
+    for i in range(nR):
+        I = iR[i]
+        for j in range(i+1, nR):
+            J = iR[j]
+            #mu = (drR[I] - drR[J]) / dRR[I,J]
+            mu = (f_mod(drR[I], Rcut[I]) - f_mod(drR[J], Rcut[J])) / dRR[I,J]
+            s = s_stratmann(mu)
+            P[I] *= s
+            P[J] *= (1.0 - s)
+
+    return P[c] / np.sum(P)
+
 
 
 #############################################################
@@ -270,8 +283,8 @@ if __name__ == '__main__':
     nR = R.shape[0]
     print(f'nR = {nR}')
 
-    r_rad, w_rad = baker(50, 8, 1)
-    r_ang, w_ang = delley(17)
+    r_rad, w_rad = baker(100, 8, 1)
+    r_ang, w_ang = delley(59)
 
     print(r_rad)
 
@@ -299,7 +312,7 @@ if __name__ == '__main__':
         for J in range(nR):
             if J != I:
                 dRRmin = min(dRRmin, dRR[I,J])
-        drR_thr[I] = 0.18 * dRRmin
+        drR_thr[I] = 0.5 * (1 - stratmann_a) * dRRmin
 
     # cutoff radii
     Rcut = np.ones(nR) * r_rad[-1]
@@ -316,19 +329,19 @@ if __name__ == '__main__':
 
             start = time.time()
             #w_part = becke(drR, dRR, range(nR), iR)
-            #w_part = stratmann0(drR, dRR, range(nR), iR)
-            w_part = stratmann_mod1(drR, dRR, np.arange(nR), iR, Rcut)
+            w_part = stratmann_raw(drR, dRR, range(nR), iR)
             #w_part = stratmann(drR, dRR, drR_thr, np.arange(nR), iR)
+            #w_part = stratmann_mod1(drR, dRR, np.arange(nR), iR, Rcut)
             elapsed += time.time() - start
 
-            #val += wi * func(ri + R[iR], R, a) * w_part
-            val += wi * func2(ri + R[iR], R, Rcut, c) * w_part
+            val += wi * func(ri + R[iR], R, a) * w_part
+            #val += wi * func2(ri + R[iR], R, Rcut, c) * w_part
 
     print(f'time elapsed = {elapsed} s')
 
     val *= 4 * np.pi
-    #ref = np.sum((np.pi/a)**1.5)
-    ref = np.sum( (c*Rcut)**3 * (1.0/3 - 2 / np.pi**2) ) * 4 * np.pi
+    ref = np.sum((np.pi/a)**1.5)
+    #ref = np.sum( (c*Rcut)**3 * (1.0/3 - 2 / np.pi**2) ) * 4 * np.pi
     print(f'val = {val}')
     print(f'ref = {ref}')
 

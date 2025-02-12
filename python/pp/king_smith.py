@@ -1,29 +1,101 @@
 import numpy as np
-from scipy.special import spherical_jn
+from scipy.special import spherical_jn, roots_legendre
+from scipy.interpolate import CubicSpline
 from scipy.integrate import simpson
 
 from sbt import sbt
 from lommel import king_smith_A
 
-def king_smith_ff(r, rbeta_r, Gcut, Gmax, R):
+def king_smith_ff(l, dq, nq, fq, qa, qb, R):
+    r'''
+    Fourier filtering via the method proposed by King-Smith et al.
 
-    # k-space radial grid
-    nq = 100;
-    q = np.linspace(0, Gmax, nq);
-    dq = q[1] - q[0]
+    Given a k-space radial function f(q) tabulated on a uniform grid
+
+                    0, dq, 2*dq, ..., (nq-1)*dq
+
+    this subroutine looks for a new k-space piecewise radial function
+
+               / f(q)       q <= qa
+        g(q) = | h(q)       qa < q < qb
+               \  0         q >= qb
+
+    where h(q) is determined by minimizing the real-space "spillage":
+
+            /+inf
+        I = |     dr (r*G(r))^2
+            / R
+
+    here G(r) is the spherical Bessel transform of g(q).
+
+    Parameters
+    ----------
+
+    l : int
+        angular momentum quantum number
+    dq : float
+        k-space radial grid spacing
+    nq : int
+        number of k-space radial grid points
+    fq : array
+        values on the k-space radial grid
+    qa, qb : float
+        endpoints of the k-space interval where optimization is performed
+    R : float
+        r-space cutoff radius
+
+    '''
+    q = dq * np.arange(nq)
+    fq_spline = CubicSpline(q, fq, extrapolate=False)
+
+    # TODO
+    # VASP has an extra step that aligns qa & qb to the k-space grid.
+    # Do we need this?
     
-    iq_delim = np.argmax(q >= Gmax)
-    
-    q_small = q[:iq_delim]
-    q_large = q[iq_delim:]
+    #-------------------------------------------------------------
+    #   k-space integration using Gauss-Legendre quadrature
+    #-------------------------------------------------------------
+    # to transform an integration from [-1, -1] to [a, b]:
+    # x = roots * (b-a)/2 + (a+b)/2
+    # w = weights * (b-a)/2
+    m = 50 # NOTE: VASP use 32, probably good enough
+    roots, weights = roots_legendre(m)
 
-    beta_q = np.array([sbt(l, rbeta, r, qi, 1) for qi in q])
+    # [0, qa]
+    q1 = roots * qa / 2 + qa / 2
+    wq1 = weights * qa / 2
 
-    A = np.zeros((nq, nq));
-    for i in range(nq):
+    # [qa, qb]
+    q2 = roots * (qb - qa) / 2 + (qb + qa) / 2
+    wq2 = weights * (qb - qa) / 2
+
+    #-------------------------------------------------------------
+    #               tabulate A_l(q,q',R)
+    #-------------------------------------------------------------
+    # A21: q \in [qa, qb], q' \in [0, qa]
+    # A22: q, q' \in [qa, qb]
+
+    A21 = np.zeros((m, m));
+    for i in range(m):
+        for j in range(m):
+            A21[i,j] = king_smith_A(l, q2[i], q1[j], R)
+
+    A22 = np.zeros((m, m))
+    for i in range(m):
         for j in range(i+1):
-            A[i,j] = king_smith_A(l, q[i], q[j], R0)
-            A[j,i] = A[i,j]
+            A22[i,j] = king_smith_A(l, q2[i], q2[j], R)
+            A22[j,i] = A22[i,j]
+
+    #-------------------------------------------------------------
+    #           build and solve the linear system
+    #-------------------------------------------------------------
+    A = np.pi/2 * np.diag(q2**2) - wq2 * A22
+    b = np.array([np.sum(wq1 * fq_spline(q1) * A21[i])
+                  for i in range(m)])
+    f_q2 = np.linalg.solve(A, b)
+
+    return
+
 
     b0 = dq * A[iq_delim:, :iq_delim] @ beta_q[:iq_delim]
     
@@ -70,6 +142,11 @@ while rbeta[icut] == 0:
     icut -= 1
 icut += 1
 
+## k-space radial grid
+#nq = 100;
+#q = np.linspace(0, Gmax, nq);
+#dq = q[1] - q[0]
+    
 #print(rbeta[icut-1])
 #print(rbeta[icut])
 
@@ -84,8 +161,14 @@ icut += 1
 Gcut = 20
 Gmax = 40
 R = 5
-q, beta_q, beta_q_new = king_smith_ff(r[:icut], rbeta[:icut], Gcut, Gmax, R)
 
+dq = 0.1
+nq = 100
+beta_q = np.zeros(nq)
+
+king_smith_ff(2, dq, nq, beta_q, Gcut, Gmax, R)
+
+exit(1)
 #
 #ecutwfc = 50; # Hartree a.u.
 #Gmax = np.sqrt(2*ecutwfc);

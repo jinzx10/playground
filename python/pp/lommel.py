@@ -9,6 +9,9 @@ def king_smith_A(l, a, b, R):
                            / 0
     
     '''
+    # FIXME
+    # one may use a recursive formula to combine the computation
+    # of j_{l+1} and j_{l}, which saves some time
     if a == b:
         aR = a * R
         jl = spherical_jn(l, aR)

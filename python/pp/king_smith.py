@@ -6,6 +6,7 @@ from scipy.integrate import simpson
 from sbt import sbt
 from lommel import king_smith_A
 
+
 def king_smith_ff(l, dq, nq, fq, qa, qb, R):
     r'''
     Fourier filtering via the method proposed by King-Smith et al.
@@ -20,7 +21,8 @@ def king_smith_ff(l, dq, nq, fq, qa, qb, R):
         g(q) = | h(q)       qa < q < qb
                \  0         q >= qb
 
-    where h(q) is determined by minimizing the real-space "spillage":
+    where h(q) is determined by minimizing the "tail" of G(r) outside
+    the cutoff radius R:
 
             /+inf
         I = |     dr (r*G(r))^2
@@ -45,6 +47,9 @@ def king_smith_ff(l, dq, nq, fq, qa, qb, R):
         r-space cutoff radius
 
     '''
+    assert(qa < qb)
+    assert(qa <= (nq-1)*dq)
+
     q = dq * np.arange(nq)
     fq_spline = CubicSpline(q, fq, extrapolate=False)
 
@@ -55,11 +60,12 @@ def king_smith_ff(l, dq, nq, fq, qa, qb, R):
     #-------------------------------------------------------------
     #   k-space integration using Gauss-Legendre quadrature
     #-------------------------------------------------------------
+    m = 50 # quadrature order     NOTE: VASP use 32
+    roots, weights = roots_legendre(m)
+
     # to transform an integration from [-1, -1] to [a, b]:
     # x = roots * (b-a)/2 + (a+b)/2
     # w = weights * (b-a)/2
-    m = 50 # NOTE: VASP use 32, probably good enough
-    roots, weights = roots_legendre(m)
 
     # [0, qa]
     q1 = roots * qa / 2 + qa / 2
@@ -89,27 +95,31 @@ def king_smith_ff(l, dq, nq, fq, qa, qb, R):
     #-------------------------------------------------------------
     #           build and solve the linear system
     #-------------------------------------------------------------
+    f_q1 = fq_spline(q1)
+    b = np.array([np.sum(wq1 * f_q1 * A21[i]) for i in range(m)])
     A = np.pi/2 * np.diag(q2**2) - wq2 * A22
-    b = np.array([np.sum(wq1 * fq_spline(q1) * A21[i])
-                  for i in range(m)])
     f_q2 = np.linalg.solve(A, b)
 
-    return
+    qtot = np.concatenate((q1, q2))
+    fqtot = np.concatenate((f_q1, f_q2))
+    plt.plot(q, fq, label='old')
+    plt.plot(qtot, fqtot, label='new')
+    plt.axhline(0.0, linestyle=':', color='k')
+    plt.legend()
+    plt.show()
+    exit(1)
 
+    #-------------------------------------------------------------
+    #           compute the new beta(r)
+    #-------------------------------------------------------------
+    dr = R / nq
+    r = dr * np.arange(nq)
+    beta_r = np.array([
+        np.sum(f_q1 * q1**2 * spherical_jn(l, q1*r[ir]) * wq1) + 
+        np.sum(f_q2 * q2**2 * spherical_jn(l, q2*r[ir]) * wq2)
+        for ir in range(nq)])
 
-    b0 = dq * A[iq_delim:, :iq_delim] @ beta_q[:iq_delim]
-    
-    b = np.zeros(len(q_large))
-    for iql, ql in enumerate(q_large):
-        b[iql] = simpson(A[iq_delim + iql, :iq_delim] * beta_q[:iq_delim], x = q_small)
-
-    B = np.pi/2 * np.diag(q_large**2) - dq * A[iq_delim:, iq_delim:]
-    y = np.linalg.solve(B, b0)
-    
-    beta_q_new = np.copy(beta_q)
-    beta_q_new[iq_delim:] = y
-
-    return q, beta_q, beta_q_new
+    return r, beta_r * (2/np.pi)
 
 
 import xml.etree.ElementTree as ET
@@ -142,31 +152,39 @@ while rbeta[icut] == 0:
     icut -= 1
 icut += 1
 
-## k-space radial grid
-#nq = 100;
-#q = np.linspace(0, Gmax, nq);
-#dq = q[1] - q[0]
-    
+R = r[icut] * 1.5
+
+# k-space radial grid
+qcut = 20
+dq = 0.01
+nq_cut = int(qcut / dq) + 1;
+q = dq * np.arange(nq_cut)
+
 #print(rbeta[icut-1])
 #print(rbeta[icut])
+#
 
-##***************************
-#plt.plot(r[:icut], rbeta[:icut]);
-#plt.axhline(0, linestyle=':', color='k')
-#plt.xlim([0, r[icut]])
+beta_q = np.array([sbt(l, rbeta, r, qi, k=1) for qi in q])
+
+#beta_q_max = np.array([sbt(l, rbeta, r, qi) for qi in qtot])
+#plt.plot(qtot, beta_q_max)
+#plt.xlim([0, Gmax])
+#plt.axhline(0.0, linestyle=':')
 #plt.show()
 #exit(1)
+
+qa = 8
+qb = 15
+r_ff, beta_r_ff = king_smith_ff(l, dq, nq_cut, beta_q, qa, qb, R)
+
 ##***************************
-
-Gcut = 20
-Gmax = 40
-R = 5
-
-dq = 0.1
-nq = 100
-beta_q = np.zeros(nq)
-
-king_smith_ff(2, dq, nq, beta_q, Gcut, Gmax, R)
+plt.axhline(0, linestyle=':', color='k')
+#plt.xlim([0, r[icut]])
+plt.plot(r[:icut], rbeta[:icut]);
+plt.plot(r_ff, r_ff*beta_r_ff)
+plt.show()
+#exit(1)
+##***************************
 
 exit(1)
 #

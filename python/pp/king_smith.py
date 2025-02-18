@@ -3,9 +3,9 @@ from scipy.special import spherical_jn, roots_legendre
 from scipy.interpolate import CubicSpline
 from scipy.integrate import simpson
 
+from lommel import lommel_j
+from jlzeros import JLZEROS
 from sbt import sbt
-from lommel import king_smith_A
-
 
 def king_smith_ff(l, dq, nq, fq, qa, qb, R):
     r'''
@@ -54,11 +54,11 @@ def king_smith_ff(l, dq, nq, fq, qa, qb, R):
     fq_spline = CubicSpline(q, fq, extrapolate=False)
 
     # TODO
-    # VASP has an extra step that aligns qa & qb to the k-space grid.
-    # Do we need this?
+    # VASP has an extra step that aligns qa & qb to the k-space grid,
+    # but I do not see the point of that. Do we need this?
     
     #-------------------------------------------------------------
-    #   k-space integration using Gauss-Legendre quadrature
+    #               Gauss-Legendre quadrature
     #-------------------------------------------------------------
     m = 50 # quadrature order     NOTE: VASP use 32
     roots, weights = roots_legendre(m)
@@ -84,12 +84,12 @@ def king_smith_ff(l, dq, nq, fq, qa, qb, R):
     A21 = np.zeros((m, m));
     for i in range(m):
         for j in range(m):
-            A21[i,j] = king_smith_A(l, q2[i], q1[j], R)
+            A21[i,j] = (q2[i]*q1[j])**2 * lommel_j(l, q2[i], q1[j], R)
 
     A22 = np.zeros((m, m))
     for i in range(m):
         for j in range(i+1):
-            A22[i,j] = king_smith_A(l, q2[i], q2[j], R)
+            A22[i,j] = (q2[i]*q2[j])**2 * lommel_j(l, q2[i], q2[j], R)
             A22[j,i] = A22[i,j]
 
     #-------------------------------------------------------------
@@ -100,26 +100,132 @@ def king_smith_ff(l, dq, nq, fq, qa, qb, R):
     A = np.pi/2 * np.diag(q2**2) - wq2 * A22
     f_q2 = np.linalg.solve(A, b)
 
-    qtot = np.concatenate((q1, q2))
-    fqtot = np.concatenate((f_q1, f_q2))
-    plt.plot(q, fq, label='old')
-    plt.plot(qtot, fqtot, label='new')
-    plt.axhline(0.0, linestyle=':', color='k')
-    plt.legend()
-    plt.show()
-    exit(1)
+    #qtot = np.concatenate((q1, q2))
+    #fqtot = np.concatenate((f_q1, f_q2))
+    #plt.plot(q, fq, label='old')
+    #plt.plot(qtot, fqtot, label='new')
+    #plt.axhline(0.0, linestyle=':', color='k')
+    #plt.legend()
+    #plt.show()
+    #exit(1)
 
     #-------------------------------------------------------------
-    #           compute the new beta(r)
+    #       compute the new beta(r) on the linear grid
     #-------------------------------------------------------------
     dr = R / nq
     r = dr * np.arange(nq)
-    beta_r = np.array([
+    fr = np.array([
         np.sum(f_q1 * q1**2 * spherical_jn(l, q1*r[ir]) * wq1) + 
         np.sum(f_q2 * q2**2 * spherical_jn(l, q2*r[ir]) * wq2)
         for ir in range(nq)])
+    fr *= 2.0 / np.pi
 
-    return r, beta_r * (2/np.pi)
+    #-------------------------------------------------------------
+    #               inspect r-space "tail"
+    #-------------------------------------------------------------
+    # SBT should be self-inverse, but a function cannot be strictly
+    # localized in both r and k space. Since the new beta is made
+    # truncated in k-space, it must have some tail in the r-space.
+    # We can estimate the tail by inspecting the error from two
+    # consecutive SBTs: f(q) -> f(r) -> f2(q).
+    # The difference between f(q) and f2(q) results from the
+    # truncation in r-space.
+
+    # SBT f(q) -> f(r) towards an r-space quadrature grid
+    r_quad = roots * R / 2 + R / 2
+    wr_quad = weights * R / 2
+    fr_quad = np.array([
+        np.sum(f_q1 * q1**2 * spherical_jn(l, q1*r_quad[ir]) * wq1) + 
+        np.sum(f_q2 * q2**2 * spherical_jn(l, q2*r_quad[ir]) * wq2)
+        for ir in range(m)])
+    fr_quad *= 2.0/np.pi
+
+    # SBT f(r) -> f2(q) towards the previous k-space grid
+    qtot = np.concatenate((q1, q2))
+    f2q = np.array([
+        np.sum(wr_quad * fr_quad * r_quad**2
+               * spherical_jn(l, qtot[iq]*r_quad))
+        for iq in range(2*m)
+    ])
+
+    fq = np.concatenate((f_q1, f_q2))
+    err = np.linalg.norm(fq - f2q, np.inf)
+
+    #plt.plot(qtot, fq)
+    #plt.plot(qtot, f2q)
+    #plt.show()
+    #exit(1)
+
+    return r, fr, err
+
+
+def opt_sphbes(l, dq, nq, fq, qa, qb, R, nbes, alpha):
+    r'''
+    Optimized superposition of truncated spherical Bessel functions.
+
+    Let theta[m] be the m-th positive zero of the l-th order spherical
+    Bessel function, z[m] the m-th spherical Bessel function with node
+    at R:
+
+                      /  jl(theta(m)*r/R)     r <= R
+            z[m](r) = |
+                      \        0              r >  R
+
+    Given a k-space radial function f(q) tabulated on a uniform grid
+
+                    0, dq, 2*dq, ..., (nq-1)*dq
+
+    this subroutine looks for a new function g(r) as a superposition
+    of z[m]:
+
+                    g(r) = sum(c[k] * z[k](r))
+                            k
+
+    such that
+
+            / qa                          / +inf
+    alpha * |    dq q^2 (f(q) - h(q))^2 + |      dq q^2 h(q)^2
+            / 0                           / qb
+
+    is minimized. Here h(q) is the spherical Bessel transform of g(r)
+    and alpha is a relative weight factor.
+
+    '''
+    assert(qa < qb)
+    assert(qa <= (nq-1)*dq)
+
+    q = dq * np.arange(nq)
+    fq_spline = CubicSpline(q, fq, extrapolate=False)
+
+    #-------------------------------------------------------------
+    #   wave vectors that satisfies the boundary condition
+    #-------------------------------------------------------------
+    q_bc = JLZEROS[l][:nbes] / R
+
+    #-------------------------------------------------------------
+    #               Gauss-Legendre quadrature
+    #-------------------------------------------------------------
+    m = 64 # quadrature order
+    roots, weights = roots_legendre(m)
+
+    # to transform an integration from [-1, -1] to [a, b]:
+    # x = roots * (b-a)/2 + (a+b)/2
+    # w = weights * (b-a)/2
+
+    # [0, qa]
+    q1 = roots * qa / 2 + qa / 2
+    wq1 = weights * qa / 2
+
+    #-------------------------------------------------------------
+    #           spherical Bessel transform of z[k](r)
+    #-------------------------------------------------------------
+    # Z[k][i] is the k-th transformed function at q1[i]
+    Z = np.zeros((nbes, m))
+    for k in range(nbes):
+        for i in range(m):
+            Z[k,i] = lommel_j(l, q_bc[k], q1[i], R)
+
+
 
 
 import xml.etree.ElementTree as ET
@@ -175,7 +281,7 @@ beta_q = np.array([sbt(l, rbeta, r, qi, k=1) for qi in q])
 
 qa = 8
 qb = 15
-r_ff, beta_r_ff = king_smith_ff(l, dq, nq_cut, beta_q, qa, qb, R)
+r_ff, beta_r_ff, err_ff = king_smith_ff(l, dq, nq_cut, beta_q, qa, qb, R)
 
 ##***************************
 plt.axhline(0, linestyle=':', color='k')
@@ -187,87 +293,3 @@ plt.show()
 ##***************************
 
 exit(1)
-#
-#ecutwfc = 50; # Hartree a.u.
-#Gmax = np.sqrt(2*ecutwfc);
-#Gamma1 = 4 * Gmax;
-#gamma = Gamma1 - Gmax;
-#
-#nq = 100;
-#q = np.linspace(0, gamma, nq);
-#dq = q[1] - q[0]
-#
-#iq_delim = np.argmax(q >= Gmax)
-#
-#q_small = q[:iq_delim]
-#q_large = q[iq_delim:]
-##print(q_small)
-##print(q_large)
-#
-#
-## PP_BETA in UPF is r*beta(r), not bare beta(r)
-#beta_q = np.array([sbt(l, rbeta, r, qi, 1) for qi in q])
-#
-#####################
-##plt.plot(q[:iq_delim], beta_q[:iq_delim])
-##plt.plot(q, beta_q)
-##plt.axhline(0, color='k', linestyle=':')
-##plt.show()
-##exit(1)
-#####################
-#
-#rc = r[icut]
-#R0 = 1.5 * rc;
-#
-#'''
-#                         / R0
-#    A[q,q'] = (q*q')^2 * |    dr jl(qr) * jl(q'r) * r^2
-#                         / 0
-#
-#'''
-#
-#from lommel import king_smith_A
-#
-#A = np.zeros((nq, nq));
-#for i in range(nq):
-#    for j in range(i+1):
-#        A[i,j] = king_smith_A(l, q[i], q[j], R0)
-#        A[j,i] = A[i,j]
-#
-##plt.imshow(A)
-#
-#b0 = dq * A[iq_delim:, :iq_delim] @ beta_q[:iq_delim]
-#
-#b = np.zeros(len(q_large))
-#for iql, ql in enumerate(q_large):
-#    b[iql] = simpson(A[iq_delim + iql, :iq_delim] * beta_q[:iq_delim], x = q_small)
-#
-##print('b = ', b)
-##print('b0 = ', b0)
-##print(np.linalg.norm(b-b0))
-##plt.plot(q_large, b)
-##plt.plot(q_large, b0)
-##plt.show()
-##
-##exit(1)
-#B = np.pi/2 * np.diag(q_large**2) - dq * A[iq_delim:, iq_delim:]
-#y = np.linalg.solve(B, b0)
-#
-#beta_q_new = np.copy(beta_q)
-#beta_q_new[iq_delim:] = y
-#
-##print(q[iq_delim-1])
-##print(q[iq_delim])
-##print(f'Gmax = {Gmax}, gamma = {gamma}')
-##exit(1)
-#
-plt.plot(q, beta_q, label='old')
-plt.plot(q, beta_q_new, label = 'new')
-plt.axhline(0.0, linestyle=':')
-plt.axvline(Gmax, linestyle='--')
-plt.legend()
-
-plt.show()
-
-
-

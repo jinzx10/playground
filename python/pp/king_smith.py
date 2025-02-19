@@ -60,7 +60,7 @@ def king_smith_ff(l, dq, nq, fq, qa, qb, R):
     #-------------------------------------------------------------
     #               Gauss-Legendre quadrature
     #-------------------------------------------------------------
-    m = 50 # quadrature order     NOTE: VASP use 32
+    m = 64 # quadrature order     NOTE: VASP use 32
     roots, weights = roots_legendre(m)
 
     # to transform an integration from [-1, -1] to [a, b]:
@@ -88,7 +88,7 @@ def king_smith_ff(l, dq, nq, fq, qa, qb, R):
 
     A22 = np.zeros((m, m))
     for i in range(m):
-        for j in range(i+1):
+        for j in range(i+1): # symmetric matrix
             A22[i,j] = (q2[i]*q2[j])**2 * lommel_j(l, q2[i], q2[j], R)
             A22[j,i] = A22[i,j]
 
@@ -198,11 +198,6 @@ def opt_sphbes(l, dq, nq, fq, qa, qb, R, nbes, alpha):
     fq_spline = CubicSpline(q, fq, extrapolate=False)
 
     #-------------------------------------------------------------
-    #   wave vectors that satisfies the boundary condition
-    #-------------------------------------------------------------
-    q_bc = JLZEROS[l][:nbes] / R
-
-    #-------------------------------------------------------------
     #               Gauss-Legendre quadrature
     #-------------------------------------------------------------
     m = 64 # quadrature order
@@ -216,6 +211,10 @@ def opt_sphbes(l, dq, nq, fq, qa, qb, R, nbes, alpha):
     q1 = roots * qa / 2 + qa / 2
     wq1 = weights * qa / 2
 
+    # [0, R]
+    r_quad = roots * R / 2 + R / 2
+    wr_quad = weights * R / 2
+
     #-------------------------------------------------------------
     #           spherical Bessel transform of z[k](r)
     #-------------------------------------------------------------
@@ -223,10 +222,40 @@ def opt_sphbes(l, dq, nq, fq, qa, qb, R, nbes, alpha):
     Z = np.zeros((nbes, m))
     for k in range(nbes):
         for i in range(m):
-            Z[k,i] = lommel_j(l, q_bc[k], q1[i], R)
+            Z[k,i] = lommel_j(l, JLZEROS[l][k]/R, q1[i], R)
 
 
+    #-------------------------------------------------------------
+    #           build and solve the linear system
+    #-------------------------------------------------------------
+    A = np.zeros((nbes, nbes))
+    for i in range(nbes):
+        for j in range(i+1): # symmetric matrix
+            A[i,j] = np.sum(wq1 * q1**2 * Z[i] * Z[j])
+            A[j,i] = A[i,j]
 
+    tmp = np.zeros((m, m))
+    for i in range(m):
+        for j in range(i+1): # symmetric matrix
+            tmp[i,j] = -(r_quad[i] * r_quad[j])**2 \
+                    * lommel_j(l, r_quad[i], r_quad[j], qb) \
+                    * wr_quad[i] * wr_quad[j]
+            tmp[j,i] = tmp[i,j]
+    tmp += np.pi/2 * np.diag(wr_quad * r_quad**2)
+
+    z = np.zeros((nbes, m))
+    for k in range(nbes):
+        z[k] = spherical_jn(l, JLZEROS[l][k]/R * r_quad)
+    B = z @ tmp @ z.T
+
+    b = np.zeros(nbes)
+    for i in range(nbes):
+        b[i] = np.sum(wq1 * q1**2 * fq_spline(q1) * Z[i])
+
+    # superposition coefficient
+    c = np.linalg.solve(A+B/alpha, b)
+
+    return c
 
 import xml.etree.ElementTree as ET
 
@@ -279,15 +308,24 @@ beta_q = np.array([sbt(l, rbeta, r, qi, k=1) for qi in q])
 #plt.show()
 #exit(1)
 
-qa = 8
-qb = 15
-r_ff, beta_r_ff, err_ff = king_smith_ff(l, dq, nq_cut, beta_q, qa, qb, R)
+qa = 15
+qb = 25
+#r_ff, beta_r_ff, err_ff = king_smith_ff(l, dq, nq_cut, beta_q, qa, qb, R)
+c = opt_sphbes(l, dq, nq_cut, beta_q, qa, qb, R, 20, 10)
+
+dr = R / nq_cut
+r_new = dr * np.arange(nq_cut)
+betar_new = np.zeros(nq_cut)
+for k, ck in enumerate(c):
+    betar_new += ck * spherical_jn(l, JLZEROS[l][k] * r_new / R)
 
 ##***************************
 plt.axhline(0, linestyle=':', color='k')
 #plt.xlim([0, r[icut]])
-plt.plot(r[:icut], rbeta[:icut]);
-plt.plot(r_ff, r_ff*beta_r_ff)
+plt.plot(r[:icut], rbeta[:icut], label='old');
+#plt.plot(r_ff, r_ff*beta_r_ff)
+plt.plot(r_new, r_new*betar_new, label='new');
+plt.legend()
 plt.show()
 #exit(1)
 ##***************************

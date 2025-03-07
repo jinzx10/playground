@@ -18,19 +18,19 @@ def s2r(m, mp):
 def M(l, lp, mu, nu, lam):
     val = 0
     for m in range(-l, l+1):
-        for mp in range(-lp, lp+1):
+        for mp in range(max(-lp, m+lp-l), min(lp,m+l-lp)+1):
             val += s2r(mu, m) * r2s(mp, nu) * r2s(m-mp, lam) * np.sqrt(comb(l+m, lp+mp) * comb(l-m, lp-mp))
 
-    return val
+    return np.real(val)
 
 
 def real_sph_harm(l, m, theta, phi):
     if m == 0:
-        return sph_harm_y(l, 0, theta, phi)
+        return np.real(sph_harm_y(l, 0, theta, phi))
     elif m > 0:
-        return (-1)**m * np.real(sph_harm_y(l, m, theta, phi))
+        return (-1)**m * np.sqrt(2) * np.real(sph_harm_y(l, m, theta, phi))
     else:
-        return (-1)**m * np.imag(sph_harm_y(l, -m, theta, phi))
+        return (-1)**m * np.sqrt(2) * np.imag(sph_harm_y(l, -m, theta, phi))
 
 
 def solid_sph_harm(l, m, r):
@@ -40,41 +40,56 @@ def solid_sph_harm(l, m, r):
     return np.sqrt(4*np.pi/(2*l+1)) * rabs**l \
             * real_sph_harm(l, m, theta, phi)
 
-#lmax = 1
-#
-#for l in range(lmax+1):
-#    for lp in range(lmax+1):
-#        for mu in range(-l, l+1):
-#            for nu in range(-lp, lp+1):
-#                for lam in range(lp-l, l-lp+1):
-#                    val = 0
-#                    for m in range(-l, l+1):
-#                        for mp in range(-lp, lp+1):
-#                            val += s2r(mu, m) * r2s(mp, nu) * r2s(m-mp, lam) * np.sqrt(comb(l+m, lp+mp) * comb(l-m, lp-mp))
-#
-#                    #if val == 0:
-#                    if True:
-#                        print(f'l={l}  lp={lp}  mu={mu:2}  nu={nu:2}  lam={lam:2}  M^2={np.real(val)**2: 20.15f}')
-#
 
-r1 = np.random.randn(3)
-r2 = np.random.randn(3)
+###########################################################################
 
-l = 3
-m = -2 
+import unittest
 
-ref = solid_sph_harm(l, m, r1+r2)
+class TestAddition(unittest.TestCase):
 
-val = 0
-for lp in range(l+1):
-    for nu in range(-lp, lp+1):
-        for lam in range(lp-l, l-lp+1):
-            val += M(l, lp, m, nu, lam) * solid_sph_harm(lp, nu, r1) * solid_sph_harm(l-lp, lam, r2)
+    def test_(self):
 
-print(f'ref={ref: 20.15f}  val={val: 20.15f}  diff={ref-val: 20.15f}')
+        l = 4
+        m = -3
+
+        r1 = np.random.randn(3)
+        r2 = np.random.randn(3)
+        ref = solid_sph_harm(l, m, r1+r2)
+        
+        val = 0.0
+        for lp in range(l+1):
+            for nu in range(-lp, lp+1):
+                for lam in range(lp-l, l-lp+1):
+                    MM = M(l, lp, m, nu, lam)
+                    print(f'l={l}  m={m:2}  lp={lp}  nu={nu:2}  lam={lam:2}  M^2={MM**2:8.3f}')
+                    val += M(l, lp, m, nu, lam) * solid_sph_harm(lp, nu, r1) * solid_sph_harm(l-lp, lam, r2)
+        
+        #print(f'ref={ref: 20.15f}  val={val: 20.15f}  diff={abs(ref-val): 20.15f}')
+
+    def _test_all(self):
+
+        lmax = 4
+        n = 5
+
+        for l in range(lmax+1):
+            for m in range(-l, l+1):
+                for i in range(n):
+                    r1 = np.random.randn(3)
+                    r2 = np.random.randn(3)
+                    ref = solid_sph_harm(l, m, r1+r2)
+        
+                    val = 0.0
+                    for lp in range(l+1):
+                        for nu in range(-lp, lp+1):
+                            for lam in range(lp-l, l-lp+1):
+                                val += M(l, lp, m, nu, lam) * solid_sph_harm(lp, nu, r1) * solid_sph_harm(l-lp, lam, r2)
+                    
+                    #print(f'ref={ref: 20.15f}  val={val: 20.15f}  diff={abs(ref-val): 20.15f}')
+                    self.assertAlmostEqual(ref, val, 12)
 
 
 
-
+if __name__ == '__main__':
+    unittest.main()
 
 

@@ -15,7 +15,8 @@ int main() {
     dim3 block(1, 2, 3); // number of threads in a block
     print_thread_index<<<grid, block>>>();
 
-    cudaDeviceSynchronize();
+    cudaDeviceReset(); 
+    //cudaDeviceSynchronize();
 
     return 0;
 }

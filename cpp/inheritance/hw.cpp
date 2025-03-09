@@ -2,34 +2,43 @@
 
 using namespace std;
 
-struct Base
-{
-    Base(int j): i(j) {}
-    int i;
-    int geti() { return i; }
+class Base {
+public:
+    Base(): tag('b') {}
+
+    virtual Base* gen() {
+        return new Base;    
+    }
+
+    virtual void overlap(Base* ket) {
+        cout << "Base::overlap(Base*)" << endl;
+    }
+
+    char tag;
 };
 
-struct Common
-{
-    Common(int i): j(i) {}
+class Derived : public Base {
+public:
+    Derived() { tag = 'd'; } 
+    Derived* gen() {
+        return new Derived;
+    }
 
-    int j;
-    void printj() { cout << "j = " << j << endl; }
-
+    void overlap(Derived* ket) {
+        cout << "Derived::overlap(Derived*)" << endl;
+    }
 };
 
-struct Derived : Base, Common
-{
-    Derived(int i): Base(i), Common(geti()) {}
 
-};
-
+void print(Base* b) {
+    cout << b->gen()->tag << endl;
+    b->overlap(nullptr);
+}
 
 int main() {
 
-    Derived d(5);
-
-    d.printj();
+    Derived d0;
+    print(&d0);
 
 
 	return 0;

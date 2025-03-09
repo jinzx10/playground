@@ -15,6 +15,10 @@ public:
     /**
      * @brief Initializes a block-cyclic distribution handle.
      *
+     * The constructor generates a BLACS grid from the given MPI communicator and
+     * a specified layout, and then initializes the ScaLAPACK descriptor for the
+     * block-cyclic distribution.
+     *
      * @param   mg      number of rows in the global matrix
      * @param   ng      number of columns in the global matrix
      * @param   mb      number of rows in a block

@@ -43,15 +43,15 @@ int main() {
      ***************************************************************************/
     // number of disjoint communicators
     // each of which will be used to create a BLACS context
-    int nctxt = 4;
+    int n_sub = 4;
     int rank_sub = -1;
     int nprocs_sub = 0;
     MPI_Comm comm_sub;
-    MPI_Comm_split(MPI_COMM_WORLD, rank / nctxt, rank, &comm_sub);
+    MPI_Comm_split(MPI_COMM_WORLD, rank / n_sub, rank, &comm_sub);
     MPI_Comm_rank(comm_sub, &rank_sub);
     MPI_Comm_size(comm_sub, &nprocs_sub);
 
-    assert(nctxt <= nprocs);
+    assert(n_sub <= nprocs);
 
     /***************************************************************************
      *                              ranks
@@ -70,8 +70,8 @@ int main() {
      *                          system context
      ***************************************************************************/
     // MPI communicator to BLACS context (will be used in grid_init)
-    int ctxt_world = Csys2blacs_handle(MPI_COMM_WORLD);
     int ctxt_sub = Csys2blacs_handle(comm_sub);
+    int ctxt_world = Csys2blacs_handle(MPI_COMM_WORLD);
 
     if (rank == 0) printf("system ctxt id (i.e., MPI communicator index):\n");
     for (int i = 0; i < nprocs; i++) {
@@ -138,7 +138,7 @@ int main() {
     Cblacs_gridinit(&ctxt_sub, &layout, nrow, ncol);
     Cblacs_gridinfo(ctxt_sub, &nrow, &ncol, &irow, &icol);
 
-    if (rank == 0) printf("%ix%i BLACS grid from comm_sub:\n", nrow, ncol);
+    if (rank == 0) printf("%ix%i BLACS grid from comm_sub (Cblacs_gridinfo):\n", nrow, ncol);
     for (int i = 0; i < nprocs; i++) {
         if (i == rank) {
             printf("MPI rank (sub) = %i    pcoord (%i,%i)    BLACS ctxt = %i\n",
@@ -153,7 +153,7 @@ int main() {
     // relevant communicator (which may not be the rank in MPI_COMM_WORLD)
     MPI_Comm_rank(comm_sub, &id);
     Cblacs_pcoord(ctxt_sub, id, &irow, &icol);
-    if (rank == 0) printf("%ix%i BLACS grid from comm_sub:\n", nrow, ncol);
+    if (rank == 0) printf("%ix%i BLACS grid from comm_sub (Cblacs_pcoord):\n", nrow, ncol);
     for (int i = 0; i < nprocs; i++) {
         if (i == rank) {
             printf("MPI rank (sub) = %i    pcoord (%i,%i)    BLACS ctxt = %i\n",

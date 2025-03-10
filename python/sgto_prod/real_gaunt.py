@@ -5,7 +5,7 @@ from sympy import I, conjugate, Float
 from sympy.physics.wigner import gaunt
 #NOTE real_gaunt() in sympy is buggy, don't use it!
 
-from harm import Y2R_sym
+from harm import Y2R_sym, _ind, _rind
 
 REAL_GAUNT_TABLE_LMAX = 4
 REAL_GAUNT_TABLE = './real_gaunt.npy'
@@ -40,16 +40,6 @@ def real_gaunt_sym(l1, l2, l3, m1, m2, m3):
                 val += u1 * u2 * u3 * gaunt(l1, l2, l3, m1p, m2p, m3p)
 
     return val
-
-
-def _ind(l, m):
-    return l*l + l + m
-
-
-def _rind(i):
-    l = int(np.sqrt(i))
-    m = i - l*l - l
-    return l, m
 
 
 def real_gaunt_gen(fname, lmax1, lmax2, lmax3):

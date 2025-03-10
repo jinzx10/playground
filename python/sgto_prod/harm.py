@@ -94,6 +94,22 @@ def Y2R_sym(m, mp):
     return conjugate(R2Y_sym(mp, m))
 
 
+'''
+Index map:
+forward : (l,m) -> l*l + l + m
+backward: i -> (l=int(sqrt(i)), m=i-l*l-l)
+
+'''
+def _ind(l, m):
+    return l*l + l + m
+
+
+def _rind(i):
+    l = int(np.sqrt(i))
+    m = i - l*l - l
+    return l, m
+
+
 ##############################################################
 
 import unittest

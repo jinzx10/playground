@@ -1,7 +1,7 @@
 import numpy as np
-from harm import real_solid_harm, real_gaunt
+from harm import real_solid_harm
 from addition import M_all
-
+from real_gaunt import real_gaunt
 
 def gauss_prod(alpha, A, beta, B):
     '''
@@ -117,11 +117,13 @@ class TestProd(unittest.TestCase):
         rC = r - C
         rCabs = np.linalg.norm(rC)
 
-        l1, m1 = 3, -3
-        l2, m2 = 2, 1
+        l1, m1 = 4, 2
+        l2, m2 = 4, 2
         
         out = sGTO_prod(alpha, A, l1, m1, beta, B, l2, m2)
-        val = sum(coef * rCabs**key[0] * sgto(r, C, gamma, key[1], key[2])
+        val = sum(coef
+                  * rCabs**key[0]
+                  * sgto(r, C, gamma, key[1], key[2])
                   for key, coef in out.items())
 
         ref = sgto(r, A, alpha, l1, m1) * sgto(r, B, beta, l2, m2)

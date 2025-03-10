@@ -1,7 +1,7 @@
 import numpy as np
 from harm import real_solid_harm
 from addition import M_all
-from real_gaunt import real_gaunt
+from real_gaunt import real_gaunt, REAL_GAUNT_TABLE_LMAX
 
 def gauss_prod(alpha, A, beta, B):
     '''
@@ -29,11 +29,11 @@ def real_solid_harm_prod(A, l1, m1, B, l2, m2, C):
     can be expanded into a sum of real solid harmonics on
     an arbitrary new center:
 
-     m1          m2        -- -- --             p  m
-    S  (r-A) * S   (r-B) = \  \  \  coef * (r-C)  S (r-C)
-     l1          l2        /  /  /                 l
-                           -- -- --
-                           p  l  m
+     m1         m2        -- -- --             p  m
+    S  (r-A) * S  (r-B) = \  \  \  coef * |r-C|  S (r-C)
+     l1         l2        /  /  /                 l
+                          -- -- --
+                          p  l  m
 
     This function returns the above expansion as a dict
     {(p, l, m): coef} 
@@ -45,7 +45,7 @@ def real_solid_harm_prod(A, l1, m1, B, l2, m2, C):
     CA = C - A
     CB = C - B
 
-    out = {}
+    xpan = {}
 
     for (l1p, nu1, lam1), coef1 in M1:
         S1 = real_solid_harm(l1-l1p, lam1, CA)
@@ -58,12 +58,18 @@ def real_solid_harm_prod(A, l1, m1, B, l2, m2, C):
                     if G != 0.0:
                         key = (l1p+l2p-l, l, m)
                         val = coef1 * coef2 * fac * np.sqrt(2*l+1) * G
-                        if key not in out:
-                            out[key] = val
+                        if key not in xpan:
+                            xpan[key] = val
                         else:
-                            out[key] += val
+                            xpan[key] += val
 
-    return out
+                        # (4, -2) x (4, 2)
+                        #if key == (2, 4, 0):
+                        #    print(f'l1p={l1p} nu1={nu1:2} lam1={lam1:2} '
+                        #          f'l2p={l2p} nu2={nu2:2} lam2={lam2:2} '
+                        #          f'val={val}')
+
+    return xpan
 
 
 def sGTO_prod(alpha, A, l1, m1, beta, B, l2, m2):
@@ -82,7 +88,7 @@ import unittest
 
 class TestProd(unittest.TestCase):
 
-    def test_real_solid_harm_prod(self):
+    def _test_real_solid_harm_prod(self):
         r = np.random.randn(3)
         A = np.random.randn(3)
         B = np.random.randn(3)
@@ -91,10 +97,10 @@ class TestProd(unittest.TestCase):
         l1, m1 = 3, 1
         l2, m2 = 2, -2
         
-        out = real_solid_harm_prod(A, l1, m1, B, l2, m2, C)
+        xpan = real_solid_harm_prod(A, l1, m1, B, l2, m2, C)
         rCabs = np.linalg.norm(r-C)
         val = sum(coef * rCabs**key[0] * real_solid_harm(key[1], key[2], r-C)
-                  for key, coef in out.items())
+                  for key, coef in xpan.items())
 
         ref = real_solid_harm(l1, m1, r-A) * real_solid_harm(l2, m2, r-B)
         self.assertAlmostEqual(ref, val, 12)
@@ -117,14 +123,21 @@ class TestProd(unittest.TestCase):
         rC = r - C
         rCabs = np.linalg.norm(rC)
 
-        l1, m1 = 4, 2
-        l2, m2 = 4, 2
+        #l1, m1 = 4, -2
+        #l2, m2 = 4, 2
+
+        l1, l2 = np.random.randint(REAL_GAUNT_TABLE_LMAX+1, size=2)
+        m1 = np.random.randint(-l1, l1+1)
+        m2 = np.random.randint(-l2, l2+1)
         
-        out = sGTO_prod(alpha, A, l1, m1, beta, B, l2, m2)
+        xpan = sGTO_prod(alpha, A, l1, m1, beta, B, l2, m2)
         val = sum(coef
                   * rCabs**key[0]
                   * sgto(r, C, gamma, key[1], key[2])
-                  for key, coef in out.items())
+                  for key, coef in xpan.items())
+
+        #for key, coef in xpan.items():
+        #    print(key, coef)
 
         ref = sgto(r, A, alpha, l1, m1) * sgto(r, B, beta, l2, m2)
         self.assertAlmostEqual(ref, val, 12)

@@ -1,11 +1,13 @@
 import numpy as np
 import os
 
+from scipy.io import savemat
 from sympy import I, conjugate, Float
 from sympy.physics.wigner import gaunt
 #NOTE real_gaunt() in sympy is buggy, don't use it!
 
 from harm import Y2R_sym, _ind, _rind
+
 
 REAL_GAUNT_TABLE_LMAX = 4
 REAL_GAUNT_TABLE = './real_gaunt.npy'
@@ -66,6 +68,8 @@ def real_gaunt_gen(fname, lmax1, lmax2, lmax3):
                         float(real_gaunt_sym(l1, l2, l3, m1, m2, m3))
 
     np.save(fname, table)
+    savemat(fname.replace('.npy', '.mat'),
+            {'real_gaunt_table': table}, appendmat=False)
 
 
 if not os.path.isfile(REAL_GAUNT_TABLE):
@@ -75,6 +79,7 @@ if not os.path.isfile(REAL_GAUNT_TABLE):
                    REAL_GAUNT_TABLE_LMAX*2)
 
 _real_gaunt_table = np.load(REAL_GAUNT_TABLE)
+
 def real_gaunt(l1, l2, l3, m1, m2, m3):
     return _real_gaunt_table[_ind(l1,m1), _ind(l2,m2), _ind(l3,m3)]
 

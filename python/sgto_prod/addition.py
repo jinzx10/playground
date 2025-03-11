@@ -1,36 +1,80 @@
+import os
 import numpy as np
+
 from math import comb
 from sympy import sqrt
-from harm import real_sph_harm, real_solid_harm, \
-        R2Y, Y2R, R2Y_sym, Y2R_sym
+from scipy.io import savemat
+
+from harm import real_solid_harm, R2Y_sym, Y2R_sym, _ind, _rind
 
 
-def M(l, mu, lp, nu, lam):
+REAL_ADDITION_TABLE_LMAX = 4
+REAL_ADDITION_TABLE = './real_addition.npy'
+
+
+def M_sym(l, mu, lp, nu, lam):
     r'''
-    Coefficients in the real solid harmonics' addition theorem.
+    Symbolic coefficients in the real solid harmonics' addition theorem.
+    (abbreviated as "M coefficients" hereafter)
 
                  l     lp      l-lp
-     mu          --    --       --                         nu        lam
-    S  (r1+r2) = \     \        \     M(l,lp,mu,nu,lam) * S  (r1) * S   (r2)
-     l           /     /        /                          lp        l-lp
+     mu          --    --       --     mu nu lam    nu        lam
+    S  (r1+r2) = \     \        \     M          * S  (r1) * S   (r2)
+     l           /     /        /      l  lp        lp        l-lp
                  --    --       --
                 lp=0  nu=-lp  lam=lp-l
 
     '''
-    return np.real(sum(
-        Y2R(mu, m) * R2Y(mp, nu) * R2Y(m-mp, lam)
-        * np.sqrt(comb(l+m, lp+mp) * comb(l-m, lp-mp))
-        for m in range(-l, l+1)
-        for mp in range(max(-lp, m+lp-l), min(lp,m+l-lp)+1)
-        ))
+    return sum(Y2R_sym(mu, m) * R2Y_sym(mp, nu) * R2Y_sym(m-mp, lam)
+               * sqrt(comb(l+m, lp+mp) * comb(l-m, lp-mp))
+               for m in range(-l, l+1)
+               for mp in range(max(-lp, m+lp-l), min(lp,m+l-lp)+1)
+               )
 
 
-def M_all(l, mu):
+def M_gen(fname, lmax):
     '''
-    Non-zero coefficients in the real solid harmonics' addition theorem.
-    See also M().
+    Tabulate and save the M coefficients to file.
 
     '''
+    table = np.zeros(((lmax+1)**2, (lmax+1)**2, 2*lmax+1))
+
+    print(f'Generate M table up to l={lmax} ...')
+
+    for i1 in range((lmax+1)**2):
+        l, mu = _rind(i1)
+        print(f'{i1+1}/{(lmax+1)**2}')
+        for i2 in range((lmax+1)**2):
+            lp, nu = _rind(i2)
+            if lp > l:
+                break
+            for lam in range(lp-l, l-lp+1):
+                i3 = lam + REAL_ADDITION_TABLE_LMAX
+                table[i1, i2, i3] = float(M_sym(l, mu, lp, nu, lam))
+
+    np.save(fname, table)
+    savemat(fname.replace('.npy', '.mat'),
+            {'real_addition_table': table}, appendmat=False)
+
+
+if not os.path.isfile(REAL_ADDITION_TABLE):
+    M_gen(REAL_ADDITION_TABLE, REAL_ADDITION_TABLE_LMAX)
+
+
+_real_addition_table = np.load(REAL_ADDITION_TABLE)
+
+def M(l, mu, lp, nu, lam):
+    return _real_addition_table[_ind(l,mu), _ind(lp,nu),
+                                lam + REAL_ADDITION_TABLE_LMAX]
+
+
+def M_all(l, mu=None):
+    '''
+    Non-zero M coefficients.
+
+    '''
+    if mu is not None:
+
     coef_all = []
     for lp in range(l+1):
         for nu in range(-lp, lp+1):
@@ -42,34 +86,7 @@ def M_all(l, mu):
     return coef_all
 
 
-def M_sym(l, mu, lp, nu, lam):
-    '''
-    Symbolic version of M().
-
-    '''
-    return sum(Y2R_sym(mu, m) * R2Y_sym(mp, nu) * R2Y_sym(m-mp, lam)
-               * sqrt(comb(l+m, lp+mp) * comb(l-m, lp-mp))
-               for m in range(-l, l+1)
-               for mp in range(max(-lp, m+lp-l), min(lp,m+l-lp)+1)
-               )
-
-
-def M_all_sym(l, mu):
-    '''
-    Symbolic version of M_all().
-
-    '''
-    coef_all = []
-    for lp in range(l+1):
-        for nu in range(-lp, lp+1):
-            for lam in range(lp-l, l-lp+1):
-                coef = M_sym(l, mu, lp, nu, lam)
-                if coef != 0:
-                    coef_all.append(((lp, nu, lam), coef))
-
-    return coef_all
-
-###########################################################################
+########################################################################
 
 import unittest
 
@@ -125,8 +142,6 @@ class TestAddition(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    #print(M_sym(4, 3, 2, 2, 1))
-    #print(M_all_sym(4, 3))
     unittest.main()
 
 

@@ -19,7 +19,7 @@ def real_sph_harm(l, m, theta, phi):
     elif m > 0:
         return (-1)**m * np.sqrt(2) * np.real(sph_harm_y(l, m, theta, phi))
     else:
-        return (-1)**m * np.sqrt(2) * np.imag(sph_harm_y(l, -m, theta, phi))
+        return (-1.)**m * np.sqrt(2) * np.imag(sph_harm_y(l, -m, theta, phi))
 
 
 def real_solid_harm(l, m, r):

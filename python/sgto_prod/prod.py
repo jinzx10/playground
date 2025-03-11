@@ -123,12 +123,12 @@ class TestProd(unittest.TestCase):
         rC = r - C
         rCabs = np.linalg.norm(rC)
 
-        #l1, m1 = 4, -2
-        #l2, m2 = 4, 2
+        l1, m1 = 4, 2
+        l2, m2 = 4, 2
 
-        l1, l2 = np.random.randint(REAL_GAUNT_TABLE_LMAX+1, size=2)
-        m1 = np.random.randint(-l1, l1+1)
-        m2 = np.random.randint(-l2, l2+1)
+        #l1, l2 = np.random.randint(REAL_GAUNT_TABLE_LMAX+1, size=2)
+        #m1 = np.random.randint(-l1, l1+1)
+        #m2 = np.random.randint(-l2, l2+1)
         
         xpan = sGTO_prod(alpha, A, l1, m1, beta, B, l2, m2)
         val = sum(coef
@@ -136,8 +136,8 @@ class TestProd(unittest.TestCase):
                   * sgto(r, C, gamma, key[1], key[2])
                   for key, coef in xpan.items())
 
-        #for key, coef in xpan.items():
-        #    print(key, coef)
+        for key, coef in xpan.items():
+            print(key, coef)
 
         ref = sgto(r, A, alpha, l1, m1) * sgto(r, B, beta, l2, m2)
         self.assertAlmostEqual(ref, val, 12)

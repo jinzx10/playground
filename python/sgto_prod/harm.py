@@ -100,11 +100,11 @@ forward : (l,m) -> l*l + l + m
 backward: i -> (l=int(sqrt(i)), m=i-l*l-l)
 
 '''
-def _ind(l, m):
+def pack_lm(l, m):
     return l*l + l + m
 
 
-def _rind(i):
+def unpack_lm(i):
     l = int(np.sqrt(i))
     m = i - l*l - l
     return l, m

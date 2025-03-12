@@ -6,7 +6,7 @@ from sympy import sqrt
 from scipy.io import savemat
 from scipy.sparse import csr_matrix, save_npz, load_npz
 
-from harm import real_solid_harm, R2Y_sym, Y2R_sym, _ind, _rind
+from harm import real_solid_harm, R2Y_sym, Y2R_sym, pack_lm, unpack_lm
 
 
 REAL_ADDITION_TABLE_LMAX = 4
@@ -35,13 +35,13 @@ def M_sym(l, mu, lp, nu, lam):
                )
 
 
-def _encode(lp, nu, lam, lmax=REAL_ADDITION_TABLE_LMAX):
-    return _ind(lp, nu) * (2*lmax+1) + lam + lmax
+def pack_M(lp, nu, lam, lmax=REAL_ADDITION_TABLE_LMAX):
+    return pack_lm(lp, nu) * (2*lmax+1) + lam + lmax
 
 
-def _decode(col, lmax=REAL_ADDITION_TABLE_LMAX):
+def unpack_M(col, lmax=REAL_ADDITION_TABLE_LMAX):
     r, _lam = divmod(col, 2*lmax+1)
-    lp, nu = _rind(r)
+    lp, nu = unpack_lm(r)
     return lp, nu, _lam - lmax
 
 
@@ -53,8 +53,8 @@ def M_gen(fname, lmax):
 
             (l,mu) x (lp,nu,lam)
 
-    See _ind()/_rind() for the index map of (l,mu).
-    See _encode()/_decode() for the index map of (lp,nu,lam).
+    See pack_lm()/unpack_lm() for the index map of (l,mu).
+    See pack_M()/unpack_M() for the index map of (lp,nu,lam).
 
     '''
     table = np.zeros(((lmax+1)**2, (lmax+1)**2*(2*lmax+1)))
@@ -62,14 +62,14 @@ def M_gen(fname, lmax):
     print(f'Generate real addition table up to l={lmax} ...')
 
     for i1 in range((lmax+1)**2):
-        l, mu = _rind(i1)
+        l, mu = unpack_lm(i1)
         print(f'{i1+1}/{(lmax+1)**2}', end='\r')
         for r in range((lmax+1)**2):
-            lp, nu = _rind(r)
+            lp, nu = unpack_lm(r)
             if lp > l:
                 break
             for lam in range(lp-l, l-lp+1):
-                i2 = _encode(lp, nu, lam, lmax)
+                i2 = pack_M(lp, nu, lam, lmax)
                 table[i1, i2] = float(M_sym(l, mu, lp, nu, lam))
     print('')
 
@@ -79,8 +79,8 @@ def M_gen(fname, lmax):
 
     # MATLAB uses CSC format, so it's better to transpose
     savemat(fname.replace('.npz', '.mat'),
-            {'real_addition_table': table_csr.transpose(),
-             'REAL_ADDITION_TABLE_LMAX': lmax})
+            {'REAL_ADDITION_TABLE': table_csr.transpose(),
+             'REAL_ADDITION_TABLE_LMAX': float(lmax)})
 
 
 if not os.path.isfile(REAL_ADDITION_TABLE):
@@ -89,7 +89,7 @@ if not os.path.isfile(REAL_ADDITION_TABLE):
 _real_addition_table = load_npz(REAL_ADDITION_TABLE)
 
 def M(l, mu, lp, nu, lam):
-    return _real_addition_table[_ind(l,mu), _encode(lp, nu, lam)]
+    return _real_addition_table[pack_lm(l,mu), pack_M(lp, nu, lam)]
 
 
 def M_nz(l, mu):
@@ -98,9 +98,9 @@ def M_nz(l, mu):
     a list of pairs ((lp,nu,lam), coef).
 
     '''
-    i1 = _ind(l,mu)
+    i1 = pack_lm(l,mu)
     row = _real_addition_table[i1]
-    lp_nu_lam = [_decode(i2) for i2 in row.indices]
+    lp_nu_lam = [unpack_M(i2) for i2 in row.indices]
     return list(zip(lp_nu_lam, row.data))
 
 

@@ -7,7 +7,7 @@ from sympy import Float
 from sympy.physics.wigner import gaunt
 #NOTE real_gaunt() in sympy is buggy, don't use it!
 
-from harm import Y2R_sym, _ind, _rind
+from harm import Y2R_sym, pack_lm, unpack_lm
 
 
 REAL_GAUNT_TABLE_LMAX = 4
@@ -71,13 +71,13 @@ def real_gaunt_sym(l1, l2, l3, m1, m2, m3):
     return val
 
 
-def _encode(l1, m1, l2, m2, lmax=REAL_GAUNT_TABLE_LMAX):
-    return _ind(l1, m1) * (lmax+1)**2 + _ind(l2, m2)
+def pack_G(l1, m1, l2, m2, lmax=REAL_GAUNT_TABLE_LMAX):
+    return pack_lm(l1, m1) * (lmax+1)**2 + pack_lm(l2, m2)
 
 
-def _decode(row, lmax=REAL_GAUNT_TABLE_LMAX):
+def unpack_G(row, lmax=REAL_GAUNT_TABLE_LMAX):
     i1, i2 = divmod(row, (lmax+1)**2)
-    return *_rind(i1), *_rind(i2)
+    return *unpack_lm(i1), *unpack_lm(i2)
 
 
 def real_gaunt_gen(fname, lmax=REAL_GAUNT_TABLE_LMAX):
@@ -94,8 +94,8 @@ def real_gaunt_gen(fname, lmax=REAL_GAUNT_TABLE_LMAX):
 
             (l1,m1,l2,m2) x (l3,m3)
 
-    See _ind()/_rind() for the index map of (l3,m3).
-    See _encode()/_decode() for the index map of (l1,m1,l2,m2).
+    See pack_lm()/unpack_lm() for the index map of (l3,m3).
+    See pack_G()/unpack_G() for the index map of (l1,m1,l2,m2).
 
     '''
     table = np.zeros(((lmax+1)**4, (2*lmax+1)**2))
@@ -103,12 +103,12 @@ def real_gaunt_gen(fname, lmax=REAL_GAUNT_TABLE_LMAX):
     print(f'Generate real Gaunt table up to l={lmax}...')
 
     for row in range((lmax+1)**4):
-        l1, m1, l2, m2 = _decode(row)
+        l1, m1, l2, m2 = unpack_G(row)
         print(f'{row+1}/{(lmax+1)**4}', end='\r')
         for l3 in range(abs(l1-l2), l1+l2+1, 2):
             for m3 in [x for x in {m1+m2, m1-m2, m2-m1, -m1-m2}
                        if abs(x) <= l3]:
-                col = _ind(l3, m3)
+                col = pack_lm(l3, m3)
                 table[row, col] = \
                         float(real_gaunt_sym(l1, l2, l3, m1, m2, m3))
     print('')
@@ -117,8 +117,8 @@ def real_gaunt_gen(fname, lmax=REAL_GAUNT_TABLE_LMAX):
 
     # MATLAB uses CSC format, so it's better to transpose
     savemat(fname.replace('.npz', '.mat'),
-            {'real_gaunt_table': table_csr.transpose(),
-             'REAL_GAUNT_TABLE_LMAX': lmax})
+            {'REAL_GAUNT_TABLE': table_csr.transpose(),
+             'REAL_GAUNT_TABLE_LMAX': float(lmax)})
 
 
 if not os.path.isfile(REAL_GAUNT_TABLE):
@@ -127,7 +127,7 @@ if not os.path.isfile(REAL_GAUNT_TABLE):
 _real_gaunt_table = load_npz(REAL_GAUNT_TABLE)
 
 def real_gaunt(l1, l2, l3, m1, m2, m3):
-    return _real_gaunt_table[_encode(l1,m1,l2,m2), _ind(l3,m3)]
+    return _real_gaunt_table[pack_G(l1,m1,l2,m2), pack_lm(l3,m3)]
 
 
 def real_gaunt_nz(l1, l2, m1, m2):
@@ -136,9 +136,9 @@ def real_gaunt_nz(l1, l2, m1, m2):
     (l1,l2,m1,m2) as a list of pairs ((l3,m3), coef).
 
     '''
-    ir = _encode(l1,m1,l2,m2)
+    ir = pack_G(l1,m1,l2,m2)
     tab = _real_gaunt_table[ir]
-    l3m3 = [_rind(ic) for ic in tab.indices]
+    l3m3 = [unpack_lm(ic) for ic in tab.indices]
     return list(zip(l3m3, tab.data))
 
 

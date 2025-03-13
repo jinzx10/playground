@@ -1,7 +1,8 @@
 import numpy as np
 from harm import real_solid_harm
 from addition import M_nz
-from gaunt import real_gaunt
+#from gaunt import real_gaunt
+from gaunt import real_gaunt_nz
 
 def gauss_prod(alpha, A, beta, B):
     '''
@@ -52,22 +53,23 @@ def real_solid_harm_prod(A, l1, m1, B, l2, m2, C):
         for (l2p, nu2, lam2), coef2 in M2_nz:
             S2 = real_solid_harm(l2-l2p, lam2, CB)
             fac = S1 * S2 * 2 * np.sqrt(np.pi / ((2*l1p+1) * (2*l2p+1)))
-            for l in range(abs(l1p-l2p), l1p+l2p+1, 2):
-                for m in range(-l, l+1):
-                    G = real_gaunt(l1p, l2p, l, nu1, nu2, m)
-                    if G != 0.0:
-                        key = (l1p+l2p-l, l, m)
-                        val = coef1 * coef2 * fac * np.sqrt(2*l+1) * G
-                        if key not in xpan:
-                            xpan[key] = val
-                        else:
-                            xpan[key] += val
 
-                        # (4, -2) x (4, 2)
-                        #if key == (2, 4, 0):
-                        #    print(f'l1p={l1p} nu1={nu1:2} lam1={lam1:2} '
-                        #          f'l2p={l2p} nu2={nu2:2} lam2={lam2:2} '
-                        #          f'val={val}')
+            G_list = real_gaunt_nz(l1p, l2p, nu1, nu2)
+
+            for (l,m), G in G_list:
+                key = (l1p+l2p-l, l, m)
+                val = coef1 * coef2 * fac * np.sqrt(2*l+1) * G
+
+                if key not in xpan:
+                    xpan[key] = val
+                else:
+                    xpan[key] += val
+
+                # (4, -2) x (4, 2)
+                #if key == (2, 4, 0):
+                #    print(f'l1p={l1p} nu1={nu1:2} lam1={lam1:2} '
+                #          f'l2p={l2p} nu2={nu2:2} lam2={lam2:2} '
+                #          f'val={val}')
 
     return xpan
 
@@ -141,8 +143,8 @@ class TestProd(unittest.TestCase):
                   * sgto(r, C, gamma, key[1], key[2])
                   for key, coef in xpan.items())
 
-        for key, coef in xpan.items():
-            print(key, coef)
+        #for key, coef in xpan.items():
+        #    print(key, coef)
 
         ref = sgto(r, A, alpha, l1, m1) * sgto(r, B, beta, l2, m2)
         self.assertAlmostEqual(ref, val, 12)

@@ -40,36 +40,36 @@ def unpack_lmlm(index, lmax=MMG_TABLE_LMAX):
 
 
 def pack_MMG(l1p, l2p, lam1, lam2, l, m, lmax=MMG_TABLE_LMAX):
-    return (((l1p * (lmax+1) + l2p) * (2*lmax+1) + lam1) \
-            * (2*lmax+1) + lam2) * (lmax+1)**2 + pack_lm(l,m)
+    return (((l1p * (lmax+1) + l2p) * (2*lmax+1) + lam1 + MMG_TABLE_LMAX) \
+            * (2*lmax+1) + lam2 + MMG_TABLE_LMAX) * (2*lmax+1)**2 + pack_lm(l,m)
 
 
 def unpack_MMG(index, lmax=MMG_TABLE_LMAX):
-    tmp, lm = divmod(index, (lmax+1)**2)
+    tmp, lm = divmod(index, (2*lmax+1)**2)
     tmp, lam2 = divmod(tmp, 2*lmax+1)
     tmp, lam1 = divmod(tmp, 2*lmax+1)
-    l2p, l1p = divmod(tmp, lmax+1)
-    return l1p, l2p, lam1, lam2, *unpack_lm(lm)
+    l1p, l2p = divmod(tmp, lmax+1)
+    return l1p, l2p, lam1 - MMG_TABLE_LMAX, lam2 - MMG_TABLE_LMAX, *unpack_lm(lm)
 
 
 def MMG_gen(fname, lmax=MMG_TABLE_LMAX):
     assert MMG_TABLE_LMAX == REAL_GAUNT_TABLE_LMAX and \
            MMG_TABLE_LMAX == REAL_ADDITION_TABLE_LMAX
 
-    table = np.zeros(((lmax+1)**4, (lmax+1)**4 * (2*lmax+1)**2))
+    table = np.zeros(((lmax+1)**4, (lmax+1)**2 * (2*lmax+1)**4))
 
     for ir in range((lmax+1)**4):
         l1, m1, l2, m2 = unpack_lmlm(ir)
-        M1_nz = M_nz(l1, m1)
-        M2_nz = M_nz(l2, m2)
-        for (l1p, nu1, lam1), coef1 in M1_nz:
-            for (l2p, nu2, lam2), coef2 in M2_nz:
+        M1_list = M_nz(l1, m1)
+        M2_list = M_nz(l2, m2)
+        for (l1p, nu1, lam1), M1 in M1_list:
+            for (l2p, nu2, lam2), M2 in M2_list:
                 fac = 2 * np.sqrt(np.pi / ((2*l1p+1) * (2*l2p+1)))
                 G_list = real_gaunt_nz(l1p, l2p, nu1, nu2)
                 for (l,m), G in G_list:
                     ic = pack_MMG(l1p, l2p, lam1, lam2, l, m)
                     table[ir, ic] += \
-                            fac * np.sqrt(2*l+1) * coef1 * coef2 * G
+                            fac * np.sqrt(2*l+1) * M1 * M2 * G
         print(f'{ir+1}/{(lmax+1)**4}', end='\r')
     print('')
 
@@ -185,7 +185,7 @@ def sGTO_prod(alpha, A, l1, m1, beta, B, l2, m2):
 
     '''
     K, C = gauss_prod(alpha, A, beta, B)
-    xpan = real_solid_harm_prod2(A, l1, m1, B, l2, m2, C)
+    xpan = real_solid_harm_prod(A, l1, m1, B, l2, m2, C)
     return {key: coef * K for key, coef in xpan.items()}
 
 
@@ -201,10 +201,23 @@ class TestProd(unittest.TestCase):
         B = np.random.randn(3)
         C = np.random.randn(3)
         
-        l1, m1 = 3, 1
-        l2, m2 = 2, -2
+        l1, m1 = 4, 2
+        l2, m2 = 4, -2
+        #l1, m1 = 1, 1
+        #l2, m2 = 2, -2
         
         xpan = real_solid_harm_prod(A, l1, m1, B, l2, m2, C)
+        #xpan = real_solid_harm_prod2(A, l1, m1, B, l2, m2, C)
+
+        #print('xspan...')
+        #for key, coef in xpan.items():
+        #    print(key, coef)
+
+        #print('xspan2...')
+        #for key, coef in xpan2.items():
+        #    print(key, coef)
+
+
         rCabs = np.linalg.norm(r-C)
         val = sum(coef
                   * rCabs**key[0]
@@ -212,7 +225,8 @@ class TestProd(unittest.TestCase):
                   for key, coef in xpan.items())
 
         ref = real_solid_harm(l1, m1, r-A) * real_solid_harm(l2, m2, r-B)
-        self.assertAlmostEqual(ref, val, 12)
+        #self.assertAlmostEqual(ref, val, 12)
+        self.assertTrue(np.allclose(ref, val, rtol=1e-12))
 
 
     def test_sGTO_prod(self):

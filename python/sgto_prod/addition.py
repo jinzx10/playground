@@ -63,7 +63,6 @@ def M_gen(fname, lmax):
 
     for i1 in range((lmax+1)**2):
         l, mu = unpack_lm(i1)
-        print(f'{i1+1}/{(lmax+1)**2}', end='\r')
         for r in range((lmax+1)**2):
             lp, nu = unpack_lm(r)
             if lp > l:
@@ -71,6 +70,7 @@ def M_gen(fname, lmax):
             for lam in range(lp-l, l-lp+1):
                 i2 = pack_M(lp, nu, lam, lmax)
                 table[i1, i2] = float(M_sym(l, mu, lp, nu, lam))
+        print(f'{i1+1}/{(lmax+1)**2}', end='\r')
     print('')
 
     table_csr = csr_matrix(table)

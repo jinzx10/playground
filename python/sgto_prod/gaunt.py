@@ -104,14 +104,15 @@ def real_gaunt_gen(fname, lmax=REAL_GAUNT_TABLE_LMAX):
 
     for row in range((lmax+1)**4):
         l1, m1, l2, m2 = unpack_G(row)
-        print(f'{row+1}/{(lmax+1)**4}', end='\r')
         for l3 in range(abs(l1-l2), l1+l2+1, 2):
             for m3 in [x for x in {m1+m2, m1-m2, m2-m1, -m1-m2}
                        if abs(x) <= l3]:
                 col = pack_lm(l3, m3)
                 table[row, col] = \
                         float(real_gaunt_sym(l1, l2, l3, m1, m2, m3))
+        print(f'{row+1}/{(lmax+1)**4}', end='\r')
     print('')
+
     table_csr = csr_matrix(table)
     save_npz(fname, table_csr)
 

@@ -1,8 +1,16 @@
+import os
 import numpy as np
-from harm import real_solid_harm
-from addition import M_nz
-#from gaunt import real_gaunt
-from gaunt import real_gaunt_nz
+
+from scipy.sparse import csr_matrix, save_npz, load_npz
+
+from harm import real_solid_harm, pack_lm, unpack_lm
+from addition import M_nz, REAL_ADDITION_TABLE_LMAX
+from gaunt import real_gaunt_nz, REAL_GAUNT_TABLE_LMAX
+
+MMG_TABLE_LMAX = 4
+MMG_TABLE = './MMG_table.npz'
+
+np.set_printoptions(legacy='1.25')
 
 def gauss_prod(alpha, A, beta, B):
     '''
@@ -20,6 +28,103 @@ def gauss_prod(alpha, A, beta, B):
     K = np.exp(-gamma*rAB**2)
     C = (alpha * A + beta * B) / (alpha + beta)
     return K, C
+
+
+def pack_lmlm(l1, m1, l2, m2, lmax=MMG_TABLE_LMAX):
+    return pack_lm(l1, m1) * (lmax+1)**2 + pack_lm(l2, m2)
+
+
+def unpack_lmlm(index, lmax=MMG_TABLE_LMAX):
+    i1, i2 = divmod(index, (lmax+1)**2)
+    return *unpack_lm(i1), *unpack_lm(i2)
+
+
+def pack_MMG(l1p, l2p, lam1, lam2, l, m, lmax=MMG_TABLE_LMAX):
+    return (((l1p * (lmax+1) + l2p) * (2*lmax+1) + lam1) \
+            * (2*lmax+1) + lam2) * (lmax+1)**2 + pack_lm(l,m)
+
+
+def unpack_MMG(index, lmax=MMG_TABLE_LMAX):
+    tmp, lm = divmod(index, (lmax+1)**2)
+    tmp, lam2 = divmod(tmp, 2*lmax+1)
+    tmp, lam1 = divmod(tmp, 2*lmax+1)
+    l2p, l1p = divmod(tmp, lmax+1)
+    return l1p, l2p, lam1, lam2, *unpack_lm(lm)
+
+
+def MMG_gen(fname, lmax=MMG_TABLE_LMAX):
+    assert MMG_TABLE_LMAX == REAL_GAUNT_TABLE_LMAX and \
+           MMG_TABLE_LMAX == REAL_ADDITION_TABLE_LMAX
+
+    table = np.zeros(((lmax+1)**4, (lmax+1)**4 * (2*lmax+1)**2))
+
+    for ir in range((lmax+1)**4):
+        l1, m1, l2, m2 = unpack_lmlm(ir)
+        M1_nz = M_nz(l1, m1)
+        M2_nz = M_nz(l2, m2)
+        for (l1p, nu1, lam1), coef1 in M1_nz:
+            for (l2p, nu2, lam2), coef2 in M2_nz:
+                fac = 2 * np.sqrt(np.pi / ((2*l1p+1) * (2*l2p+1)))
+                G_list = real_gaunt_nz(l1p, l2p, nu1, nu2)
+                for (l,m), G in G_list:
+                    ic = pack_MMG(l1p, l2p, lam1, lam2, l, m)
+                    table[ir, ic] += \
+                            fac * np.sqrt(2*l+1) * coef1 * coef2 * G
+        print(f'{ir+1}/{(lmax+1)**4}', end='\r')
+    print('')
+
+    table_csr = csr_matrix(table)
+    save_npz(fname, table_csr)
+
+
+if not os.path.isfile(MMG_TABLE):
+    MMG_gen(MMG_TABLE, MMG_TABLE_LMAX)
+
+_MMG_table = load_npz(MMG_TABLE)
+
+
+def MMG_nz(l1, m1, l2, m2):
+    ir = pack_lmlm(l1, m1, l2, m2)
+    tab = _MMG_table[ir]
+    colind = [unpack_MMG(ic) for ic in tab.indices]
+    return list(zip(colind, tab.data))
+
+
+def real_solid_harm_prod2(A, l1, m1, B, l2, m2, C):
+    r'''
+    Expansion of a product of two real solid harmonics.
+
+    A product of an arbitrary pair of real solid harmonics
+    can be expanded into a sum of real solid harmonics on
+    an arbitrary new center:
+
+     m1         m2        -- -- --             p    m
+    S  (r-A) * S  (r-B) = \  \  \  coef * |r-C|  * S (r-C)
+     l1         l2        /  /  /                   l
+                          -- -- --
+                          p  l  m
+
+    This function returns the above expansion as a dict
+    {(p, l, m): coef} 
+
+    '''
+    CA = C - A
+    CB = C - B
+
+    xpan = {}
+    tab = MMG_nz(l1, m1, l2, m2)
+    for (l1p, l2p, lam1, lam2, l, m), coef in tab:
+        S1 = real_solid_harm(l1-l1p, lam1, CA)
+        S2 = real_solid_harm(l2-l2p, lam2, CB)
+
+        key = (l1p+l2p-l, l, m)
+        val = coef * S1 * S2
+        if key not in xpan:
+            xpan[key] = val
+        else:
+            xpan[key] += val
+
+    return xpan
 
 
 def real_solid_harm_prod(A, l1, m1, B, l2, m2, C):
@@ -80,7 +185,7 @@ def sGTO_prod(alpha, A, l1, m1, beta, B, l2, m2):
 
     '''
     K, C = gauss_prod(alpha, A, beta, B)
-    xpan = real_solid_harm_prod(A, l1, m1, B, l2, m2, C)
+    xpan = real_solid_harm_prod2(A, l1, m1, B, l2, m2, C)
     return {key: coef * K for key, coef in xpan.items()}
 
 

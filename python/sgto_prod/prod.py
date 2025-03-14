@@ -166,19 +166,29 @@ class TestProd(unittest.TestCase):
         r = np.random.randn(3)
         A = np.random.randn(3)
         B = np.random.randn(3)
-        C = np.random.randn(3)
 
-        l1, m1 = 3, 2
-        l2, m2 = 2, -1
+        #C = A * 0.3 + B * 0.7 # will introduce more zero coefs. why?
+        C = A * 0.22 + B * 0.78
+        rC = r - C
+        xC, yC, zC = rC
+
+        l1, m1 = 4, 2
+        l2, m2 = 4, 4
         
         xpan = real_solid_harm_prod(A, l1, m1, B, l2, m2, C)
 
-        rC = r - C
-        xC, yC, zC = rC
         val = sum(coef
                   * xC**(2*k1) * yC**(2*k2) * zC**(2*k3) 
                   * real_solid_harm(l, m, rC)
                   for (k1, k2, k3, l, m), coef in xpan.items())
+
+        #count = 0
+        #for (k1, k2, k3, l, m), coef in xpan.items():
+        #    print(f'k1={k1}  k2={k2}  k3={k3}  l={l}  m={m}  coef={coef}')
+        #    if abs(coef) > 1e-12:
+        #        count += 1
+
+        #print(len(xpan), count)
 
         ref = real_solid_harm(l1, m1, r-A) * real_solid_harm(l2, m2, r-B)
         self.assertTrue(np.allclose(ref, val, rtol=1e-12))

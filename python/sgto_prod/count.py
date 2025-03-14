@@ -1,9 +1,9 @@
 import numpy as np
 from prod import sGTO_prod
 from harm import pack_lm, unpack_lm 
-from gaunt import REAL_GAUNT_TABLE_LMAX
+from prod import MMG_TABLE_LMAX
 
-lmax = REAL_GAUNT_TABLE_LMAX
+lmax = MMG_TABLE_LMAX 
 
 A = np.random.randn(3)
 B = np.random.randn(3)
@@ -21,7 +21,7 @@ for i1 in range((lmax+1)**2):
         key = (l1, m1, l2, m2)
         count[key] = (len(xpan), len(xpan_nz))
 
-
-for key, val in count.items():
-    print(key, val)
+for (l1, m1, l2, m2), (n, nnz) in count.items():
+    print(f'l1={l1}  m1={m1:2}  l2={l2}  m2={m2:2}  '
+          f'n={n:3}  nnz={nnz:3}')
 

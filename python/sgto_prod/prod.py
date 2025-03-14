@@ -1,7 +1,9 @@
 import os
 import numpy as np
 
+from scipy.io import savemat
 from scipy.sparse import csr_matrix, save_npz, load_npz
+from sympy.ntheory.multinomial import multinomial_coefficients
 
 from harm import real_solid_harm, pack_lm, unpack_lm
 from addition import M_nz, REAL_ADDITION_TABLE_LMAX
@@ -40,8 +42,10 @@ def unpack_lmlm(index, lmax=MMG_TABLE_LMAX):
 
 
 def pack_MMG(l1p, l2p, lam1, lam2, l, m, lmax=MMG_TABLE_LMAX):
-    return (((l1p * (lmax+1) + l2p) * (2*lmax+1) + lam1 + MMG_TABLE_LMAX) \
-            * (2*lmax+1) + lam2 + MMG_TABLE_LMAX) * (2*lmax+1)**2 + pack_lm(l,m)
+    return (( (l1p * (lmax+1) + l2p) \
+            * (2*lmax+1) + lam1 + MMG_TABLE_LMAX) \
+            * (2*lmax+1) + lam2 + MMG_TABLE_LMAX) \
+            * (2*lmax+1)**2 + pack_lm(l,m)
 
 
 def unpack_MMG(index, lmax=MMG_TABLE_LMAX):
@@ -49,7 +53,8 @@ def unpack_MMG(index, lmax=MMG_TABLE_LMAX):
     tmp, lam2 = divmod(tmp, 2*lmax+1)
     tmp, lam1 = divmod(tmp, 2*lmax+1)
     l1p, l2p = divmod(tmp, lmax+1)
-    return l1p, l2p, lam1 - MMG_TABLE_LMAX, lam2 - MMG_TABLE_LMAX, *unpack_lm(lm)
+    return l1p, l2p, lam1 - MMG_TABLE_LMAX, lam2 - MMG_TABLE_LMAX, \
+            *unpack_lm(lm)
 
 
 def MMG_gen(fname, lmax=MMG_TABLE_LMAX):
@@ -73,8 +78,17 @@ def MMG_gen(fname, lmax=MMG_TABLE_LMAX):
         print(f'{ir+1}/{(lmax+1)**4}', end='\r')
     print('')
 
+    # sum over nu1 & nu2 may introduce some cancellations
+    # subject to floating-point error, so we clean them up
+    table[abs(table) < 1e-15] = 0
+
     table_csr = csr_matrix(table)
     save_npz(fname, table_csr)
+
+    # MATLAB uses CSC format, so it's better to transpose
+    savemat(fname.replace('.npz', '.mat'),
+            {'MMG_TABLE': table_csr.transpose(),
+             'MMG_TABLE_LMAX': float(lmax)})
 
 
 if not os.path.isfile(MMG_TABLE):
@@ -90,7 +104,7 @@ def MMG_nz(l1, m1, l2, m2):
     return list(zip(colind, tab.data))
 
 
-def real_solid_harm_prod2(A, l1, m1, B, l2, m2, C):
+def real_solid_harm_prod(A, l1, m1, B, l2, m2, C):
     r'''
     Expansion of a product of two real solid harmonics.
 
@@ -113,68 +127,21 @@ def real_solid_harm_prod2(A, l1, m1, B, l2, m2, C):
 
     xpan = {}
     tab = MMG_nz(l1, m1, l2, m2)
-    for (l1p, l2p, lam1, lam2, l, m), coef in tab:
+    for (l1p, l2p, lam1, lam2, l, m), coef_tab in tab:
         S1 = real_solid_harm(l1-l1p, lam1, CA)
         S2 = real_solid_harm(l2-l2p, lam2, CB)
 
-        key = (l1p+l2p-l, l, m)
-        val = coef * S1 * S2
-        if key not in xpan:
-            xpan[key] = val
-        else:
-            xpan[key] += val
+        # express |r|**(l1p+l2p-l) as x**k1 * y**k2 * z**k3
+        q = (l1p + l2p - l) // 2
+        multinom = multinomial_coefficients(3, q)
 
-    return xpan
-
-
-def real_solid_harm_prod(A, l1, m1, B, l2, m2, C):
-    r'''
-    Expansion of a product of two real solid harmonics.
-
-    A product of an arbitrary pair of real solid harmonics
-    can be expanded into a sum of real solid harmonics on
-    an arbitrary new center:
-
-     m1         m2        -- -- --             p    m
-    S  (r-A) * S  (r-B) = \  \  \  coef * |r-C|  * S (r-C)
-     l1         l2        /  /  /                   l
-                          -- -- --
-                          p  l  m
-
-    This function returns the above expansion as a dict
-    {(p, l, m): coef} 
-
-    '''
-    M1_nz = M_nz(l1, m1)
-    M2_nz = M_nz(l2, m2)
-
-    CA = C - A
-    CB = C - B
-
-    xpan = {}
-
-    for (l1p, nu1, lam1), coef1 in M1_nz:
-        S1 = real_solid_harm(l1-l1p, lam1, CA)
-        for (l2p, nu2, lam2), coef2 in M2_nz:
-            S2 = real_solid_harm(l2-l2p, lam2, CB)
-            fac = S1 * S2 * 2 * np.sqrt(np.pi / ((2*l1p+1) * (2*l2p+1)))
-
-            G_list = real_gaunt_nz(l1p, l2p, nu1, nu2)
-
-            for (l,m), G in G_list:
-                key = (l1p+l2p-l, l, m)
-                val = coef1 * coef2 * fac * np.sqrt(2*l+1) * G
-
-                if key not in xpan:
-                    xpan[key] = val
-                else:
-                    xpan[key] += val
-
-                # (4, -2) x (4, 2)
-                #if key == (2, 4, 0):
-                #    print(f'l1p={l1p} nu1={nu1:2} lam1={lam1:2} '
-                #          f'l2p={l2p} nu2={nu2:2} lam2={lam2:2} '
-                #          f'val={val}')
+        for (k1, k2, k3), coef_nom in multinom.items():
+            key = (k1, k2, k3, l, m)
+            val = coef_nom * coef_tab * S1 * S2
+            if key not in xpan:
+                xpan[key] = val
+            else:
+                xpan[key] += val
 
     return xpan
 
@@ -200,34 +167,22 @@ class TestProd(unittest.TestCase):
         A = np.random.randn(3)
         B = np.random.randn(3)
         C = np.random.randn(3)
-        
-        l1, m1 = 4, 2
-        l2, m2 = 4, -2
-        #l1, m1 = 1, 1
-        #l2, m2 = 2, -2
+
+        l1, m1 = 3, 2
+        l2, m2 = 2, -1
         
         xpan = real_solid_harm_prod(A, l1, m1, B, l2, m2, C)
-        #xpan = real_solid_harm_prod2(A, l1, m1, B, l2, m2, C)
 
-        #print('xspan...')
-        #for key, coef in xpan.items():
-        #    print(key, coef)
-
-        #print('xspan2...')
-        #for key, coef in xpan2.items():
-        #    print(key, coef)
-
-
-        rCabs = np.linalg.norm(r-C)
+        rC = r - C
+        xC, yC, zC = rC
         val = sum(coef
-                  * rCabs**key[0]
-                  * real_solid_harm(key[1], key[2], r-C)
-                  for key, coef in xpan.items())
+                  * xC**(2*k1) * yC**(2*k2) * zC**(2*k3) 
+                  * real_solid_harm(l, m, rC)
+                  for (k1, k2, k3, l, m), coef in xpan.items())
 
         ref = real_solid_harm(l1, m1, r-A) * real_solid_harm(l2, m2, r-B)
-        #self.assertAlmostEqual(ref, val, 12)
         self.assertTrue(np.allclose(ref, val, rtol=1e-12))
-
+        
 
     def test_sGTO_prod(self):
 
@@ -247,23 +202,16 @@ class TestProd(unittest.TestCase):
         C = gauss_prod(alpha, A, beta, B)[1]
         
         rC = r - C
-        rCabs = np.linalg.norm(rC)
+        xC, yC, zC = rC
 
         l1, m1 = 4, 2
-        l2, m2 = 4, 2
+        l2, m2 = 4, -2
 
-        #l1, l2 = np.random.randint(REAL_GAUNT_TABLE_LMAX+1, size=2)
-        #m1 = np.random.randint(-l1, l1+1)
-        #m2 = np.random.randint(-l2, l2+1)
-        
         xpan = sGTO_prod(alpha, A, l1, m1, beta, B, l2, m2)
         val = sum(coef
-                  * rCabs**key[0]
-                  * sgto(r, C, gamma, key[1], key[2])
-                  for key, coef in xpan.items())
-
-        #for key, coef in xpan.items():
-        #    print(key, coef)
+                  * xC**(2*k1) * yC**(2*k2) * zC**(2*k3)
+                  * sgto(r, C, gamma, l, m)
+                  for (k1, k2, k3, l, m), coef in xpan.items())
 
         ref = sgto(r, A, alpha, l1, m1) * sgto(r, B, beta, l2, m2)
         self.assertAlmostEqual(ref, val, 12)

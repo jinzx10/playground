@@ -10,7 +10,7 @@ from addition import M_nz, REAL_ADDITION_TABLE_LMAX
 from gaunt import real_gaunt_nz, REAL_GAUNT_TABLE_LMAX
 
 MMG_TABLE_LMAX = 4
-MMG_TABLE = './MMG_table2.npz'
+MMG_TABLE = 'MMG_table2'
 
 np.set_printoptions(legacy='1.25')
 
@@ -24,27 +24,21 @@ def unpack_lmlm(index, lmax=MMG_TABLE_LMAX):
     return *unpack_lm(i1), *unpack_lm(i2)
 
 
-def pack_MMG(l1p, l2p, lam1, lam2, l, m, lmax=MMG_TABLE_LMAX):
-    return (( (l1p * (lmax+1) + l2p) \
-            * (2*lmax+1) + lam1 + MMG_TABLE_LMAX) \
-            * (2*lmax+1) + lam2 + MMG_TABLE_LMAX) \
-            * (2*lmax+1)**2 + pack_lm(l,m)
+def pack_lmlmlm(l1, m1, l2, m2, l, m, lmax=MMG_TABLE_LMAX):
+    return (pack_lm(l1, m1) * (lmax+1)**2 + pack_lm(l2, m2)) * (2*lmax+1)**2 + pack_lm(l, m)
 
 
-def unpack_MMG(index, lmax=MMG_TABLE_LMAX):
-    tmp, lm = divmod(index, (2*lmax+1)**2)
-    tmp, lam2 = divmod(tmp, 2*lmax+1)
-    tmp, lam1 = divmod(tmp, 2*lmax+1)
-    l1p, l2p = divmod(tmp, lmax+1)
-    return l1p, l2p, lam1 - MMG_TABLE_LMAX, lam2 - MMG_TABLE_LMAX, \
-            *unpack_lm(lm)
+def unpack_lmlmlm(index, lmax=MMG_TABLE_LMAX):
+    i12, i = divmod(index, (2*lmax+1)**2)
+    return *unpack_lmlm(i12), *unpack_lm(i)
 
 
 def MMG_gen(fname, lmax=MMG_TABLE_LMAX):
     assert MMG_TABLE_LMAX == REAL_GAUNT_TABLE_LMAX and \
            MMG_TABLE_LMAX == REAL_ADDITION_TABLE_LMAX
 
-    table = np.zeros(((lmax+1)**4 * (2*lmax+1)**2, (lmax+1)**4))
+    #  (l1p,nu1,l2p,nu2) x (l1,m1,l2,m2,l,m)
+    table = np.zeros(((lmax+1)**4, (lmax+1)**4 * (2*lmax+1)**2))
 
     for l1 in range(lmax+1):
         for m1 in range(-l1, l1+1):
@@ -54,39 +48,35 @@ def MMG_gen(fname, lmax=MMG_TABLE_LMAX):
                     M2_list = M_nz(l2, m2)
                     for (l1p, nu1, lam1), M1 in M1_list:
                         for (l2p, nu2, lam2), M2 in M2_list:
-                            ic = 
+                            ir = pack_lmlm(l1p, nu1, l2p, nu2, lmax)
                             fac = 2 * np.sqrt(np.pi / ((2*l1-2*l1p+1) * (2*l2-2*l2p+1)))
                             G_list = real_gaunt_nz(l1-l1p, l2-l2p, lam1, lam2)
                             for (l,m), G in G_list:
-                                ir = 
+                                ic = pack_lmlmlm(l1, m1, l2, m2, l, m)
                                 table[ir, ic] += fac * np.sqrt(2*l+1) * M1 * M2 * G
 
 
-    for ir in range((lmax+1)**4):
-        l1, m1, l2, m2 = unpack_lmlm(ir)
-        M1_list = M_nz(l1, m1)
-        M2_list = M_nz(l2, m2)
-        for (l1p, nu1, lam1), M1 in M1_list:
-            for (l2p, nu2, lam2), M2 in M2_list:
-                fac = 2 * np.sqrt(np.pi / ((2*l1p+1) * (2*l2p+1)))
-                G_list = real_gaunt_nz(l1p, l2p, nu1, nu2)
-                for (l,m), G in G_list:
-                    ic = pack_MMG(l1p, l2p, lam1, lam2, l, m)
-                    table[ir, ic] += \
-                            fac * np.sqrt(2*l+1) * M1 * M2 * G
-        print(f'{ir+1}/{(lmax+1)**4}', end='\r')
-    print('')
-
-    # sum over nu1 & nu2 may introduce some cancellations
+    # sum over lam1 & lam2 may introduce some cancellations
     # subject to floating-point error, so we clean them up
-    table[abs(table) < 1e-15] = 0
-
+    table[abs(table) < 1e-14] = 0
     table_csr = csr_matrix(table)
-    save_npz(fname, table_csr)
 
-    # MATLAB uses CSC format, so it's better to transpose
-    savemat(fname.replace('.npz', '.mat'),
-            {'MMG_TABLE': table_csr.transpose(),
+    # build index map to (l1,m1,l2,m2) x (q,l,m)
+    # where q = (l1-l1p+l2-l2p-l)/2
+    imap_csr = table_csr.copy()
+    for ir in range((lmax+1)**4):
+        l1p, _, l2p, _ = unpack_lmlm(ir)
+        itab = imap_csr[ir]
+        colind = np.array([unpack_lmlmlm(ic) for ic in itab.indices])
+        q = (colind[:,0] - l1p + colind[:,2] - l2p - colind[:,4]) / 2
+        imap_csr[ir].data = q * (2*lmax+1)**2 + pack_lm(colind[:,4], colind[:,5])
+
+    save_npz(fname, table_csr)
+    save_npz(fname+'_imap', imap_csr)
+
+    savemat(fname,
+            {'MMG_TABLE': table_csr,
+             'MMG_TABLE_IMAP': imap_csr,
              'MMG_TABLE_LMAX': float(lmax)})
 
 
@@ -96,14 +86,7 @@ if not os.path.isfile(MMG_TABLE):
 _MMG_table = load_npz(MMG_TABLE)
 
 
-def MMG2_nz(l1, m1, l2, m2):
-    ir = pack_lmlm(l1, m1, l2, m2)
-    tab = _MMG_table[ir]
-    colind = [unpack_MMG(ic) for ic in tab.indices]
-    return list(zip(colind, tab.data))
-
-
-def real_solid_harm_prod(A, l1, m1, B, l2, m2, C):
+def real_solid_harm_prod(AB, gamma):
     r'''
     Expansion of a product of two real solid harmonics.
 
@@ -111,28 +94,24 @@ def real_solid_harm_prod(A, l1, m1, B, l2, m2, C):
     can be expanded into a sum of real solid harmonics on
     an arbitrary new center:
 
-     m1         m2        -- -- --             p    m
+     m1         m2        -- -- --             2q   m
     S  (r-A) * S  (r-B) = \  \  \  coef * |r-C|  * S (r-C)
      l1         l2        /  /  /                   l
                           -- -- --
-                          p  l  m
+                          q  l  m
 
-    This function returns the above expansion as a dict
-    {(p, l, m): coef} 
+    In practice this new center C is determined by the
+    Gaussian product rule.
 
     '''
-    CA = C - A
-    CB = C - B
+    lmax = MMG_TABLE_LMAX
+    xpan = np.zeros((lmax+1)**4, (lmax+1)*(2*lmax+1)**2)
 
     xpan = {}
     tab = MMG_nz(l1, m1, l2, m2)
     for (l1p, l2p, lam1, lam2, l, m), coef_tab in tab:
         S1 = real_solid_harm(l1-l1p, lam1, CA)
         S2 = real_solid_harm(l2-l2p, lam2, CB)
-
-        # express |r|**(l1p+l2p-l) as x**k1 * y**k2 * z**k3
-        q = (l1p + l2p - l) // 2
-        multinom = multinomial_coefficients(3, q)
 
         for (k1, k2, k3), coef_nom in multinom.items():
             key = (k1, k2, k3, l, m)

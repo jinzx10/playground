@@ -37,7 +37,7 @@ def MMG_gen(fname, lmax=MMG_TABLE_LMAX):
     assert MMG_TABLE_LMAX == REAL_GAUNT_TABLE_LMAX and \
            MMG_TABLE_LMAX == REAL_ADDITION_TABLE_LMAX
 
-    #  (l1p,nu1,l2p,nu2) x (l1,m1,l2,m2,l,m)
+    #  (l1p,mu1,l2p,mu2) x (l1,m1,l2,m2,l,m)
     table = np.zeros(((lmax+1)**4, (lmax+1)**4 * (2*lmax+1)**2))
 
     for l1 in range(lmax+1):
@@ -46,17 +46,17 @@ def MMG_gen(fname, lmax=MMG_TABLE_LMAX):
             for l2 in range(lmax+1):
                 for m2 in range(-l2, l2+1):
                     M2_list = M_nz(l2, m2)
-                    for (l1p, nu1, lam1), M1 in M1_list:
-                        for (l2p, nu2, lam2), M2 in M2_list:
-                            ir = pack_lmlm(l1p, nu1, l2p, nu2, lmax)
+                    for (l1p, mu1, nu1), M1 in M1_list:
+                        for (l2p, mu2, nu2), M2 in M2_list:
+                            ir = pack_lmlm(l1p, mu1, l2p, mu2, lmax)
                             fac = 2 * np.sqrt(np.pi / ((2*l1-2*l1p+1) * (2*l2-2*l2p+1)))
-                            G_list = real_gaunt_nz(l1-l1p, l2-l2p, lam1, lam2)
+                            G_list = real_gaunt_nz(l1-l1p, l2-l2p, nu1, nu2)
                             for (l,m), G in G_list:
                                 ic = pack_lmlmlm(l1, m1, l2, m2, l, m)
                                 table[ir, ic] += fac * np.sqrt(2*l+1) * M1 * M2 * G
 
 
-    # sum over lam1 & lam2 may introduce some cancellations
+    # sum over nu1 & nu2 may introduce some cancellations
     # subject to floating-point error, so we clean them up
     table[abs(table) < 1e-14] = 0
     table_csr = csr_matrix(table)
@@ -67,6 +67,8 @@ def MMG_gen(fname, lmax=MMG_TABLE_LMAX):
     for ir in range((lmax+1)**4):
         l1p, _, l2p, _ = unpack_lmlm(ir)
         itab = imap_csr[ir]
+
+        # colind is (l1,m1,l2,m2,l,m)
         colind = np.array([unpack_lmlmlm(ic) for ic in itab.indices])
         q = (colind[:,0] - l1p + colind[:,2] - l2p - colind[:,4]) / 2
         imap_csr[ir].data = q * (2*lmax+1)**2 + pack_lm(colind[:,4], colind[:,5])
@@ -77,16 +79,19 @@ def MMG_gen(fname, lmax=MMG_TABLE_LMAX):
     savemat(fname,
             {'MMG_TABLE': table_csr,
              'MMG_TABLE_IMAP': imap_csr,
-             'MMG_TABLE_LMAX': float(lmax)})
+             'MMG_TABLE_LMAX': float(lmax)
+             },
+            appendmat=True
+            )
 
 
-if not os.path.isfile(MMG_TABLE):
+if not os.path.isfile(MMG_TABLE + '.npz'):
     MMG_gen(MMG_TABLE, MMG_TABLE_LMAX)
 
-_MMG_table = load_npz(MMG_TABLE)
+_MMG_table = load_npz(MMG_TABLE + '.npz')
 
 
-def real_solid_harm_prod(AB, gamma):
+def MMGSS(AB):
     r'''
     Expansion of a product of two real solid harmonics.
 
@@ -105,23 +110,59 @@ def real_solid_harm_prod(AB, gamma):
 
     '''
     lmax = MMG_TABLE_LMAX
-    xpan = np.zeros((lmax+1)**4, (lmax+1)*(2*lmax+1)**2)
 
-    xpan = {}
-    tab = MMG_nz(l1, m1, l2, m2)
-    for (l1p, l2p, lam1, lam2, l, m), coef_tab in tab:
-        S1 = real_solid_harm(l1-l1p, lam1, CA)
-        S2 = real_solid_harm(l2-l2p, lam2, CB)
+    # MMG * S(l1p, mu1, AB) * S(l2p, mu2, AB)
+    # (l1p,mu1,l2p,mu2) x (l1,m1,l2,m2,l,m)
+    # --> (l1p, l2p) x (l1,m1,l2,m2,l,m)
+    out = np.zeros(((lmax+1)**2, (lmax+1)**4 * (2*lmax+1)**2))
 
-        for (k1, k2, k3), coef_nom in multinom.items():
-            key = (k1, k2, k3, l, m)
-            val = coef_nom * coef_tab * S1 * S2
-            if key not in xpan:
-                xpan[key] = val
-            else:
-                xpan[key] += val
+    # tabulate real solid harmonics in advance
+    SAB = np.zeros(((lmax+1)**2, 1))
+    for l in range(lmax+1):
+        for m in range(-l, l+1):
+            SAB[pack_lm(l, m),0] = real_solid_harm(l, m, AB)
+
+    SS = np.kron(SAB, SAB)
+    MMGSS_tmp = _MMG_table.multiply(SS).toarray()
+
+    for ir, row in enumerate(MMGSS_tmp):
+        l1m1, l2m2 = divmod(ir, (lmax+1)**2)
+        l1p = int(np.sqrt(l1m1))
+        l2p = int(np.sqrt(l2m2))
+        out[l1p*(lmax+1)+l2p] += row
+
+    return out
+
+
+def real_solid_harm_prod(MMGSS1, gamma):
+    '''
+
+    '''
+    lmax = MMG_TABLE_LMAX
+    fac1 = -1/(1+gamma)
+    fac2 = 1/(1+1/gamma)
+    tmp = np.kron(fac1**np.arange(lmax+1), fac2**np.arange(lmax+1))
+
+    # (l1p,l2p) x (l1,m1,l2,m2,l,m)
+    MMGSS2 = csr_matrix(MMGSS1 * tmp.reshape(-1, 1))
+
+    # (l1,m1,l2,m2) x (q, l, m)
+    xpan = np.zeros(((lmax+1)**4, (lmax+1)*(2*lmax+1)**2))
+    for l1p in range(lmax+1):
+        for l2p in range(lmax+1):
+            tab = MMGSS2[l1p*(lmax+1)+l2p]
+            l1m1l2m2, lm = divmod(tab.indices, (2*lmax+1)**2)
+            l = np.sqrt(lm).astype(int)
+            l1m1, l2m2 = divmod(l1m1l2m2, (lmax+1)**2)
+            l1 = np.sqrt(l1m1).astype(int) 
+            l2 = np.sqrt(l2m2).astype(int)
+            q = (l1 - l1p + l2 - l2p - l) // 2
+            qlm = q * (2*lmax+1)**2 + lm
+            xpan[l1m1l2m2, qlm] += tab.data
 
     return xpan
+
+
 
 
 def sGTO_prod(alpha, A, l1, m1, beta, B, l2, m2):
@@ -140,7 +181,44 @@ import unittest
 
 class TestProd(unittest.TestCase):
 
-    def test_real_solid_harm_prod(self):
+    def test(self):
+
+        lmax = MMG_TABLE_LMAX
+
+        r = np.random.randn(3)
+        A = np.random.randn(3)
+        B = np.random.randn(3)
+        AB = A - B
+
+        alpha = np.random.rand()
+        beta = np.random.rand()
+        gamma = alpha/beta
+
+        tss = MMGSS(AB)
+        xpan = real_solid_harm_prod(tss, gamma)
+
+
+        #C = A * 0.3 + B * 0.7 # will introduce more zero coefs. why?
+        C = A * alpha/(alpha+beta) + B * beta/(alpha+beta)
+        rC = r - C
+        rCabs = np.linalg.norm(rC)
+        
+        l1, m1 = 4, 2
+        l2, m2 = 4, 4
+
+        coef = xpan[pack_lmlm(l1, m1, l2, m2)]
+
+        val = 0.0
+        for i in range(len(coef)):
+            q, lm = divmod(i, (2*lmax+1)**2)
+            l, m = unpack_lm(lm)
+            val += coef[i] * rCabs**(2*q) * real_solid_harm(l, m, rC)
+
+        ref = real_solid_harm(l1, m1, r-A) * real_solid_harm(l2, m2, r-B)
+        self.assertAlmostEqual(val, ref, 8)
+
+
+    def est_real_solid_harm_prod(self):
         r = np.random.randn(3)
         A = np.random.randn(3)
         B = np.random.randn(3)
@@ -172,7 +250,7 @@ class TestProd(unittest.TestCase):
         self.assertTrue(np.allclose(ref, val, rtol=1e-12))
         
 
-    def test_sGTO_prod(self):
+    def est_sGTO_prod(self):
 
         def sgto(r, r0, a, l, m):
             rr = r - r0

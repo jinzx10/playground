@@ -11,6 +11,7 @@ from gaunt import real_gaunt_nz, REAL_GAUNT_TABLE_LMAX
 
 MMG_TABLE_LMAX = 4
 MMG_TABLE = 'MMG_table2'
+MMGSS_IMAP = 'MMGSS_imap'
 
 np.set_printoptions(legacy='1.25')
 
@@ -58,30 +59,15 @@ def MMG_gen(fname, lmax=MMG_TABLE_LMAX):
 
     # sum over nu1 & nu2 may introduce some cancellations
     # subject to floating-point error, so we clean them up
-    table[abs(table) < 1e-14] = 0
+    table[abs(table) < 1e-12] = 0
     table_csr = csr_matrix(table)
 
-    # build index map to (l1,m1,l2,m2) x (q,l,m)
-    # where q = (l1-l1p+l2-l2p-l)/2
-    imap_csr = table_csr.copy()
-    for ir in range((lmax+1)**4):
-        l1p, _, l2p, _ = unpack_lmlm(ir)
-        itab = imap_csr[ir]
-
-        # colind is (l1,m1,l2,m2,l,m)
-        colind = np.array([unpack_lmlmlm(ic) for ic in itab.indices])
-        q = (colind[:,0] - l1p + colind[:,2] - l2p - colind[:,4]) / 2
-        imap_csr[ir].data = q * (2*lmax+1)**2 + pack_lm(colind[:,4], colind[:,5])
-
     save_npz(fname, table_csr)
-    save_npz(fname+'_imap', imap_csr)
-
     savemat(fname,
-            {'MMG_TABLE': table_csr,
-             'MMG_TABLE_IMAP': imap_csr,
-             'MMG_TABLE_LMAX': float(lmax)
-             },
-            appendmat=True
+            {
+                'MMG_TABLE': table_csr,
+                'MMG_TABLE_LMAX': float(lmax),
+            },
             )
 
 
@@ -89,6 +75,54 @@ if not os.path.isfile(MMG_TABLE + '.npz'):
     MMG_gen(MMG_TABLE, MMG_TABLE_LMAX)
 
 _MMG_table = load_npz(MMG_TABLE + '.npz')
+
+
+def MMGSS_imap_gen(fname, lmax=MMG_TABLE_LMAX):
+    '''
+    Build the index mapping for contracting a dense array of
+
+            (l1p,l2p) x (l1,m1,l2,m2,l,m)
+
+    to
+
+            (l1,m1,l2,m2) x (q,l,m)
+
+    where q = (l1-l1p+l2-l2p-l)/2.
+
+    '''
+    imap = np.zeros(((lmax+1)**2, (lmax+1)**4*(2*lmax+1)**2), dtype=int)
+    l1m1l2m2lm = np.arange((lmax+1)**4*(2*lmax+1)**2, dtype=int)
+
+    l1m1l2m2, lm = np.divmod(l1m1l2m2lm, (2*lmax+1)**2)
+    l1m1, l2m2 = np.divmod(l1m1l2m2, (lmax+1)**2)
+
+    l = np.sqrt(lm).astype(int)
+    l1 = np.sqrt(l1m1).astype(int)
+    l2 = np.sqrt(l2m2).astype(int)
+
+    for l1p in range(lmax+1):
+        for l2p in range(lmax+1):
+            ir = l1p * (lmax+1) + l2p
+            q = (l1 - l1p + l2 - l2p - l) // 2
+            qlm = q * (2*lmax+1)**2 + lm
+            #imap[ir] = l1m1l2m2 * (lmax+1)*(2*lmax+1)**2 + qlm
+            imap[ir] = l1m1l2m2 + qlm * (lmax+1)**4
+
+    np.savez(fname, imap)
+    savemat(fname,
+            {
+                'MMGSS_IMAP': imap,
+            },
+            )
+
+if not os.path.isfile(MMG_TABLE + '.npz'):
+    MMG_gen(MMG_TABLE, MMG_TABLE_LMAX)
+_MMG_table = load_npz(MMG_TABLE + '.npz')
+
+if not os.path.isfile(MMGSS_IMAP + '.npz'):
+    MMGSS_imap_gen(MMGSS_IMAP, MMG_TABLE_LMAX)
+
+_MMGSS_imap = np.load(MMGSS_IMAP + '.npz')
 
 
 def MMGSS(AB):
@@ -125,13 +159,14 @@ def MMGSS(AB):
     SS = np.kron(SAB, SAB)
     MMGSS_tmp = _MMG_table.multiply(SS).toarray()
 
+    # sum over mu1 & mu2
     for ir, row in enumerate(MMGSS_tmp):
         l1m1, l2m2 = divmod(ir, (lmax+1)**2)
         l1p = int(np.sqrt(l1m1))
         l2p = int(np.sqrt(l2m2))
         out[l1p*(lmax+1)+l2p] += row
 
-    return out
+    return out, MMGSS_tmp, SS
 
 
 def real_solid_harm_prod(MMGSS1, gamma):
@@ -146,7 +181,9 @@ def real_solid_harm_prod(MMGSS1, gamma):
     # (l1p,l2p) x (l1,m1,l2,m2,l,m)
     MMGSS2 = csr_matrix(MMGSS1 * tmp.reshape(-1, 1))
 
+    # contract and re-index MMGSS2 to
     # (l1,m1,l2,m2) x (q, l, m)
+    # where q = (l1 - l1p + l2 - l2p - l) // 2
     xpan = np.zeros(((lmax+1)**4, (lmax+1)*(2*lmax+1)**2))
     for l1p in range(lmax+1):
         for l2p in range(lmax+1):
@@ -181,7 +218,19 @@ import unittest
 
 class TestProd(unittest.TestCase):
 
-    def test(self):
+    def test_2(self):
+        lmax = MMG_TABLE_LMAX
+
+        AB = np.array([0.12, 0.34, 0.56])
+        mmgss, mmgss_tmp, ss = MMGSS(AB)
+        savemat('test.mat', {'mmgss': mmgss, 'mmgss_tmp':mmgss_tmp, 'ss':ss})
+        savemat('test_MMG.mat', {'mmg': _MMG_table})
+
+        gamma = 0.77
+
+
+
+    def est_1(self):
 
         lmax = MMG_TABLE_LMAX
 
@@ -189,6 +238,7 @@ class TestProd(unittest.TestCase):
         A = np.random.randn(3)
         B = np.random.randn(3)
         AB = A - B
+
 
         alpha = np.random.rand()
         beta = np.random.rand()
@@ -203,8 +253,8 @@ class TestProd(unittest.TestCase):
         rC = r - C
         rCabs = np.linalg.norm(rC)
         
-        l1, m1 = 4, 2
-        l2, m2 = 4, 4
+        l1, m1 = 1, 1
+        l2, m2 = 3, -3
 
         coef = xpan[pack_lmlm(l1, m1, l2, m2)]
 

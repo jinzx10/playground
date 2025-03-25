@@ -152,6 +152,20 @@ from harm import real_sph_harm
 
 class TestRealGaunt(unittest.TestCase):
 
+    def test_sym0(self):
+        lmax = 3
+        for l1 in range(lmax+1):
+            for m1 in range(-l1, l1+1):
+                for l2 in range(lmax+1):
+                    for m2 in range(-l2, l2+1):
+                        for l in range(abs(l1-l2), l1+l2+1, 2):
+                            for m in {m1+m2, m1-m2, m2-m1, -m1-m2}:
+                                if abs(m) <= l:
+                                    G = real_gaunt_sym(l1, l2, l, m1, m2, m).evalf()
+                                    if G != 0:
+                                        print(f'l1={l1}, m1={m1}, l2={l2}, m2={m2}, l={l}, m={m}, G={G}')
+
+
     def test_sym(self):
         '''
         Checks real_gaunt_sym by verifying that they do serve

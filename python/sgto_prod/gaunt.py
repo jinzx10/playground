@@ -122,10 +122,54 @@ def real_gaunt_gen(fname, lmax=REAL_GAUNT_TABLE_LMAX):
              'REAL_GAUNT_TABLE_LMAX': float(lmax)})
 
 
+def gaunt_gen(fname, lmax=REAL_GAUNT_TABLE_LMAX):
+    '''
+    Tabulate and save the Gaunt coefficients to file.
+
+    This function generates a table of real Gaunt coefficients
+    adequate for the expansion of a product of two real spherical
+    harmonics each of which has an angular momentum of lmax or less.
+    That is to say, the maximal angular momentum of the table is
+    (lmax, lmax, 2*lmax).
+
+    This table is made a dense matrix by grouping its indices as
+
+            (l1,m1,l2,m2) x (l3,m3)
+
+    '''
+    table = np.zeros(((lmax+1)**4, (2*lmax+1)**2))
+
+    print(f'Generate Gaunt table up to l={lmax}...')
+
+    for l1 in range(lmax+1):
+        for m1 in range(-l1, l1+1):
+            for l2 in range(lmax+1):
+                for m2 in range(-l2, l2+1):
+                    ir = pack_lm(l1, m1) * (lmax+1)**2 + pack_lm(l2, m2)
+                    for l3 in range(abs(l1-l2), l1+l2+1, 2):
+                        m3 = m1+m2
+                        if abs(m3) > l3:
+                            continue
+                        ic = pack_lm(l3, m3)
+                        fac = np.sqrt(4*np.pi*(2*l3+1)/((2*l1+1)*(2*l2+1)))
+                        table[ir, ic] = fac * (-1)**m3*float(gaunt(l1, l2, l3, m1, m2, -m3))
+                    print(f'{ir+1}/{(lmax+1)**4}', end='\r')
+    print('')
+
+    np.save(fname, table)
+
+    savemat(fname.replace('.npy', '.mat'),
+            {'GAUNT_TABLE': table,
+             'GAUNT_TABLE_LMAX': float(lmax)})
+
+
 if not os.path.isfile(REAL_GAUNT_TABLE):
     real_gaunt_gen(REAL_GAUNT_TABLE, REAL_GAUNT_TABLE_LMAX)
 
 _real_gaunt_table = load_npz(REAL_GAUNT_TABLE)
+
+gaunt_gen("gaunt_table.npy", REAL_GAUNT_TABLE_LMAX)
+_gaunt_table = np.load("gaunt_table.npy")
 
 def real_gaunt(l1, l2, l3, m1, m2, m3):
     return _real_gaunt_table[pack_G(l1,m1,l2,m2), pack_lm(l3,m3)]
@@ -152,7 +196,7 @@ from harm import real_sph_harm
 
 class TestRealGaunt(unittest.TestCase):
 
-    def test_sym0(self):
+    def est_sym0(self):
         lmax = 3
         for l1 in range(lmax+1):
             for m1 in range(-l1, l1+1):

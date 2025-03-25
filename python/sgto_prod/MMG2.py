@@ -115,12 +115,53 @@ def MMGSS_imap_gen(fname, lmax=MMG_TABLE_LMAX):
             },
             )
 
+def MMGSS_imap_gen2(fname, lmax=MMG_TABLE_LMAX):
+    '''
+    Build the one-based index mapping for contracting a dense array of
+
+            (l1p,l2p) x (l1,m1,l2,m2,l,m)
+
+    to a vectorized array of
+
+            (l1,m1,l2,m2) x (q,l,m)
+
+    where q = (l1-l1p+l2-l2p-l)/2.
+
+    '''
+    imap = np.zeros(((lmax+1)**2, (lmax+1)**4*(2*lmax+1)**2), dtype=int)
+
+    for l1 in range(lmax+1):
+        for m1 in range(-l1, l1+1):
+            for l2 in range(lmax+1):
+                for m2 in range(-l2, l2+1):
+                    for l1p in range(l1+1):
+                        for l2p in range(l2+1):
+                            for l in range(abs(l1-l1p-l2+l2p), l1-l1p+l2-l2p+1, 2):
+                                for m in range(-l, l+1):
+                                    l1m1 = l1 * (l1+1) + m1
+                                    l2m2 = l2 * (l2+1) + m2
+                                    l1m1l2m2 = l1m1 * (lmax+1)**2 + l2m2
+                                    q = (l1 - l1p + l2 - l2p - l) // 2
+                                    lm = l * (l+1) + m
+                                    qlm = q * (2*lmax+1)**2 + lm
+                                    imap[l1p*(lmax+1)+l2p, l1m1l2m2*(2*lmax+1)**2+lm] = l1m1l2m2 + qlm * (lmax+1)**4 + 1
+
+    imap = csr_matrix(imap)
+    save_npz(fname, imap)
+    savemat(fname,
+            {
+                'MMGSS_IMAP2': imap,
+            },
+            )
+
+
 if not os.path.isfile(MMG_TABLE + '.npz'):
     MMG_gen(MMG_TABLE, MMG_TABLE_LMAX)
 _MMG_table = load_npz(MMG_TABLE + '.npz')
 
-if not os.path.isfile(MMGSS_IMAP + '.npz'):
-    MMGSS_imap_gen(MMGSS_IMAP, MMG_TABLE_LMAX)
+#if not os.path.isfile(MMGSS_IMAP + '.npz'):
+#    MMGSS_imap_gen(MMGSS_IMAP, MMG_TABLE_LMAX)
+MMGSS_imap_gen2(MMGSS_IMAP, MMG_TABLE_LMAX)
 
 _MMGSS_imap = np.load(MMGSS_IMAP + '.npz')
 

@@ -126,18 +126,19 @@ def gaunt_gen(fname, lmax=REAL_GAUNT_TABLE_LMAX):
     '''
     Tabulate and save the Gaunt coefficients to file.
 
-    This function generates a table of real Gaunt coefficients
-    adequate for the expansion of a product of two real spherical
+    This function generates a table of Gaunt coefficients
+    adequate for the expansion of a product of two spherical
     harmonics each of which has an angular momentum of lmax or less.
-    That is to say, the maximal angular momentum of the table is
-    (lmax, lmax, 2*lmax).
 
     This table is made a dense matrix by grouping its indices as
 
-            (l1,m1,l2,m2) x (l3,m3)
+            (l1,m1,l2,m2) x q
+
+    where q = (l1+l2-l3)/2 and the selection rule m3 = m1+m2 has been
+    incorporated.
 
     '''
-    table = np.zeros(((lmax+1)**4, (2*lmax+1)**2))
+    table = np.zeros(((lmax+1)**4, lmax+1))
 
     print(f'Generate Gaunt table up to l={lmax}...')
 
@@ -150,9 +151,8 @@ def gaunt_gen(fname, lmax=REAL_GAUNT_TABLE_LMAX):
                         m3 = m1+m2
                         if abs(m3) > l3:
                             continue
-                        ic = pack_lm(l3, m3)
                         fac = np.sqrt(4*np.pi*(2*l3+1)/((2*l1+1)*(2*l2+1)))
-                        table[ir, ic] = fac * (-1)**m3*float(gaunt(l1, l2, l3, m1, m2, -m3))
+                        table[ir, (l1+l2-l3)//2] = fac * (-1)**m3*float(gaunt(l1, l2, l3, m1, m2, -m3))
                     print(f'{ir+1}/{(lmax+1)**4}', end='\r')
     print('')
 

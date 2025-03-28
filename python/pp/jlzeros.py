@@ -1,5 +1,7 @@
+import os
 import numpy as np
 from scipy.special import spherical_jn
+from scipy.io import savemat
 
 def ikebe(l, nzeros):
     '''
@@ -103,6 +105,11 @@ def bracket(l, nzeros, return_all=False):
 JLZEROS_LMAX = 20
 JLZEROS_NZEROS = 100
 JLZEROS = bracket(JLZEROS_LMAX, JLZEROS_NZEROS, return_all=True)
+
+jlzeros_fname = 'jlzeros.mat'
+if not os.path.isfile(jlzeros_fname):
+    savemat(jlzeros_fname, {'theta': np.array(JLZEROS).T})
+
 
 ############################################################
 #                       Test

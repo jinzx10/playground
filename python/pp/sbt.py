@@ -20,7 +20,7 @@ def sbt(l, frk, r, q, k=0):
 ##############################################################
 
 import unittest
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 class _Test(unittest.TestCase):
 

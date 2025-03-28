@@ -152,7 +152,10 @@ def gaunt_gen(fname, lmax=REAL_GAUNT_TABLE_LMAX):
                         if abs(m3) > l3:
                             continue
                         fac = np.sqrt(4*np.pi*(2*l3+1)/((2*l1+1)*(2*l2+1)))
-                        table[ir, (l1+l2-l3)//2] = fac * (-1)**m3*float(gaunt(l1, l2, l3, m1, m2, -m3))
+                        q = (l1+l2-l3)//2
+                        G = fac * (-1)**m3*float(gaunt(l1, l2, l3, m1, m2, -m3))
+                        table[ir, q] = G
+                        #print(f'l1={l1}  m1={m1:2}  l2={l2}  m2={m2:2}  q={q}  G={G:8.5f}')
                     print(f'{ir+1}/{(lmax+1)**4}', end='\r')
     print('')
 

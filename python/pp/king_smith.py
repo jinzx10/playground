@@ -224,7 +224,6 @@ def opt_sphbes(l, dq, nq, fq, qa, qb, R, nbes, alpha):
         for i in range(m):
             Z[k,i] = lommel_j(l, JLZEROS[l][k]/R, q1[i], R)
 
-
     #-------------------------------------------------------------
     #           build and solve the linear system
     #-------------------------------------------------------------
@@ -247,6 +246,10 @@ def opt_sphbes(l, dq, nq, fq, qa, qb, R, nbes, alpha):
     for k in range(nbes):
         z[k] = spherical_jn(l, JLZEROS[l][k]/R * r_quad)
     B = z @ tmp @ z.T
+    #print('eta_r', z[:,:5])
+    print('tmp', np.diag(tmp))
+
+    print('B', B)
 
     b = np.zeros(nbes)
     for i in range(nbes):
@@ -260,7 +263,7 @@ def opt_sphbes(l, dq, nq, fq, qa, qb, R, nbes, alpha):
 import xml.etree.ElementTree as ET
 
 import time
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 # get some actual PP_BETA from pseudopotential file
 #pp_file = '/home/zuxin/downloads/pseudopotentials/SG15/PBE/Si_ONCV_PBE-1.0.upf'
@@ -287,7 +290,8 @@ while rbeta[icut] == 0:
     icut -= 1
 icut += 1
 
-R = r[icut] * 1.5
+#R = r[icut] * 1.5
+R = 4.0
 
 # k-space radial grid
 qcut = 20
@@ -308,16 +312,23 @@ beta_q = np.array([sbt(l, rbeta, r, qi, k=1) for qi in q])
 #plt.show()
 #exit(1)
 
-qa = 15
-qb = 25
+qa = 5
+qb = 15
+nbes = 5
+alpha = 10
+#qa = 15
+#qb = 25
 #r_ff, beta_r_ff, err_ff = king_smith_ff(l, dq, nq_cut, beta_q, qa, qb, R)
-c = opt_sphbes(l, dq, nq_cut, beta_q, qa, qb, R, 20, 10)
+l = 2
+c = opt_sphbes(l, dq, nq_cut, beta_q, qa, qb, R, nbes, alpha)
 
 dr = R / nq_cut
 r_new = dr * np.arange(nq_cut)
 betar_new = np.zeros(nq_cut)
 for k, ck in enumerate(c):
     betar_new += ck * spherical_jn(l, JLZEROS[l][k] * r_new / R)
+
+exit(1)
 
 ##***************************
 plt.axhline(0, linestyle=':', color='k')

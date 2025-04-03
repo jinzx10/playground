@@ -130,13 +130,13 @@ void gaunt_gen(std::vector<double>& coef) {
             for (int l2 = 0; l2 <= LMAX; ++l2) {
                 for (int m2 = -l2; m2 <= l2; ++m2) {
                     for (int l3 = abs(l1-l2); l3 <= l1+l2; l3 += 2) {
-                        int m3 = m1 + m2;
+                        int m3 = -m1 - m2;
                         if (abs(m3) > l3) {
                             continue;
                         }
                         int q = (l1+l2-l3)/2;
                         double fac = std::sqrt(4.0*M_PI*(2*l3+1)/((2*l1+1)*(2*l2+1)));
-                        double G = fac * pm1(m3) * gaunt(l1, l2, l3, m1, m2, -m3);
+                        double G = fac * pm1(m3) * gaunt(l1, l2, l3, m1, m2, m3);
                         coef[gind(l1, m1, l2, m2, q)] = G;
                     }
                 }

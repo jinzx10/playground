@@ -149,7 +149,7 @@ void gaunt_gen(std::vector<double>& coef) {
 std::complex<double> sph_harm(int l, int m, double theta, double phi) {
     int mabs = std::abs(m);
     auto Ylm = std::tr1::sph_legendre(l, mabs, theta)
-        * std::exp(std::complex<double>(0, mabs*phi));
+                * std::exp(std::complex<double>(0, mabs*phi));
     if (m < 0) {
         Ylm = pm1(m) * std::conj(Ylm);
     }
@@ -175,7 +175,7 @@ int binom(int n, int k) {
 }
 
 
-inline int mind(int l, int m, int lp, int mp) {
+inline int pack_lmlm(int l, int m, int lp, int mp) {
     return pack_lm(l,m) * SZ1 + pack_lm(lp,mp);
 }
 
@@ -186,7 +186,7 @@ void M_gen(std::vector<double>& coef) {
             for (int lp = 0; lp <= l; ++lp) {
                 for (int mp = std::max(-lp, m+lp-l); mp <= std::min(lp, m+l-lp); ++mp) {
                     double M = std::sqrt(binom(l+m, lp+mp) * binom(l-m, lp-mp));
-                    coef[mind(l, m, lp, mp)] = M;
+                    coef[pack_lmlm(l, m, lp, mp)] = M;
                 }
             }
         }
@@ -219,25 +219,30 @@ void solid_harm_prod(std::vector<double> const& G, std::vector<std::complex<doub
     std::fill(coef.begin(), coef.end(), std::complex<double>(0,0));
 
     // mc0 times the exponent-dependent part
-    std::vector<std::complex<double>> MC1(mc0); 
-    std::vector<std::complex<double>> MC2(mc0);
+    std::vector<std::complex<double>> Mbar1(mc0.size()); 
+    std::vector<std::complex<double>> Mbar2(mc0.size());
 
     double base1 = -1.0 / (1.0 + gamma);
     double base2 = 1.0 / (1.0 + 1.0/gamma);
 
-    double fac1 = base1;
-    double fac2 = base2;
-    for (int l = 1 /* no need for l=0 */; l <= LMAX; ++l) {
-        for (int j = l*l; j < (l+1)*(l+1); ++j) {
-            for (int i = 0; i < SZ1; ++i) {
-                MC1[i*SZ1+j] *= fac1;
-                MC2[i*SZ1+j] *= fac2;
+    for (int l = 0; l <= LMAX; ++l) {
+        double fac1 = 1.0;
+        double fac2 = 1.0;
+        for (int lpp = l; lpp >= 0; --lpp) {
+            for (int m = -l; m <= l; ++m) {
+                int lm = pack_lm(l,m);
+                for (int mpp = std::max(-lpp, m+lpp-l); mpp <= std::min(lpp, m+l-lpp); ++mpp) {
+                    int i = lm * SZ1 + pack_lm(lpp, mpp);
+                    int j = lm * SZ1 + pack_lm(l-lpp, m-mpp);
+                    Mbar1[i] = mc0[j] * fac1;
+                    Mbar2[i] = mc0[j] * fac2;
+                }
             }
+            fac1 *= base1;
+            fac2 *= base2;
         }
-        fac1 *= base1;
-        fac2 *= base2;
     }
-
+                
     dur[2] += iclock::now() - start;
 
     start = iclock::now();
@@ -247,25 +252,21 @@ void solid_harm_prod(std::vector<double> const& G, std::vector<std::complex<doub
             for (int l1pp = 0; l1pp <= l1; ++l1pp) {
                 for (int l2pp = 0; l2pp <= l2; ++l2pp) {
                     for (int m1 = -l1; m1 <= l1; ++m1) {
-                        int l1m1 = pack_lm(l1, m1);
                         for (int m2 = -l2; m2 <= l2; ++m2) {
-                            int l2m2 = pack_lm(l2, m2);
-                            int ir = l1m1 * SZ1 + l2m2;
-                            for (int m1p = std::max(l1pp-l1, m1-l1pp);
-                                m1p <= std::min(l1-l1pp, m1+l1pp); ++m1p) {
-                                int m1pp = m1 - m1p;
-                                auto mc1 = MC1[l1m1*SZ1+pack_lm(l1-l1pp, m1p)];
-                                for (int m2p = std::max(l2pp-l2, m2-l2pp);
-                                        m2p <= std::min(l2-l2pp, m2+l2pp); ++m2p) {
-                                    int m2pp = m2 - m2p;
-                                    auto mc1mc2 = mc1 * MC2[l2m2*SZ1+pack_lm(l2-l2pp, m2p)];
+                            int ir = pack_lmlm(l1, m1, l2, m2);
+                            for (int m1pp = m1 - std::min(l1-l1pp, m1+l1pp);
+                                    m1pp <= m1 - std::max(l1pp-l1, m1-l1pp); ++m1pp) {
+                                for (int m2pp = m2 - std::min(l2-l2pp, m2+l2pp);
+                                        m2pp <= m2 - std::max(l2pp-l2, m2-l2pp); ++m2pp) {
+                                    auto mbar1mbar2 = Mbar1[pack_lmlm(l1, m1, l1pp, m1pp)]
+                                                    * Mbar2[pack_lmlm(l2, m2, l2pp, m2pp)];
                                     int m = m1pp + m2pp;
                                     int qmax = std::min(std::min(l1pp, l2pp),
                                                         (l1pp+l2pp-std::abs(m))/2);
                                     for (int q = 0; q <= qmax; ++q) {
                                         int l = l1pp + l2pp - 2*q;
                                         int ic = q*SZ2 + pack_lm(l, m);
-                                        coef[ir*SZX+ic] += G[gind(l1pp, m1pp, l2pp, m2pp, q)] * mc1mc2;
+                                        coef[ir*SZX+ic] += G[gind(l1pp, m1pp, l2pp, m2pp, q)] * mbar1mbar2;
                                     }
                                 }
                             }
@@ -339,7 +340,7 @@ void test_M() {
 
             for (int lp = 0; lp <= l; ++lp) {
                 for (int mp = std::max(-lp, m+lp-l); mp <= std::min(lp, m+l-lp); ++mp) {
-                    val += M[mind(l, m, lp, mp)] * solid_harm(lp, mp, r1x, r1y, r1z) * solid_harm(l-lp, m-mp, r2x, r2y, r2z);        
+                    val += M[pack_lmlm(l, m, lp, mp)] * solid_harm(lp, mp, r1x, r1y, r1z) * solid_harm(l-lp, m-mp, r2x, r2y, r2z);        
                 }
             }
 
@@ -418,8 +419,8 @@ int main() {
     printf("exponent part: %6.1f us (averaged by %i runs)\n",
             dur[1].count() * 1e6 / nt2, nt2);
 
-    printf("-multiply    : %6.1f us\n", dur[2].count() * 1e6 / nt2);
-    printf("-contraction : %6.1f us\n", dur[3].count() * 1e6 / nt2);
+    printf("- multiply   : %6.1f us\n", dur[2].count() * 1e6 / nt2);
+    printf("- contraction: %6.1f us\n", dur[3].count() * 1e6 / nt2);
 
     //------------ verification ------------
     double Cx = (alpha*Ax + beta*Bx) / (alpha + beta);
@@ -446,8 +447,8 @@ int main() {
     };
 
     for (int l1 = 0; l1 <= LMAX; ++l1) {
-        for (int m1 = -l1; m1 <= l1; ++m1) {
-            for (int l2 = 0; l2 <= LMAX; ++l2) {
+        for (int l2 = 0; l2 <= LMAX; ++l2) {
+            for (int m1 = -l1; m1 <= l1; ++m1) {
                 for (int m2 = -l2; m2 <= l2; ++m2) {
                     int ir = pack_lm(l1, m1) * SZ1 + pack_lm(l2, m2);
 

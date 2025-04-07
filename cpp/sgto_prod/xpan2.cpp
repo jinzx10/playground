@@ -301,9 +301,6 @@ void test_G() {
                     int qmax = std::min(std::min(l1, l2), (l1+l2-std::abs(m))/2);
                     for (int q = 0; q <= qmax; ++q) {
                         int l = l1 + l2 - 2*q;
-                        if (std::abs(m) > l) {
-                            break;
-                        }
                         val += Gaunt[gind(l1, m1, l2, m2, q)] * std::pow(rabs, 2*q) * solid_harm(l, m, rx, ry, rz);
                     }
                     std::complex<double> ref = solid_harm(l1, m1, rx, ry, rz) * solid_harm(l2, m2, rx, ry, rz);

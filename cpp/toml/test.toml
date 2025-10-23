@@ -1,0 +1,172 @@
+# Calculation configuration file for MatPPW
+# Standard TOML 1.0.0 format https://toml.io/en/v1.0.0
+# 
+# This example for Fe3C, hybrid, spinon, kon, NCPP
+# all key are specified
+#
+[env]
+    job_root = "." 
+    out_prefix = "Fe3C"
+    rng_type = "default" # default should be fine, check Matlab's rng page
+    seed = 0
+    paw_hartree_explicit = true # false to use QE's default radial hartree method; true to use explicit formula (might be unstable for some pseudopotential)
+    use_libxc = false # true to use libxc's function, whose PBE and HSE are not the same as QE
+    use_ext_d3 = true 
+    
+[tasks]
+    dump_chk = true
+    autorestart = false
+    [tasks.restart]
+        # controls what to read
+        read_cfg = false
+        read_geom = false
+        read_grid = false
+        read_pspot = false
+        read_guess = false
+        read_den = false
+        read_wfn = false
+        read_scf = false
+        # controls whether dump checkpoint in an append way
+        append_geom = true
+        append_den = false
+        append_wfn = false
+    [tasks.properties]
+        [tasks.properties.dos]
+            # for DOS, energy in unit of eV!
+            add_states = 10
+            energy_step = 0.01
+            fwhm = 0.05
+    [[tasks.task_list]] # Note that this is a list (similar to `system.pspot.elements`)
+        type = "energy"
+        properties = ["energy", "force", "dos", "dens_cube"] # match keys in PropsCfg
+
+[system]
+    charge = 0
+    multiplicity = 14
+    pbc = 3
+    [system.coord]
+        file_format = "LATTE"
+        fn = "Fe3C.dat" # relative to job_root
+        abs_path = false
+    [system.box]
+        from_cr_file = true # read from cr file, only true is supported for now
+    [system.pspot]
+        folder = "pseudo" # relative to job_root
+        abs_path = false
+        type_by_prefix = true # default to true
+        delimiter = [".", "_", "-"]
+        mass_from_ptable = true # default to true
+        init_mag_ptable = true
+        # then listing all element's info
+        [[system.pspot.elements]] # specify dicttionary (will overwrite automatic values)
+            symbol = "C"
+            pspot_fn =  "C_ONCV_PBE-1.2.upf"
+            abs_path = false # default to false.
+            mass = 12.0
+            init_mag = 0
+        [[system.pspot.elements]]
+            symbol = "Fe"
+            pspot_fn =  "Fe_ONCV_PBE-1.2.upf"
+            mass = 56
+            init_mag = 4
+
+[electrons]
+    dft_xc = "pbe0"
+    spin_type = "collinear" # "unpol" or "collinear"
+    relax_spin = true # if true, try to find 1 chempots for both alpha and beta
+    max_diag_iter = 20
+    max_scf_iter = 100
+    max_exx_iter = 100
+    etol = 1e-6 # QE's conv_thr, it is a extensive value (the larger the system, the larger the number)
+    ecut_wfn = 22
+    [electrons.grids]
+        ecut_rho = 100 # in unit of Hartree, must be >= 4*ecut_wfn
+        fft_base = "base235"
+    [electrons.kmesh]
+        nk = [2,2,2] # QE's nk1,nk2,nk3, roughly inverse of a
+        sk = [0,0,0] # [1,1,1] = Monkhorst-Pack (MP), [0,0,0] = Gamma-centered (GMC), QE's sk1,sk2,sk3;
+        shifts = [0.0, 0.0, 0.0] # shift of center (VASP's s1, s2, s3)
+        time_rev = true # using the k->-k symmetry (should be false for noncolinear spin)
+    [electrons.ham]
+        [electrons.ham.xc]
+            nlcc = true # if any pspot has nlcc data
+            mgga_start_tol = 1.0e-1 # SCF tol to turn from PBE to MGGA, negative means no PBE loops
+        [electrons.ham.exx]
+            # Note that this section will have effect when xc IS hybrid.
+            method = "ace"
+            qmesh_red = [2,2,2] # VASP's NKREDX, NKREDY, and NKREDZ
+            exx_frac = -1 # negative value means using default value
+            exx_scrlen = -1 # negative value means using default value
+            verbose = true
+    [electrons.wfn]
+        nband = -1
+        nbanda = -1
+        nbandb = -1
+        [electrons.wfn.smearing]
+            method = "Gaussian" # none, Gaussian, FermiDirac
+            sigma = 0.005 # kbt, in unit of Hartree, QE's `degauss`
+            vband_frac = 0.2 # fractional for virtual orbitals (w.r.t. occupied orbitals)
+            # advanced options
+            must_converge = true
+            maxiter = 1000 # max number of iteration 
+            damp = 1.0 # dammping factor for newton iteration
+            tol = 1e-12 # convergence tol
+            occ_tol = 1e-16 # smaller occupation will be considered as 0 in entropy of FD
+            maxstep = 0.1 # max step size of each step
+        [electrons.wfn.diag]
+            method = "Davidson" # only Davidson is supported for now
+            init_tol = 1e-4 # only the first SCF step, after it, tol will be adjusted adaptivelly
+            nbuff = 0 # buffer states (to stablize diagnoalization)
+            precond = "QE" # Only QE is supported for now
+            # Davidson cfgs
+            dav_ndim = 4 # Davidson's max subspace size, QE's diago_david_ndim
+            re_hx_freq = 10 # frequency for recomputing HX at the beginning of inner loop
+            verbose = false
+    [electrons.scf]
+        qtol = 1e6 # QE don't use q_tol, thus we set it to a large value for now
+        pawtol = 1e-6 # tol energy for PAW (not used for this example)
+        verbose = true
+        [electrons.scf.guess]
+            init_mag_site = [
+                # in case you need some very special initial guess of mag
+                7, 0.001, # atom index, magnatic for the site
+                8, 0.001
+            ]
+            init_wfn = "rand_atomic" # "random", "atomic", "rand_atomic"(default)
+            init_dens = "sad" # "sad"
+        [electrons.scf.mixer]
+            alpha = 0.30 # Mixing strength, alpha = 1-beta, QE's mixing_beta
+            alpha_mag = 0.6 # mixing strength for the spin density (usually can be larger than total density)
+            alpha_bec = 0.4 # mixing strength for becsum term of PAW and USPP (not used here)
+            alpha_tau = 0.4 # mixing strength for kinetic density (tau) for Meta-GGA
+            method = "Broyden" # "linear", "Broyden", "Pulay", or "Anderson" (currently Pulay and Broyden are the same)
+            acc_tol = 10.0 # tol to starting acceleration methods
+            max_m = 15 # memory length for Pulay and Broyden mixer
+            # advanded cfg (usually there's no need to modify this part)
+            # there are different alphas and betas, but they are not the mixing parameter alpha mentioned above!
+            #   Anderson 
+            andsn_beta = 0.8
+            andsn_theta_min = -2.5
+            andsn_theta_max = 0.9
+            #   Pulay
+            bar_alpha_max = 10
+            reset_freq = 100
+            #   metric for dot product
+            # this part is a mess (only change metric_maxdiff is a good idea in most cases)
+            metric_maxdiff = 20 # VASP's suggested value (used to compute metric_beta)
+            metric_beta = -1 # if negative value, determined by metric_maxdiff
+            metric_beta_rho_tot = -1
+            metric_beta_rho_mag = -1
+            metric_beta_tau = -1
+            metric_wt_rho_tot = 1 # weight for total density section
+            metric_wt_rho_mag = 1
+            metric_wt_tau = 1e-4
+            metric_wt_bec = 1e-4 
+            #   other
+            gfrac_wfn = 2 # cutoff for g in mixer w.r.t wfncut
+            kerker_beta = 1.0 # Kerker preconditioner
+
+[ions]
+    [ions.ewald]
+        ecut = 1e-8
+        rcut = 15 

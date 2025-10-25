@@ -9,25 +9,24 @@
 
 class ProfilerAggregator {
 private:
+    ProfilerAggregator() = default; // singleton
+    ~ProfilerAggregator() { print(); }
+
+    using duration_t = std::chrono::nanoseconds;
     struct FunctionStats {
         size_t call_count = 0;
-        std::chrono::nanoseconds total_duration{0};
+        duration_t total_duration{0};
     };
 
     std::map<std::string, FunctionStats> data_;
-
-    // Mutex for thread-safe access
-    std::mutex data_mutex_;
-
-    ProfilerAggregator() = default;
-    ~ProfilerAggregator() { print(); }
+    std::mutex data_mutex_; // for thread-safe access
 
 public:
     static ProfilerAggregator& get_instance() {
         static ProfilerAggregator instance;
         return instance;
     }
-    static void log(const std::string& name, std::chrono::nanoseconds duration);
+    static void log(const std::string& name, duration_t duration);
     static void print();
 };
 

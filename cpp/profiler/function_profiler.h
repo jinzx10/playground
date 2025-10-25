@@ -29,12 +29,12 @@ public:
 };
 
 // A convenience macro to simplify insertion into functions
-#define PROFILE_FUNCTION() FunctionProfiler function_profiler(__FUNCTION__)
+#define PROFILE_FUNCTION() FunctionProfiler function_profiler(__func__)
 
-#else // PROFILER_ENABLED is not defined
+#else
 
 #define PROFILE_FUNCTION() void(0)
 
-#endif // ifdef PROFILER_ENABLED
+#endif
 
-#endif // ifndef FUNCTION_PROFILER_H
+#endif

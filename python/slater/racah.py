@@ -10,8 +10,8 @@ F2E = Matrix([
 
 A = Matrix([
     [Rational(2,45), Rational(1,33), Rational(50, 1287)],
-    [Rational(1, 9), Rational(-1, 3), Rational(7, 9)],
-    [Rational(5, 3), 2, -Rational(91, 3)],
+    [Rational(1, 2025), Rational(-1, 3267), Rational(175, 1656369)],
+    [Rational(1, 135), Rational(2, 1089), -Rational(175, 42471)],
     ])
 
 print(A.inv())
@@ -22,4 +22,4 @@ QE = Matrix([
     [Rational(736164, 59400), Rational(368082, 660), -Rational(11154, 100)],
     ])
 
-print(QE.inv())
+print(QE)

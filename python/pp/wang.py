@@ -6,7 +6,7 @@ x = (1 + np.arange(M)) / M
 eta = 7
 
 
-O = np.diag(np.sin(2*eta*x)/x + M*np.pi - eta)
+O = np.diag(np.sin(2*eta*x)/(2*x) + M*np.pi - eta)
 
 for i in range(M):
     for j in range(i):

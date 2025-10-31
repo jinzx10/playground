@@ -18,9 +18,7 @@ int main() {
     complexCalculation();
     databaseQuery();
 
-    //ProfilerAggregator::get_instance().print();
+    ProfilerAggregator::get_instance().print();
     
-    // The results are automatically printed when ProfilerAggregator's 
-    // static instance is destroyed (at program exit).
     return 0;
 }

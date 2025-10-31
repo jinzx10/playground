@@ -21,7 +21,6 @@ public:
         ProfilerAggregator::log(name_, duration);
     }
 
-    // Prohibit copying and moving
     FunctionProfiler(const FunctionProfiler&) = delete;
     FunctionProfiler& operator=(const FunctionProfiler&) = delete;
     FunctionProfiler(FunctionProfiler&&) = delete;

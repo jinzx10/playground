@@ -7,9 +7,14 @@
 #include <string>
 
 class ProfilerAggregator {
-private:
-    ProfilerAggregator() = default; // singleton
-    ~ProfilerAggregator() { print(); }
+private: // singleton
+    ProfilerAggregator() = default;
+    ~ProfilerAggregator() = default;
+
+    ProfilerAggregator(const ProfilerAggregator&) = delete;
+    ProfilerAggregator& operator=(const ProfilerAggregator&) = delete;
+    ProfilerAggregator(ProfilerAggregator&&) = delete;
+    ProfilerAggregator& operator=(ProfilerAggregator&&) = delete;
 
     using duration_t = std::chrono::nanoseconds;
     struct FunctionStats {

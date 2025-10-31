@@ -5,16 +5,23 @@ project(hw DESCRIPTION "hello world!")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Options
 option(ENABLE_PROFILING "Function call counter and time profiling" ON)
+
+# Prerequisites
+find_package(MPI REQUIRED COMPONENTS CXX)
 
 # Add the main application executable target
 add_executable(${PROJECT_NAME} src/main.cpp)
 
-
+# Add subdirectories
 add_subdirectory(src/util)
 
 # Link the main executable against the libraries defined in the subdirectories
 target_link_libraries(${PROJECT_NAME} PRIVATE util)
+
+# Link external libraries
+target_link_libraries(${PROJECT_NAME} PRIVATE MPI::MPI_CXX)
 
 
 if (ENABLE_PROFILING)

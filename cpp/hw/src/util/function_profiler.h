@@ -20,11 +20,6 @@ public:
         auto duration = std::chrono::steady_clock::now() - start_time_;
         ProfilerAggregator::log(name_, duration);
     }
-
-    FunctionProfiler(const FunctionProfiler&) = delete;
-    FunctionProfiler& operator=(const FunctionProfiler&) = delete;
-    FunctionProfiler(FunctionProfiler&&) = delete;
-    FunctionProfiler& operator=(FunctionProfiler&&) = delete;
 };
 
 // A convenience macro to simplify insertion into functions

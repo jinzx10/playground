@@ -2,7 +2,7 @@
 #include <cstdio>
 
 void ProfilerAggregator::log(const std::string& name, duration_t duration) {
-    ProfilerAggregator& instance = ProfilerAggregator::get_instance();
+    ProfilerAggregator& instance = ProfilerAggregator::get();
     std::lock_guard<std::mutex> lock(instance.data_mutex_);
 
     FunctionStats& stats = instance.data_[name];
@@ -11,7 +11,7 @@ void ProfilerAggregator::log(const std::string& name, duration_t duration) {
 }
 
 void ProfilerAggregator::print() {
-    ProfilerAggregator& instance = get_instance();
+    ProfilerAggregator& instance = ProfilerAggregator::get();
     std::lock_guard<std::mutex> lock(instance.data_mutex_);
 
     std::printf("\n");

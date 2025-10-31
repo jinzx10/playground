@@ -9,12 +9,7 @@
 class ProfilerAggregator {
 private: // singleton
     ProfilerAggregator() = default;
-    ~ProfilerAggregator() = default;
-
-    ProfilerAggregator(const ProfilerAggregator&) = delete;
-    ProfilerAggregator& operator=(const ProfilerAggregator&) = delete;
-    ProfilerAggregator(ProfilerAggregator&&) = delete;
-    ProfilerAggregator& operator=(ProfilerAggregator&&) = delete;
+    ~ProfilerAggregator() { print(); }
 
     using duration_t = std::chrono::nanoseconds;
     struct FunctionStats {
@@ -26,7 +21,7 @@ private: // singleton
     std::mutex data_mutex_; // for thread-safe access
 
 public:
-    static ProfilerAggregator& get_instance() {
+    static ProfilerAggregator& get() {
         static ProfilerAggregator instance;
         return instance;
     }

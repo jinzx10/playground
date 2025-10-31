@@ -1,4 +1,5 @@
 #include "profiler_aggregator.h"
+#include <cstdio>
 
 void ProfilerAggregator::log(const std::string& name, duration_t duration) {
     ProfilerAggregator& instance = ProfilerAggregator::get_instance();

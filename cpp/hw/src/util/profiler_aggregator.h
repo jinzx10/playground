@@ -5,7 +5,6 @@
 #include <map>
 #include <mutex>
 #include <string>
-#include <cstdio>
 
 class ProfilerAggregator {
 private:

@@ -1,7 +1,7 @@
 #ifndef FUNCTION_PROFILER_H
 #define FUNCTION_PROFILER_H
 
-#ifdef PROFILER_ENABLED
+#ifdef ENABLE_PROFILING
 
 #include <string>
 #include <chrono>

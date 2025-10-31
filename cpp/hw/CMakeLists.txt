@@ -5,7 +5,7 @@ project(hw DESCRIPTION "hello world!")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-option(PROFILER_ENABLED "Function call counter and time profiling" ON)
+option(ENABLE_PROFILING "Function call counter and time profiling" ON)
 
 # Add the main application executable target
 add_executable(${PROJECT_NAME} src/main.cpp)
@@ -17,8 +17,8 @@ add_subdirectory(src/util)
 target_link_libraries(${PROJECT_NAME} PRIVATE util)
 
 
-if (PROFILER_ENABLED)
-    add_compile_definitions(PROFILER_ENABLED)
+if (ENABLE_PROFILING)
+    add_compile_definitions(ENABLE_PROFILING)
 endif()
 
 ## --- UNIT TEST BUILD ---

@@ -43,19 +43,19 @@ public:
 
     void free();
 
-    MPI_Comm image_comm() { return image_comm_; }
-    MPI_Comm kpool_comm() { return kpool_comm_; }
-    MPI_Comm bpool_comm() { return bpool_comm_; }
+    MPI_Comm image_comm() const { return image_comm_; }
+    MPI_Comm kpool_comm() const { return kpool_comm_; }
+    MPI_Comm bpool_comm() const { return bpool_comm_; }
 
-    int world_size() { return world_size_; }
-    int image_size() { return image_size_; }
-    int kpool_size() { return kpool_size_; }
-    int bpool_size() { return bpool_size_; }
+    int world_size() const { return world_size_; }
+    int image_size() const { return image_size_; }
+    int kpool_size() const { return kpool_size_; }
+    int bpool_size() const { return bpool_size_; }
 
-    int world_rank() { return world_rank_; }
-    int image_rank() { return image_rank_; }
-    int kpool_rank() { return kpool_rank_; }
-    int bpool_rank() { return bpool_rank_; }
+    int world_rank() const { return world_rank_; }
+    int image_rank() const { return image_rank_; }
+    int kpool_rank() const { return kpool_rank_; }
+    int bpool_rank() const { return bpool_rank_; }
 };
 
 #endif

@@ -11,22 +11,25 @@ option(ENABLE_PROFILING "Function call counter and time profiling" ON)
 # Prerequisites
 find_package(MPI REQUIRED COMPONENTS CXX)
 
-# Add the main application executable target
-add_executable(${PROJECT_NAME} src/main.cpp)
-
-# Add subdirectories
-add_subdirectory(src/util)
-
-# Link the main executable against the libraries defined in the subdirectories
-target_link_libraries(${PROJECT_NAME} PRIVATE util)
-
-# Link external libraries
-target_link_libraries(${PROJECT_NAME} PRIVATE MPI::MPI_CXX)
-
-
+# Compiler flags
 if (ENABLE_PROFILING)
     add_compile_definitions(ENABLE_PROFILING)
 endif()
+
+# Main executable
+add_executable(${PROJECT_NAME} src/main.cpp)
+
+# Modules
+add_subdirectory(src/util)
+add_subdirectory(src/para)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    util
+    para
+)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE MPI::MPI_CXX)
+
 
 ## --- UNIT TEST BUILD ---
 ## 3. CONFIGURE TESTING (Using Google Test)

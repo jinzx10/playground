@@ -6,7 +6,7 @@
 
 class ParallelConfig {
 private: // singleton
-    ParallelConfig() = default;
+    ParallelConfig();
     ~ParallelConfig() { free(); }
 
     MPI_Comm image_comm_ = MPI_COMM_NULL;

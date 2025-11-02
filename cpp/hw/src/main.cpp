@@ -1,4 +1,5 @@
 #include "util/function_profiler.h"
+#include "para/parallel_config.h"
 #include <thread>   
 #include <mpi.h>
 
@@ -15,22 +16,28 @@ void databaseQuery() {
 int main(int argc, char** argv) {
     PROFILE_FUNCTION();
 
-    MPI_Init(&argc, &argv);
-
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    if (rank != 0) {
-        freopen("/dev/null", "w", stdout);
+    // Initialize MPI with thread support
+    int requested = MPI_THREAD_MULTIPLE;
+    int provided;
+    MPI_Init_thread(&argc, &argv, requested, &provided);
+    if (provided < requested) {
+        std::fprintf(stderr, "Could not obtain requested MPI thread support level\n");
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
+
+    ParallelConfig& para = ParallelConfig::get();
+
+    // Suppress the output other than the root process
+    if (para.world_rank() != 0) std::freopen("/dev/null", "w", stdout);
+
+    para.setup(2, 2, 1);
 
     complexCalculation();
     complexCalculation();
     complexCalculation();
     databaseQuery();
 
-    //ProfilerAggregator::get_instance().print();
-    
+    para.free();
     MPI_Finalize();
     return 0;
 }

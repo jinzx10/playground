@@ -11,6 +11,9 @@ option(ENABLE_PROFILING "Function call counter and time profiling" ON)
 # Prerequisites
 find_package(MPI REQUIRED COMPONENTS CXX)
 
+# External dependencies
+include(cmake/Dependencies.cmake)
+
 # Compiler flags
 if (ENABLE_PROFILING)
     add_compile_definitions(ENABLE_PROFILING)
@@ -28,7 +31,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     para
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE MPI::MPI_CXX)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    MPI::MPI_CXX
+    spdlog::spdlog
+)
 
 
 ## --- UNIT TEST BUILD ---

@@ -20,8 +20,10 @@ namespace {
         // sanity check
         assert(num_child <= parent_size);
         if (parent_size % num_child != 0) {
-            std::fprintf(stderr,
-                "%s warning: %s: parent size (%d) is not divisible by num_child (%d)\n",
+            std::fprintf(
+                stderr,
+                "%s warning: %s: parent_size (%d) "
+                "is not divisible by num_child (%d)\n",
                 __func__, info.c_str(), parent_size, num_child
             );
         }

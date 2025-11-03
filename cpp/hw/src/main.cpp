@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     ParallelConfig& para = ParallelConfig::get();
 
     // Suppress the output other than the root process
-    if (para.world_rank() != 0) std::freopen("/dev/null", "w", stdout);
+    //if (para.world_rank() != 0) std::freopen("/dev/null", "w", stdout);
 
     para.setup(2, 2, 1);
 

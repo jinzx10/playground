@@ -1,6 +1,6 @@
 #include "profiler_aggregator.h"
 #include <cstdio>
-#include "spdlog/spdlog.h"
+#include "util/log.h"
 
 void ProfilerAggregator::log(const std::string& name, duration_t duration) {
     ProfilerAggregator& instance = ProfilerAggregator::get();
@@ -15,15 +15,10 @@ void ProfilerAggregator::print() {
     ProfilerAggregator& instance = ProfilerAggregator::get();
     std::lock_guard<std::mutex> lock(instance.data_mutex_);
 
-
-    spdlog::info("");
-    spdlog::info("------------------ FUNCTION PROFILING RESULTS ------------------");
-    spdlog::info("  Count  | Total Duration (s) | Avg Duration (s) | Function Name");
-    spdlog::info("----------------------------------------------------------------");
-    //std::printf("\n");
-    //std::printf("------------------ FUNCTION PROFILING RESULTS ------------------\n");
-    //std::printf("  Count  | Total Duration (s) | Avg Duration (s) | Function Name\n");
-    //std::printf("----------------------------------------------------------------\n");
+    Log::info("");
+    Log::info("-------------------- FUNCTION PROFILING RESULTS --------------------");
+    Log::info("   Count   | Total Duration (s) | Avg Duration (s) | Function Name  ");
+    Log::info("--------------------------------------------------------------------");
 
     for (const auto& pair : instance.data_) {
         const auto& name = pair.first;
@@ -33,11 +28,8 @@ void ProfilerAggregator::print() {
         double total_s = std::chrono::duration<double>(stats.total_duration).count();
         double avg_s = total_s / stats.call_count;
 
-        spdlog::info(" {:7} | {:18.3f} | {:16.3f} | {}",
+        Log::info(" {:9} | {:18.3f} | {:16.3f} | {}",
                     stats.call_count, total_s, avg_s, name.c_str());
-        //std::printf(" %7zu | %18.3f | %16.3f | %s\n",
-        //            stats.call_count, total_s, avg_s, name.c_str());
     }
-    spdlog::info("----------------------------------------------------------------");
-    //std::printf("----------------------------------------------------------------\n");
+    Log::info("--------------------------------------------------------------------");
 }

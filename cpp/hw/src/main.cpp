@@ -1,7 +1,9 @@
-#include "util/function_profiler.h"
 #include "para/parallel_config.h"
-#include <thread>   
+#include "util/function_profiler.h"
+#include "util/log.h"
+
 #include <mpi.h>
+#include <thread> // merely used in test code; not necessary
 
 void complexCalculation() {
     PROFILE_FUNCTION();
@@ -20,24 +22,27 @@ int main(int argc, char** argv) {
     int requested = MPI_THREAD_MULTIPLE;
     int provided;
     MPI_Init_thread(&argc, &argv, requested, &provided);
+
+    // Initialize logger
+    Log::init();
+
+    // Check thread support
     if (provided < requested) {
-        std::fprintf(stderr, "Could not obtain requested MPI thread support level\n");
+        Log::error("Could not obtain requested MPI thread support level");
+        Log::flush();
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
-    ParallelConfig& para = ParallelConfig::get();
-
-    // Suppress the output other than the root process
-    //if (para.world_rank() != 0) std::freopen("/dev/null", "w", stdout);
-
-    para.setup(2, 2, 1);
+    // Image, kpool and bpool setup
+    ParallelConfig::get().setup(2, 2, 1);
 
     complexCalculation();
     complexCalculation();
     complexCalculation();
     databaseQuery();
 
-    para.free();
+    ParallelConfig::get().free();
+    Log::flush();
     MPI_Finalize();
     return 0;
 }

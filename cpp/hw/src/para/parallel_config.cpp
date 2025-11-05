@@ -1,9 +1,12 @@
 #include "parallel_config.h"
 
+#include "util/log.h"
+
 #include <cstdio>
 #include <cassert>
 
 namespace {
+
     void split_comm(
         MPI_Comm parent_comm,
         int num_child,
@@ -56,7 +59,7 @@ void ParallelConfig::free() {
 }
 
 
-void ParallelConfig::do_setup(
+void ParallelConfig::setup(
     int num_images,
     int kpools_per_image,
     int bpools_per_kpool

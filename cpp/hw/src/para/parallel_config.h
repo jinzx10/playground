@@ -23,24 +23,13 @@ private: // singleton
     int kpool_rank_ = -1;
     int bpool_rank_ = -1;
 
-    std::once_flag init_flag_;
-
-    void do_setup(int num_images, int kpools_per_image, int bpools_per_kpool);
-
 public:
     static ParallelConfig& get() {
         static ParallelConfig instance;
         return instance;
     }
 
-    void setup(int num_images, int kpools_per_image, int bpools_per_kpool) {
-        std::call_once(
-            init_flag_,
-            &ParallelConfig::do_setup,
-            this, num_images, kpools_per_image, bpools_per_kpool
-        );
-    }
-
+    void setup(int num_images, int kpools_per_image, int bpools_per_kpool);
     void free();
 
     MPI_Comm image_comm() const { return image_comm_; }

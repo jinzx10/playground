@@ -19,47 +19,6 @@ if (ENABLE_PROFILING)
     add_compile_definitions(ENABLE_PROFILING)
 endif()
 
-# Main executable
-add_executable(${PROJECT_NAME} src/main.cpp)
+# Add source directories
+add_subdirectory(src)
 
-# Modules
-add_subdirectory(src/util)
-add_subdirectory(src/para)
-
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    util
-    para
-)
-
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    MPI::MPI_CXX
-    spdlog::spdlog
-)
-
-
-## --- UNIT TEST BUILD ---
-## 3. CONFIGURE TESTING (Using Google Test)
-#
-## Search for Google Test package
-## NOTE: You must install GTest globally or include it as a submodule/external project
-#find_package(GTest REQUIRED)
-#
-## Enable testing for CTest (CMake's built-in test runner)
-#enable_testing()
-#
-## Define the unit test executable target
-#add_executable(unit_tests
-#    ${TEST_SOURCE_DIR}/unit/*.cpp
-#    ${TEST_SOURCE_DIR}/unit/*/*.cpp # Include unit test files
-#)
-#
-## Link the unit test executable to the necessary libraries
-#target_link_libraries(unit_tests
-#    GTest::gtest_main  # Links GTest framework and its main() function
-#    ${PROJECT_NAME}    # Links the main application's code (if needed)
-#)
-#
-## 4. REGISTER TESTS WITH CTEST
-#
-## This command tells CTest how to run the test executable
-#add_test(NAME run_unit_tests COMMAND unit_tests)

@@ -3,4 +3,4 @@ add_library(para STATIC
 )
 
 target_include_directories(para PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(para PUBLIC MPI::MPI_CXX)
+target_link_libraries(para PUBLIC MPI::MPI_CXX spdlog::spdlog)

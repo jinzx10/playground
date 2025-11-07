@@ -22,7 +22,7 @@ public:
     }
 };
 
-// A convenience macro to simplify insertion into functions
+// A convenient macro to simplify insertion into functions
 #define PROFILE_FUNCTION() FunctionProfiler function_profiler(__func__)
 
 #else

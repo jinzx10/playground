@@ -22,14 +22,14 @@ void Log::init() {
     std::vector<spdlog::sink_ptr> sinks;
 
     // (1.1) All processes get an individual, all-inclusive file sink
-    // with filename "rank-<rank>.log" (width aligned)
+    // with filename "rank-<rank>.log".
     int rank_width = num_digits(ParallelConfig::get().world_size()-1);
     std::string filename = fmt::format("rank-{:0{}d}.log", rank, rank_width);
 
     // true: overwrite; false: append
     auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(filename, true);
 
-    // Log every message up from debug level to the file
+    // Log every message up from debug level
     file_sink->set_level(spdlog::level::debug);
 
     // [time.millisec] [level] message
@@ -37,7 +37,7 @@ void Log::init() {
 
     sinks.push_back(file_sink);
 
-    // (1.2) ONLY rank-0 gets a console sink
+    // (1.2) ONLY rank-0 gets a console (screen) sink
     if (rank == 0) {
         auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 

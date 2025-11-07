@@ -9,19 +9,32 @@ private: // singleton
     ParallelConfig();
     ~ParallelConfig() { free(); }
 
-    MPI_Comm image_comm_ = MPI_COMM_NULL;
-    MPI_Comm kpool_comm_ = MPI_COMM_NULL;
-    MPI_Comm bpool_comm_ = MPI_COMM_NULL;
-
     int world_size_ = -1;
-    int image_size_ = -1;
-    int kpool_size_ = -1;
-    int bpool_size_ = -1;
-
     int world_rank_ = -1;
-    int image_rank_ = -1;
-    int kpool_rank_ = -1;
-    int bpool_rank_ = -1;
+
+    MPI_Comm intra_image_comm_ = MPI_COMM_NULL;
+    MPI_Comm intra_kpool_comm_ = MPI_COMM_NULL;
+    MPI_Comm intra_bpool_comm_ = MPI_COMM_NULL;
+
+    int intra_image_size_ = -1;
+    int intra_kpool_size_ = -1;
+    int intra_bpool_size_ = -1;
+
+    int intra_image_rank_ = -1;
+    int intra_kpool_rank_ = -1;
+    int intra_bpool_rank_ = -1;
+
+    MPI_Comm inter_image_comm_ = MPI_COMM_NULL;
+    MPI_Comm inter_kpool_comm_ = MPI_COMM_NULL;
+    MPI_Comm inter_bpool_comm_ = MPI_COMM_NULL;
+
+    int inter_image_size_ = -1;
+    int inter_kpool_size_ = -1;
+    int inter_bpool_size_ = -1;
+
+    int inter_image_rank_ = -1;
+    int inter_kpool_rank_ = -1;
+    int inter_bpool_rank_ = -1;
 
 public:
     static ParallelConfig& get() {
@@ -32,19 +45,32 @@ public:
     void setup(int num_images, int kpools_per_image, int bpools_per_kpool);
     void free();
 
-    MPI_Comm image_comm() const { return image_comm_; }
-    MPI_Comm kpool_comm() const { return kpool_comm_; }
-    MPI_Comm bpool_comm() const { return bpool_comm_; }
-
     int world_size() const { return world_size_; }
-    int image_size() const { return image_size_; }
-    int kpool_size() const { return kpool_size_; }
-    int bpool_size() const { return bpool_size_; }
-
     int world_rank() const { return world_rank_; }
-    int image_rank() const { return image_rank_; }
-    int kpool_rank() const { return kpool_rank_; }
-    int bpool_rank() const { return bpool_rank_; }
+
+    MPI_Comm intra_image_comm() const { return intra_image_comm_; }
+    MPI_Comm intra_kpool_comm() const { return intra_kpool_comm_; }
+    MPI_Comm intra_bpool_comm() const { return intra_bpool_comm_; }
+
+    int intra_image_size() const { return intra_image_size_; }
+    int intra_kpool_size() const { return intra_kpool_size_; }
+    int intra_bpool_size() const { return intra_bpool_size_; }
+
+    int intra_image_rank() const { return intra_image_rank_; }
+    int intra_kpool_rank() const { return intra_kpool_rank_; }
+    int intra_bpool_rank() const { return intra_bpool_rank_; }
+
+    MPI_Comm inter_image_comm() const { return inter_image_comm_; }
+    MPI_Comm inter_kpool_comm() const { return inter_kpool_comm_; }
+    MPI_Comm inter_bpool_comm() const { return inter_bpool_comm_; }
+
+    int inter_image_size() const { return inter_image_size_; }
+    int inter_kpool_size() const { return inter_kpool_size_; }
+    int inter_bpool_size() const { return inter_bpool_size_; }
+
+    int inter_image_rank() const { return inter_image_rank_; }
+    int inter_kpool_rank() const { return inter_kpool_rank_; }
+    int inter_bpool_rank() const { return inter_bpool_rank_; }
 };
 
 #endif

@@ -57,7 +57,13 @@ void Log::init() {
 
     // (3) Give the first message
     debug("Logging starts on rank {}", rank);
+    info("Welcome!");
     flush();
+
+    // NOTE: only one logger is used for each process, which is set as
+    // the default but NOT registered. One should call flush() instead
+    // of drop_all() or shutdown() since the latter merely applys to
+    // loggers in the registry.
 }
 
 

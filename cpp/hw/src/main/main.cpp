@@ -1,9 +1,11 @@
 #include "para/parallel_config.h"
 #include "util/function_profiler.h"
 #include "util/log.h"
+#include "util/toml.h"
 
 #include <mpi.h>
 #include <thread> // merely used in test code; not necessary
+#include <iostream>
 
 void complexCalculation() {
     PROFILE_FUNCTION();
@@ -40,6 +42,11 @@ int main(int argc, char** argv) {
     complexCalculation();
     complexCalculation();
     databaseQuery();
+
+    Toml::table tbl = Toml::parse_and_bcast("sp_pbe0.toml");
+    std::string prefix = *(tbl["env"]["out_prefix"].value<std::string>());
+    Log::info("out_prefix is {}", prefix);
+
 
     ParallelConfig::get().free();
     Log::flush();

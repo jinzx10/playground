@@ -2,7 +2,6 @@
 #define PARALLEL_CONFIG_H
 
 #include <mpi.h>
-#include <mutex>
 
 class ParallelConfig {
 private: // singleton

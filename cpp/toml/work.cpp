@@ -48,6 +48,7 @@ int main() {
 
     std::cout << tbl["atoms"]["mag"]["Fe"][0] << std::endl;
 
+    std::cout << "str = " << tbl["str"] << std::endl;
 
     return 0;
 }

@@ -13,8 +13,8 @@ private:
     std::chrono::steady_clock::time_point start_time_;
 
 public:
-    FunctionProfiler(const std::string& function_name) 
-        : name_(function_name), start_time_(std::chrono::steady_clock::now()) {}
+    FunctionProfiler(const std::string& func_name) 
+        : name_(func_name), start_time_(std::chrono::steady_clock::now()) {}
 
     ~FunctionProfiler() {
         auto duration = std::chrono::steady_clock::now() - start_time_;

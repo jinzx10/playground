@@ -1,6 +1,12 @@
 import numpy as np
 import sympy as sp
 
+'''
+Basically the same as rlylm.py, but using a different
+normalization.
+
+'''
+
 def cart_to_angle(r):
     rnorm = np.linalg.norm(r)
     if rnorm < 1e-8:
@@ -34,7 +40,7 @@ def rlylm_ref(lmax, r, rmod):
             for ir in range(nr):
                 theta, phi = cart_to_angle(r[ir])
                 Zval = sp.re(Z.subs({theta_: theta, phi_: phi}).evalf())
-                rlylm[ir, col] = Zval * rmod[ir]**l * sgn
+                rlylm[ir, col] = Zval * rmod[ir]**l * sgn * sp.sqrt(4 * sp.pi / (2*l+1))
             col += 1
     return rlylm
 
@@ -49,15 +55,14 @@ def rlylm_real_batch(lmax, r, rmod):
     rlylm = np.zeros((nr, (lmax+1)**2))
 
     # R(0, 0) = sqrt(1/4pi)
-    rlylm[:, 0] = np.sqrt(0.25 / np.pi)
+    rlylm[:, 0] = 1.0
     if lmax == 0:
         return rlylm
 
-    # l=1, m: (0, 1, -1) -> (z, -x, -y) * sqrt(3/4pi)
-    fac1 = np.sqrt(0.75 / np.pi)
-    rlylm[:, 1] = fac1 * r[:, 2]
-    rlylm[:, 2] = -fac1 * r[:, 0]
-    rlylm[:, 3] = -fac1 * r[:, 1]
+    # l=1, m: (0, 1, -1) -> (z, -x, -y)
+    rlylm[:, 1] = r[:, 2]
+    rlylm[:, 2] = -r[:, 0]
+    rlylm[:, 3] = -r[:, 1]
     if lmax == 1:
         return rlylm
 
@@ -69,20 +74,19 @@ def rlylm_real_batch(lmax, r, rmod):
         idx_l_2 = (l - 2) * (l - 2)
 
         # R(l,m) for m = 0, 1, -1, ..., l-2, 2-l
-        fac1 = np.sqrt((2 * l - 1) * (2 * l + 1))
-        fac2 = np.sqrt((2 * l + 1) / (2 * l - 3))
+        fac1 = 2 * l - 1
         for im in range(0, 2 * l - 3):
             mabs = (im + 1) // 2  # 0, 1, 1, 2, 2, ...
-            rlylm[:,idx_l+im] = (fac1 * r[:,2] * rlylm[:,idx_l_1+im] - fac2 * np.sqrt((l-1-mabs)*(l-1+mabs)) * rmod2 * rlylm[:,idx_l_2+im]) \
+            rlylm[:,idx_l+im] = (fac1 * r[:,2] * rlylm[:,idx_l_1+im] - np.sqrt((l-1-mabs)*(l-1+mabs)) * rmod2 * rlylm[:,idx_l_2+im]) \
                                 / np.sqrt((l + mabs) * (l - mabs))
 
         # R(l,l-1) and R(l,1-l)
-        fac = np.sqrt(2*l+1)
+        fac = np.sqrt(2*l-1)
         rlylm[:,idx_l+2*l-3] = fac * r[:,2] * rlylm[:,idx_l-2]
         rlylm[:,idx_l+2*l-2] = fac * r[:,2] * rlylm[:,idx_l-1]
 
         # R(l,l) and R(l,-l)
-        fac = -np.sqrt((2*l+1)/(2*l))
+        fac = -np.sqrt((2*l-1)/(2*l))
         rlylm[:,idx_l+2*l-1] = fac * (r[:,0] * rlylm[:,idx_l-2] - r[:,1] * rlylm[:, idx_l-1])
         rlylm[:,idx_l+2*l  ] = fac * (r[:,0] * rlylm[:,idx_l-1] + r[:,1] * rlylm[:, idx_l-2])
 

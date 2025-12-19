@@ -1,3 +1,6 @@
+set(FETCHCONTENT_BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}/../_deps"
+    CACHE PATH "Persistent directory for external dependencies")
+
 include(FetchContent)
 
 FetchContent_Declare(
